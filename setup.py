@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 # ==============================================================================
 setup(
     name="zyx",
-    version="0.1.90",
+    version="0.1.91",
     # --------------------------------------------------------------------------
     author="Hammad Saeed",
     author_email="hvmmad@gmail.com",
