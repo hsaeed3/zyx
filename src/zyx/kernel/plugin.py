@@ -28,16 +28,20 @@ class TextMemoryPlugin(UtilLazyLoader):
     pass
 
 
-TextMemoryPlugin.init("semantic_kernel.core_plugins.text_memory_plugin", "TextMemoryPlugin")
+TextMemoryPlugin.init(
+    "semantic_kernel.core_plugins.text_memory_plugin", "TextMemoryPlugin"
+)
 
-    
+
 class WebSearchEnginePlugin(UtilLazyLoader):
     pass
 
 
-WebSearchEnginePlugin.init("semantic_kernel.core_plugins.web_search_engine_plugin", "WebSearchEnginePlugin")
-    
-    
+WebSearchEnginePlugin.init(
+    "semantic_kernel.core_plugins.web_search_engine_plugin", "WebSearchEnginePlugin"
+)
+
+
 class HttpPlugin(UtilLazyLoader):
     pass
 
@@ -56,4 +60,6 @@ class SessionsPythonTool(UtilLazyLoader):
     pass
 
 
-SessionsPythonTool.init("semantic_kernel.core_plugins.sessions_python_tool", "SessionsPythonTool")
+SessionsPythonTool.init(
+    "semantic_kernel.core_plugins.sessions_python_tool", "SessionsPythonTool"
+)
