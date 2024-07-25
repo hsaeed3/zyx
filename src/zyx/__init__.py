@@ -11,6 +11,8 @@ __all__ = [
     "Qdrant",
     "logger",
     "console",
+    "BaseModel",
+    "Field",
     "tqdm",
     "tqdm_notebook",
 ]
@@ -25,6 +27,8 @@ from .ext.data import memory as Memory
 from .ext.data import qdrant as Qdrant
 from .ext.util import logger as logger
 from .ext.util import console as console
+from .ext.util import BaseModel as BaseModel
+from .ext.util import Field as Field
 from .ext.util import tqdm as tqdm
 from .ext.util import tqdm_notebook as tqdm_notebook
 

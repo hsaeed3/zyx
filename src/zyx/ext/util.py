@@ -3,6 +3,20 @@
 from ._loader import UtilLazyLoader
 
 
+class BaseModel(UtilLazyLoader):
+    pass
+
+
+BaseModel.init("pydantic.main", "BaseModel")
+
+
+class Field(UtilLazyLoader):
+    pass
+
+
+Field.init("pydantic.fields", "Field")
+
+
 class logger(UtilLazyLoader):
     pass
 

@@ -7,7 +7,7 @@ class db(UtilLazyLoader):
     pass
 
 
-db.init("sqlmodel.main", "SQLModel")
+db.init("sqlite3", "sqlite3")
 
 
 class memory(UtilLazyLoader):
