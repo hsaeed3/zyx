@@ -1,38 +1,49 @@
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>
-# zyx is open source
-# use it however you want :)
-#
-# 2024 Hammad Saeed
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# ==============================================================================
+# ~ zyx ~
+# hammad saeed & other people with their stuff
+# nothing fancy, just a toolkit of other people's stuff
+# ==============================================================================
 
-from setuptools import setup, find_packages
+# ==============================================================================
+from setuptools import find_packages, setup
+# ==============================================================================
 
+# ==============================================================================
 setup(
     name="zyx",
-    version="0.2",
+    version="0.1.90",
+    # --------------------------------------------------------------------------
     author="Hammad Saeed",
-    author_email="hammad@supportvectors.com",
-
-    description="Lightspeed Python functions for the AI era.",
-
-    python_requires=">3.8",
-    packages=find_packages(),
-    include_package_data=True,
+    author_email="hvmmad@gmail.com",
+    # --------------------------------------------------------------------------
+    description="A fun ai toolkit of other people's stuff",
+    # --------------------------------------------------------------------------
+    python_requires=">=3.9",
+    # --------------------------------------------------------------------------
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    # --------------------------------------------------------------------------
     install_requires=[
-
-        # Foundational / Utility Libraries
-        "art", "fastui", "loguru", "pathlib", "tqdm",
-
-        # Data / RAG
-        "chroma", "peewee", "sqlmodel",
-
-        # LLMs
-        "litellm", "ollama",
-
-        # Prompting
-        "dspy-ai", "instructor",
-
-        # API / Web
-        "fastapi", "uvicorn"
-
-])
+        # CORE DEPENDENCIES ====================================================
+        # -- genai -------------------------------------------------------------
+        "instructor",
+        "cohere",  # Cohere will be removed on fix
+        "litellm",
+        "huggingface_hub",
+        # -- data --------------------------------------------------------------
+        "langchain-core",
+        "mem0ai",
+        "langgraph",
+        "sqlmodel",
+        "qdrant-client",
+        # -- util --------------------------------------------------------------
+        "fastapi",
+        "loguru",
+        "rich",
+        "tqdm",
+        "uvicorn",
+        # =======================================================================
+    ],
+    # --------------------------------------------------------------------------
+)
+# ==============================================================================
