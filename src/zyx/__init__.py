@@ -1,38 +1,39 @@
 # zyx ==============================================================================
 
 __all__ = [
-    "batch_completion",
+    "ai",
+    "audio",
+    "image",
+    
+    'logger',
+    'BaseModel',
+    'Field',
+    "rich_console",
+    
     "completion",
-    "embedding",
-    "Inference",
-    "ollama_embedding",
+    "CompletionClient",
+    "embeddings",
+    "function",
+    "instructor_completion",
+    
     "db",
-    "Memory",
-    "Qdrant",
-    "logger",
-    "console",
-    "BaseModel",
-    "Field",
-    "tqdm",
-    "tqdm_notebook",
+    "batch",
+    "lightning",
+    "reader",
+    
+    "paint",
 ]
 
-from .ext.ai import batch_completion as batch_completion
-from .ext.ai import completion as completion
-from .ext.ai import embedding as embedding
-from .ext.ai import Inference as Inference
-from .ext.ai import ollama_embedding as ollama_embedding
-from .ext.data import db as db
-from .ext.data import memory as Memory
-from .ext.data import qdrant as Qdrant
-from .ext.util import logger as logger
-from .ext.util import console as console
-from .ext.util import BaseModel as BaseModel
-from .ext.util import Field as Field
-from .ext.util import tqdm as tqdm
-from .ext.util import tqdm_notebook as tqdm_notebook
-
+import builtins
 from rich import print
-import builtins as __builtins__
+builtins.print = print
 
-__builtins__.print = print
+from .core import logger, BaseModel, Field, rich_console, batch, lightning, reader
+from .ai import completion, CompletionClient, embeddings, function, instructor_completion
+from .image import paint
+
+from .data import db
+
+from . import ai
+from . import audio
+from . import image
