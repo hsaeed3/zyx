@@ -190,3 +190,10 @@ def _completion(
     """"""
     client = zyxLanguageGraphClient(model=model, api_key=api_key, base_url=base_url, organization=organization, max_tokens=max_tokens, temperature=temperature, verbose=verbose)
     return client._handle_completion(messages, tools, response_model)
+
+if __name__ == "__main__":
+    class ResponseClassModel(BaseModel):
+        feelings : list
+        emotions : list
+
+    print(_completion("Hi how are yaaa", model = "ollama_chat/llama3.1", response_model = ResponseClassModel))

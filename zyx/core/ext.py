@@ -1,10 +1,10 @@
 __all__ = [
-    "logger",
     "BaseModel",
+    "Field",
     "zyxModuleLoader"
 ]
 
-from pydantic.main import BaseModel
+from pydantic import BaseModel, Field
 from types import ModuleType
 from typing import Any, Optional, TypeVar
 
@@ -48,7 +48,6 @@ class zyxModuleLoader(metaclass=LazyLoaderMeta):
                         module = import_module(cls._module_name)
                         cls._module_cache = getattr(module, cls._attr_name)
 
-                        # Handle special cases
                         if inspect.isclass(cls._module_cache):
                             return type(cls.__name__, (cls._module_cache,), {})
                         elif inspect.isgeneratorfunction(cls._module_cache):
@@ -114,7 +113,3 @@ class zyxModuleLoader(metaclass=LazyLoaderMeta):
         if hasattr(module, "__contains__"):
             return item in module
         raise TypeError(f"{module} object does not support membership test")
-
-class logger(zyxModuleLoader):
-    pass
-logger.init("loguru", "logger")

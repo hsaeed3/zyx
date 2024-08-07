@@ -1,28 +1,10 @@
-from zyx.core.utils import convert_to_openai_tool
+import zyx
 
-from pydantic import BaseModel, Field
-
-class ExampleModel(BaseModel):
-    """An example model."""
-    name: str = Field(..., description="The name of the item")
-    count: int = Field(..., description="The count of items")
-
-def example_function(x: int, y: str) -> str:
-    """An example function.
+class ExtractionModel(zyx.BaseModel):
+    name : str
+    age : int
     
-    Args:
-        x: An integer parameter
-        y: A string parameter
-    
-    Returns:
-        A string result
-    """
-    pass
+text = "There once was a strange man. he really was odd. the man was 30. he was known to all as john"
 
-# Convert Pydantic model
-pydantic_result = convert_to_openai_tool(ExampleModel)
-print("Pydantic result:", pydantic_result)
-
-# Convert Python function
-function_result = convert_to_openai_tool(example_function)
-print("Function result:", function_result)
+print(zyx.extract(ExtractionModel, text, model = "ollama/llama3.1"))
+print(zyx.generate(ExtractionModel))
