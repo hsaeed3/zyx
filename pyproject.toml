@@ -7,6 +7,11 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+langchain-community = "^0.2.11"
+langgraph = "^0.1.19"
+litellm = "^1.43.0"
+loguru = "^0.7.2"
+rich = "^13.7.1"
 
 [tool.poetry.group.dev.dependencies]
 poetry = "^1.8.3"
