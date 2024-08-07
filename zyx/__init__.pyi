@@ -3,7 +3,6 @@ __all__ = [
     "Field",
     "logger",
     "db",
-    
     "code",
     "extract",
     "generate",
@@ -11,7 +10,7 @@ __all__ = [
     "toolkits",
     "completion",
     "function",
-    "zyxModuleLoader"
+    "zyxModuleLoader",
 ]
 
 from .core.ext import zyxModuleLoader, BaseModel, Field

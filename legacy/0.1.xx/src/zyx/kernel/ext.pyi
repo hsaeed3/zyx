@@ -55,9 +55,6 @@ from semantic_kernel.contents.chat_message_content import (
 from semantic_kernel.contents.function_call_content import (
     FunctionCallContent as FunctionCallContent_type,
 )
-from semantic_kernel.contents.streaming_chat_message_content import (
-    StreamingChatMessageContent as StreamingChatMessageContent_type,
-)
 from semantic_kernel.functions.kernel_function import (
     KernelFunction as KernelFunction_type,
 )

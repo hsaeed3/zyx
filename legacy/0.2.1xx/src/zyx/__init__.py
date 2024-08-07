@@ -3,14 +3,12 @@
 __all__ = [
     "audio",
     "image",
-    
     "BaseModel",
     "Field",
     "logger",
     "rich_console",
     "batch",
     "lightning",
-    
     "completion",
     "embeddings",
     "cast",
@@ -23,6 +21,7 @@ __all__ = [
 
 import builtins as _builtins
 from rich import print as _print
+
 _builtins.print = _print
 
 from .client import _completion as completion

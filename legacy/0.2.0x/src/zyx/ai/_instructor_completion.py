@@ -9,6 +9,7 @@ Assistant = Type["Assistant"]
 
 # --- completion ----------------------------------------------------------------
 
+
 def instructor_completion(
     messages: Union[str, list[str]],
     model: Optional[str] = "openai/gpt-3.5-turbo",
@@ -39,13 +40,14 @@ def instructor_completion(
     """
 
     if not messages:
-            raise ValueError("No messages provided")
+        raise ValueError("No messages provided")
 
     if isinstance(messages, str):
         messages = [{"role": "user", "content": messages}]
 
     if response_model is None:
         from litellm.main import completion as litellm_completion
+
         response = litellm_completion(
             model=model,
             messages=messages,
@@ -81,8 +83,10 @@ def instructor_completion(
             strict=strict,
             **kwargs,
         )
-        
+
+
 # --- util ----------------------------------------------------------------------
+
 
 def _return_response(response: "ModelResponse" = None) -> "ModelResponse":
     """
@@ -92,6 +96,7 @@ def _return_response(response: "ModelResponse" = None) -> "ModelResponse":
         response : The response from the completion function
     """
     return response
+
 
 def _ollama_instruct(
     model: str,
@@ -142,6 +147,7 @@ def _ollama_instruct(
         **kwargs,
     )
     return resp
+
 
 def _litellm_instruct(
     model: str,

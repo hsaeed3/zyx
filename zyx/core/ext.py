@@ -1,8 +1,4 @@
-__all__ = [
-    "BaseModel",
-    "Field",
-    "zyxModuleLoader"
-]
+__all__ = ["BaseModel", "Field", "zyxModuleLoader"]
 
 from pydantic import BaseModel, Field
 from types import ModuleType
@@ -10,6 +6,7 @@ from typing import Any, Optional, TypeVar
 
 T = TypeVar("T")
 R = TypeVar("R")
+
 
 class LazyLoaderMeta(type):
     """
@@ -34,6 +31,7 @@ class zyxModuleLoader(metaclass=LazyLoaderMeta):
     """
 
     import threading
+
     _module_cache: Optional[ModuleType] = None
     _lock = threading.Lock()
 
@@ -41,6 +39,7 @@ class zyxModuleLoader(metaclass=LazyLoaderMeta):
     def _load(cls) -> Any:
         import inspect
         from importlib import import_module
+
         if cls._module_cache is None:
             with cls._lock:
                 if cls._module_cache is None:

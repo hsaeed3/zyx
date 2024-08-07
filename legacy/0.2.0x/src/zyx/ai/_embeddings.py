@@ -1,31 +1,27 @@
 # zyx ==============================================================================
 
-__all__ = [
-    "embeddings"
-]
+__all__ = ["embeddings"]
 
 from typing import List, Literal, Optional, Union
 
 EmbeddingsProviders = ["google/", "openai/", "ollama/"]
 
-def embeddings(
-    inputs : Union[list[str], str],
 
-    model : Optional[str] = "openai/text-embedding-ada-002",
-    dimensions : Optional[int] = None,
-    
-    host : Optional[str] = None,
-    api_key : Optional[str] = None,
-    base_url : Optional[str] = None,
-    organization : Optional[str] = None,
-    encoding_format : Literal["float", "base64"] = "float",
-    
-    verbose : Optional[bool] = False,
-    
-    *args, **kwargs
+def embeddings(
+    inputs: Union[list[str], str],
+    model: Optional[str] = "openai/text-embedding-ada-002",
+    dimensions: Optional[int] = None,
+    host: Optional[str] = None,
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    organization: Optional[str] = None,
+    encoding_format: Literal["float", "base64"] = "float",
+    verbose: Optional[bool] = False,
+    *args,
+    **kwargs,
 ):
     """Utilize an external service to retrieve embeddings for the inputs text.
-    
+
     Args:
         inputs (Union[list[str], str]): The inputs text to embed.
         model (Optional[str], optional): The model to use for embeddings. Defaults to "openai/text-embedding-ada-002".
@@ -41,19 +37,20 @@ def embeddings(
         raise ValueError("Inputs text is required.")
     if verbose is True:
         from zyx.core import logger
-        
+
     if not any([model.startswith(provider) for provider in EmbeddingsProviders]):
         from phi.embedder.openai import OpenAIEmbedder
+
         try:
             embedder = OpenAIEmbedder(
-                dimensions = dimensions,
-                model = model,
-                encoding_format = encoding_format,
-                api_key = api_key,
-                base_url = base_url,
-                organization = organization
+                dimensions=dimensions,
+                model=model,
+                encoding_format=encoding_format,
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
             )
-            
+
             if isinstance(inputs, List):
                 embeddings = []
                 for i in inputs:
@@ -68,15 +65,16 @@ def embeddings(
             raise e
     elif model.startswith("openai/"):
         from phi.embedder.openai import OpenAIEmbedder
+
         model = model[7:]
         try:
             embedder = OpenAIEmbedder(
-                dimensions = dimensions if dimensions is not None else 1536,
-                model = model,
-                encoding_format = encoding_format,
-                api_key = api_key,
-                base_url = base_url,
-                organization = organization
+                dimensions=dimensions if dimensions is not None else 1536,
+                model=model,
+                encoding_format=encoding_format,
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
             )
             if isinstance(inputs, List):
                 embeddings = []
@@ -93,11 +91,12 @@ def embeddings(
     elif model.startswith("google/"):
         model = model[8:]
         from phi.embedder.google import GeminiEmbedder
+
         try:
             embedder = GeminiEmbedder(
-                dimensions = dimensions if dimensions is not None else 1536,
-                model = model,
-                api_key = api_key,
+                dimensions=dimensions if dimensions is not None else 1536,
+                model=model,
+                api_key=api_key,
             )
             if isinstance(inputs, List):
                 embeddings = []
@@ -114,12 +113,13 @@ def embeddings(
     elif model.startswith("ollama/"):
         model = model[8:]
         from phi.embedder.ollama import OllamaEmbedder
+
         try:
             embedder = OllamaEmbedder(
-                dimensions = dimensions if dimensions is not None else 4096,
-                model = model,
-                api_key = api_key,
-                host = host
+                dimensions=dimensions if dimensions is not None else 4096,
+                model=model,
+                api_key=api_key,
+                host=host,
             )
             if isinstance(inputs, List):
                 embeddings = []
@@ -133,4 +133,3 @@ def embeddings(
             if verbose is True:
                 logger.error(f"Failed to initialize Ollama Embedder: {e}")
             raise e
-        

@@ -34,7 +34,6 @@ __all__ = [
 from .ext import (
     Kernel,
     FunctionChoiceBehavior,
-    FunctionCallContent,
     PromptExecutionSettings,
     auto_function_invocation_context,
     DocumentLoader,

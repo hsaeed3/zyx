@@ -1,15 +1,13 @@
 # zyx ==============================================================================
 
-__all__ = [
-    "batch",
-    "lightning"
-]
+__all__ = ["batch", "lightning"]
 
 from typing import Callable, Iterable, Optional, Any, TypeVar, List, Generator
 import time
 
 T = TypeVar("T")
 R = TypeVar("R")
+
 
 def batch(
     batch_size: Optional[int] = None,
@@ -18,13 +16,16 @@ def batch(
 ) -> Callable[[Callable[[T], R]], Callable[[Iterable[T]], List[R]]]:
     import asyncio
     import functools
+
     def decorator(func: Callable[[T], R]) -> Callable[[Iterable[T]], List[R]]:
         @functools.wraps(func)
         async def wrapper(iterable: Iterable[T], *args: Any, **kwargs: Any) -> List[R]:
             num_workers = psutil.cpu_count(logical=False) or 4
 
             async def process_batch(batch: List[T]) -> List[R]:
-                return await asyncio.gather(*[func(item, *args, **kwargs) for item in batch])
+                return await asyncio.gather(
+                    *[func(item, *args, **kwargs) for item in batch]
+                )
 
             results: List[R] = []
             start_time = time.time() if verbose else None
@@ -58,6 +59,7 @@ def batch(
 
             if verbose:
                 import psutil
+
                 end_time = time.time()
                 end_memory = psutil.virtual_memory().used
                 execution_time = end_time - start_time if start_time else 0
@@ -74,17 +76,20 @@ def batch(
 
     return decorator
 
+
 def lightning(
     batch_size: Optional[int] = None,
     verbose: bool = False,
     timeout: Optional[float] = None,
 ) -> Callable[[Callable[[T], R]], Callable[[Iterable[T]], List[R]]]:
     import functools
+
     def decorator(func: Callable[[T], R]) -> Callable[[Iterable[T]], List[R]]:
         @functools.wraps(func)
         def wrapper(iterable: Iterable[T], *args: Any, **kwargs: Any) -> List[R]:
             import concurrent.futures
             import psutil
+
             num_workers = psutil.cpu_count(logical=False) or 4
 
             def process_batch(batch: List[T]) -> List[R]:
@@ -145,5 +150,6 @@ def lightning(
         return wrapper
 
     return decorator
+
 
 # ==============================================================================

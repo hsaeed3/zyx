@@ -13,8 +13,8 @@ _all__ = [
     "JinaReaderTools",
     "YouTubeTools",
     "SQLTools",
-    'ShellTools',
-    'PythonTools'
+    "ShellTools",
+    "PythonTools",
 ]
 
 from phi.tools.toolkit import Toolkit as Toolkit

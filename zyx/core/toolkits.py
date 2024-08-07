@@ -13,8 +13,8 @@ _all__ = [
     "JinaReaderTools",
     "YouTubeTools",
     "SQLTools",
-    'ShellTools',
-    'PythonTools'
+    "ShellTools",
+    "PythonTools",
 ]
 
 from .ext import zyxModuleLoader
@@ -107,9 +107,12 @@ SQLTools.init("phi.tools.sql", "SQLTools")
 class ShellTools(zyxModuleLoader):
     pass
 
+
 ShellTools.init("phi.tools.shell", "ShellTools")
 
 
 class PythonTools(zyxModuleLoader):
     pass
+
+
 PythonTools.init("phi.tools.python", "PythonTools")

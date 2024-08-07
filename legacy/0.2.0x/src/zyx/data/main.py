@@ -8,19 +8,23 @@ DBType = Literal["sql", "qdrant"]
 
 # --- Database Models --------------------------------------------------------------
 
+
 class Document(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     content: str
     filename: str
     hash: str
 
+
 # --- Database Class --------------------------------------------------------------
+
 
 class DB:
     """Base class for database operations."""
+
     def __init__(
-        self, 
-        db_type: DBType = "sql", 
+        self,
+        db_type: DBType = "sql",
         db_path: str = ":memory:",
         embedding_model: str = "text-embedding-ada-002",
         vector_size: int = 1536,
@@ -48,25 +52,29 @@ class DB:
 
     def _setup_sql_db(self):
         from sqlalchemy.engine import create_engine
+
         self.engine = create_engine(f"sqlite:///{self.db_path}", echo=False)
         SQLModel.metadata.create_all(self.engine)
 
     def _setup_qdrant_db(self, qdrant_url: str):
         from qdrant_client.models import VectorParams, Distance
         from qdrant_client.qdrant_client import QdrantClient
+
         self.qdrant_client = QdrantClient(qdrant_url)
         self.qdrant_client.recreate_collection(
             collection_name=self.collection_name,
-            vectors_config=VectorParams(size=self.vector_size, distance=Distance.COSINE),
+            vectors_config=VectorParams(
+                size=self.vector_size, distance=Distance.COSINE
+            ),
         )
 
     def add(self, path: Union[str, List[str]]):
         """Add a document or a list of documents to the database.
         Utilizes chunking to split the document into smaller chunks.
-        
+
         Args:
             path (Union[str, List[str]]): The path to the document file or a list of paths.
-            
+
         Raises:
             ValueError: If the path is invalid.
         """
@@ -98,7 +106,8 @@ class DB:
 
     def _process_file(self, file_path: str) -> tuple:
         import hashlib
-        with open(file_path, 'r', encoding='utf-8') as file:
+
+        with open(file_path, "r", encoding="utf-8") as file:
             content = file.read()
         filename = os.path.basename(file_path)
         file_hash = hashlib.md5(content.encode()).hexdigest()
@@ -107,28 +116,37 @@ class DB:
     def _chunk_contents(self, contents: List[tuple]) -> List[tuple]:
         import hashlib
         from ..core.text import chunk
+
         chunked_contents = []
         for content, filename, file_hash in contents:
             chunks = chunk(content, self.chunk_size, self.token_counter)
-            for i, chunk_content in enumerate(chunks[0]): 
+            for i, chunk_content in enumerate(chunks[0]):
                 chunk_hash = hashlib.md5(chunk_content.encode()).hexdigest()
-                chunked_contents.append((chunk_content, f"{filename}_chunk_{i}", chunk_hash))
+                chunked_contents.append(
+                    (chunk_content, f"{filename}_chunk_{i}", chunk_hash)
+                )
         return chunked_contents
 
     def _add_to_sql(self, contents: List[tuple]):
         from sqlalchemy.orm import Session
         from sqlalchemy.sql.expression import select
+
         with Session(self.engine) as session:
             for content, filename, file_hash in contents:
-                existing_doc = session.execute(select(Document).where(Document.hash == file_hash)).first()
+                existing_doc = session.execute(
+                    select(Document).where(Document.hash == file_hash)
+                ).first()
                 if not existing_doc:
-                    document = Document(content=content, filename=filename, hash=file_hash)
+                    document = Document(
+                        content=content, filename=filename, hash=file_hash
+                    )
                     session.add(document)
             session.commit()
 
     def _add_to_qdrant(self, contents: List[tuple]):
         from qdrant_client.models import PointStruct
         from ..ai import embeddings
+
         points = []
         contents_list = [content for content, _, _ in contents]
         embedding_response = embeddings(
@@ -137,24 +155,26 @@ class DB:
             api_key=self.api_key,
             api_base=self.api_base,
         )
-        for i, ((content, filename, file_hash), embedding_data) in enumerate(zip(contents, embedding_response['data'])):
-            embedding_vector = embedding_data['embedding']
+        for i, ((content, filename, file_hash), embedding_data) in enumerate(
+            zip(contents, embedding_response["data"])
+        ):
+            embedding_vector = embedding_data["embedding"]
             point = PointStruct(
                 id=i,
                 vector=embedding_vector,
-                payload={"content": content, "filename": filename, "hash": file_hash}
+                payload={"content": content, "filename": filename, "hash": file_hash},
             )
             points.append(point)
-        
+
         self.qdrant_client.upsert(collection_name=self.collection_name, points=points)
 
     def search(self, query: str, top_k: int = 5) -> List[dict]:
         """Searches the database for documents similar to the query.
-        
+
         Args:
             query (str): The query string.
             top_k (int, optional): The number of results to return. Defaults to 5.
-            
+
         Returns:
             List[dict]: A list of dictionaries containing the content and filename.
         """
@@ -166,28 +186,37 @@ class DB:
     def _search_sql(self, query: str, top_k: int) -> List[dict]:
         from sqlalchemy.orm import Session
         from sqlalchemy.sql.expression import select
+
         with Session(self.engine) as session:
-            statement = select(Document).where(Document.content.contains(query)).limit(top_k)
+            statement = (
+                select(Document).where(Document.content.contains(query)).limit(top_k)
+            )
             results = session.execute(statement).all()
-            return [{"content": doc.content, "filename": doc.filename} for doc in results]
+            return [
+                {"content": doc.content, "filename": doc.filename} for doc in results
+            ]
 
     def _search_qdrant(self, query: str, top_k: int) -> List[dict]:
         from ..ai import embeddings
+
         embedding_response = embeddings(
             inputs=[query],
             model=self.embedding_model,
             api_key=self.api_key,
             api_base=self.api_base,
         )
-        query_vector = embedding_response['data'][0]['embedding']
+        query_vector = embedding_response["data"][0]["embedding"]
         search_result = self.qdrant_client.search(
-            collection_name=self.collection_name,
-            query_vector=query_vector,
-            limit=top_k
+            collection_name=self.collection_name, query_vector=query_vector, limit=top_k
         )
-        return [{"content": hit.payload["content"], "filename": hit.payload["filename"]} for hit in search_result]
+        return [
+            {"content": hit.payload["content"], "filename": hit.payload["filename"]}
+            for hit in search_result
+        ]
+
 
 # ==============================================================================
+
 
 def db(
     db_type: DBType = "sql",
@@ -203,14 +232,14 @@ def db(
 ) -> DB:
     """
     Creates and returns a DB instance with the specified configuration.
-    
+
     Example:
         ```python
         db = DB()
-        
+
         # Add a document
         db.add("path/to/document.txt")
-        
+
         # Search for similar documents
         results = db.search("query")
         ```
@@ -242,5 +271,6 @@ def db(
         api_key=api_key,
         api_base=api_base,
     )
+
 
 # ==============================================================================
