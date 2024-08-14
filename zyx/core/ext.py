@@ -1,8 +1,4 @@
-__all__ = [
-    "BaseModel", 
-    "Field", 
-    "zyxModuleLoader"
-]
+__all__ = ["BaseModel", "Field", "zyxModuleLoader"]
 
 # --- zyx ----------------------------------------------------------------
 
@@ -12,6 +8,7 @@ from typing import Any, Optional, TypeVar
 
 import builtins
 from rich import print
+
 builtins.print = print
 
 T = TypeVar("T")

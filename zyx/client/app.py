@@ -9,8 +9,8 @@ from typing import Union, Optional, List, Callable
 from ..types import ClientModeParams
 from ..core.ext import BaseModel
 
-class ChatApp(App):
 
+class ChatApp(App):
     def __init__(
         self,
         messages: Union[str, list[dict]] = None,
@@ -27,7 +27,7 @@ class ChatApp(App):
         max_tokens: Optional[int] = None,
         max_retries: Optional[int] = 3,
         verbose: Optional[bool] = False,
-        **kwargs
+        **kwargs,
     ):
         from .main import Client
 
@@ -59,7 +59,9 @@ class ChatApp(App):
         user_message = event.value.strip()
         if user_message:
             self.chat_history.append({"role": "user", "content": user_message})
-            self.query_one("#chat_display", RichLog).write(f"[bold blue]User:[/bold blue] {user_message}\n", markup=True)
+            self.query_one("#chat_display", RichLog).write(
+                f"[bold blue]User:[/bold blue] {user_message}\n", markup=True
+            )
 
             response = self.client.completion(
                 messages=self.chat_history,
@@ -76,15 +78,18 @@ class ChatApp(App):
                 max_tokens=self.max_tokens,
                 max_retries=self.max_retries,
                 verbose=self.verbose,
-                **self.kwargs
+                **self.kwargs,
             )
 
-            assistant_reply = response.choices[0].message['content']
+            assistant_reply = response.choices[0].message["content"]
             self.chat_history.append({"role": "assistant", "content": assistant_reply})
 
-            self.query_one("#chat_display", RichLog).write(f"[bold green]Assistant:[/bold green] {assistant_reply}\n", markup=True)
+            self.query_one("#chat_display", RichLog).write(
+                f"[bold green]Assistant:[/bold green] {assistant_reply}\n", markup=True
+            )
 
             self.query_one("#input_field", Input).value = ""
+
 
 def cli(
     messages: Union[str, list[dict]] = None,
@@ -101,7 +106,7 @@ def cli(
     max_tokens: Optional[int] = None,
     max_retries: Optional[int] = 3,
     verbose: Optional[bool] = False,
-    **kwargs
+    **kwargs,
 ):
     ChatApp(
         messages=messages,
@@ -118,5 +123,5 @@ def cli(
         max_tokens=max_tokens,
         max_retries=max_retries,
         verbose=verbose,
-        **kwargs
+        **kwargs,
     ).run()

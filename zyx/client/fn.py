@@ -9,6 +9,7 @@ __all__ = [
 
 # --- zyx ----------------------------------------------------------------
 
+
 def chainofthought(
     query: str,
     answer_type: Any = str,
@@ -17,7 +18,7 @@ def chainofthought(
     base_url: Optional[str] = None,
     max_tokens: Optional[int] = None,
     temperature: float = 0,
-    verbose: bool = False
+    verbose: bool = False,
 ):
     """
     Generates a chain of thought reasoning and extracts a final answer for a given query.
@@ -35,6 +36,7 @@ def chainofthought(
     Returns:
         Any: The final answer of the specified type.
     """
+
     class Reasoning(BaseModel):
         chain_of_thought: str
 
@@ -64,7 +66,7 @@ def chainofthought(
         max_tokens=max_tokens,
         temperature=temperature,
         response_model=Reasoning,
-        verbose=verbose
+        verbose=verbose,
     )
 
     if verbose:
@@ -91,15 +93,17 @@ def chainofthought(
         max_tokens=max_tokens,
         temperature=temperature,
         response_model=FinalAnswerModel,
-        verbose=verbose
+        verbose=verbose,
     )
 
     return final_answer_response.answer
+
 
 # --- zyx ----------------------------------------------------------------
 
 from ..core.ext import BaseModel
 from typing import Any, Callable, Optional, get_type_hints, Union, List, Literal
+
 
 def function(
     model: str = "gpt-4o-mini",
@@ -132,6 +136,7 @@ def function(
     def decorator(f: Callable) -> Callable:
         from .main import Client
         from functools import wraps
+
         @wraps(f)
         @tenacity.retry(
             stop=tenacity.stop_after_attempt(3),
@@ -181,11 +186,27 @@ def function(
 
     return decorator
 
+
 # --- zyx ----------------------------------------------------------------
+
 
 def code(
     instructions: str = None,
-    language: Union[Literal["python", "javascript", "typescript", "shell", "bash", "java", "cpp", "c++", "go", "sql"], str] = "python",
+    language: Union[
+        Literal[
+            "python",
+            "javascript",
+            "typescript",
+            "shell",
+            "bash",
+            "java",
+            "cpp",
+            "c++",
+            "go",
+            "sql",
+        ],
+        str,
+    ] = "python",
     model: str = "gpt-4o-mini",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
@@ -197,7 +218,7 @@ def code(
     verbose: bool = False,
 ):
     from .main import Client
-    
+
     system_prompt = f"""
     ## CONTEXT ##
     You are a code generator. Your only goal is provide code based on the instructions given.
@@ -228,7 +249,9 @@ def code(
     )
     return response.code
 
+
 # --- zyx ----------------------------------------------------------------
+
 
 def generate(
     target: BaseModel,
@@ -274,7 +297,11 @@ def generate(
     
     Ensure that all generated instances comply with the model's schema and constraints.
     """
-    user_message = instructions if instructions else f"Generate {n} instance(s) of the given model."
+    user_message = (
+        instructions
+        if instructions
+        else f"Generate {n} instance(s) of the given model."
+    )
 
     response = Client().completion(
         messages=[
@@ -293,7 +320,9 @@ def generate(
     )
     return response.items
 
+
 # --- zyx ----------------------------------------------------------------
+
 
 def extract(
     target: BaseModel,
@@ -326,7 +355,7 @@ def extract(
         BaseModel: An instance of the provided model with extracted information.
     """
     from .main import Client
-    
+
     system_message = f"""
     You are an information extractor. Your task is to extract relevant information from the given text 
     and fit it into the following Pydantic model:
@@ -358,7 +387,9 @@ def extract(
 
     return response
 
+
 # --- zyx ----------------------------------------------------------------
+
 
 def classify(
     inputs: Union[str, List[str]],
@@ -395,7 +426,7 @@ def classify(
     """
     from pydantic import create_model
     from .main import Client
-    
+
     class ClassificationResult(BaseModel):
         text: str
         label: str

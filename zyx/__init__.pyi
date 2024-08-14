@@ -2,7 +2,6 @@ __all__ = [
     "BaseModel",
     "Field",
     "logger",
-    
     "cli",
     "chainofthought",
     "classify",
@@ -11,29 +10,12 @@ __all__ = [
     "extract",
     "function",
     "generate",
-    
-    "zyxModuleLoader"
+    "zyxModuleLoader",
 ]
 
 # --- zyx ----------------------------------------------------------------
 
-from .core.ext import (
-    BaseModel,
-    Field,
-    zyxModuleLoader
-)
-from .client.app import (
-    app
-)
-from .client.main import (
-    completion
-)
-from .client.fn import (
-    classify,
-    chainofthought,
-    code,
-    extract,
-    function,
-    generate
-)
+from .core.ext import BaseModel, Field, zyxModuleLoader
+from .client.main import completion
+from .client.fn import classify, chainofthought, code, extract, function, generate
 from loguru import logger

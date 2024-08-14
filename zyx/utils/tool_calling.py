@@ -1,12 +1,13 @@
 from typing import Any, Dict, List, Type, Union
 from ..core.ext import BaseModel
 
+
 def convert_to_openai_tool(
-    function: Union[Dict[str, Any], Type[BaseModel], callable]
+    function: Union[Dict[str, Any], Type[BaseModel], callable],
 ) -> Dict[str, Any]:
     """Convert a raw function/class to an OpenAI tool."""
     tool = {}
-    
+
     if isinstance(function, dict) and all(
         k in function for k in ("name", "description", "parameters")
     ):
@@ -26,16 +27,12 @@ def convert_to_openai_tool(
         tool = convert_python_function_to_openai_function(function)
     else:
         raise ValueError("Unsupported function type")
-    
-    return {
-        "type": "function",
-        "function": tool
-    }
+
+    return {"type": "function", "function": tool}
+
 
 def convert_pydantic_to_openai_function(
-    model: Type[BaseModel],
-    name: str = None,
-    description: str = None
+    model: Type[BaseModel], name: str = None, description: str = None
 ) -> Dict[str, Any]:
     """Converts a Pydantic model to a function description for the OpenAI API."""
     schema = model.model_json_schema()
@@ -48,31 +45,23 @@ def convert_pydantic_to_openai_function(
         "parameters": schema,
     }
 
-def convert_python_function_to_openai_function(
-    function: callable
-) -> Dict[str, Any]:
+
+def convert_python_function_to_openai_function(function: callable) -> Dict[str, Any]:
     """Convert a Python function to an OpenAI function-calling API compatible dict."""
     func_name = function.__name__
     annotations = function.__annotations__
     docstring = function.__doc__ or ""
     description, arg_descriptions = parse_docstring(docstring, list(annotations))
-    parameters = {
-        "type": "object",
-        "properties": {},
-        "required": []
-    }
+    parameters = {"type": "object", "properties": {}, "required": []}
     for arg, arg_type in annotations.items():
         if arg != "return":
             parameters["properties"][arg] = {
                 "type": get_openai_type(arg_type),
-                "description": arg_descriptions.get(arg, "")
+                "description": arg_descriptions.get(arg, ""),
             }
             parameters["required"].append(arg)
-    return {
-        "name": func_name,
-        "description": description,
-        "parameters": parameters
-    }
+    return {"name": func_name, "description": description, "parameters": parameters}
+
 
 def parse_docstring(docstring: str, args: List[str]) -> tuple[str, dict]:
     """Parse the function and argument descriptions from the docstring."""
@@ -93,12 +82,8 @@ def parse_docstring(docstring: str, args: List[str]) -> tuple[str, dict]:
     description = " ".join(description_lines).strip()
     return description, arg_descriptions
 
+
 def get_openai_type(python_type: Type) -> str:
     """Convert Python type to OpenAI type."""
-    type_map = {
-        str: "string",
-        int: "integer",
-        float: "number",
-        bool: "boolean"
-    }
+    type_map = {str: "string", int: "integer", float: "number", bool: "boolean"}
     return type_map.get(python_type, "string")
