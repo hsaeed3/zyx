@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 from typing import Literal, Optional, Union, Callable, List, Iterator
-from zyx.core import BaseModel
+from zyx.client import BaseModel
 
 CompletionTools = Literal["web", "calculator", "shell", "python"]
 CompletionProviders = [
@@ -63,7 +63,7 @@ class CompletionClient:
         self.agent_tools = None
 
         if self.verbose is True:
-            from zyx.core import logger
+            from zyx.client import logger
 
             self.logger = logger
         if self.verbose is True:

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zyx"
 version = "0.2.30"
-description = "A fun AI, hyper minimal AI toolkit. Built on the inspirations of @marvin-ai."
+description = "A fun, hyper minimal AI toolkit. Built on the inspirations of @marvin-ai."
 authors = ["Hammad Saeed <hammad@supportvectors.com>"]
 readme = "readme.md"
 
