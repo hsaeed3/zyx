@@ -38,7 +38,7 @@ def convert_pydantic_to_openai_function(
     description: str = None
 ) -> Dict[str, Any]:
     """Converts a Pydantic model to a function description for the OpenAI API."""
-    schema = model.schema()
+    schema = model.model_json_schema()
     schema.pop("definitions", None)
     title = schema.pop("title", "")
     default_description = schema.pop("description", "")
