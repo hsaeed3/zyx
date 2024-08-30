@@ -1,24 +1,45 @@
 [tool.poetry]
 name = "zyx"
-version = "0.2.30"
-description = "A fun, hyper minimal AI toolkit. Built on the inspirations of @marvin-ai."
+version = "0.2.75"
+description = "A fun, hyper minimal AI toolkit. Built on the inspirations of marvin-ai."
 authors = ["Hammad Saeed <hammad@supportvectors.com>"]
-readme = "readme.md"
+readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-instructor = "^1.3.7"
+python = ">=3.10, <3.13"
+fal-client = "^0.4.1"
+instructor = "^1.3.3"
 litellm = "^1.43.9"
 ollama = "^0.3.1"
 loguru = "^0.7.2"
 rich = "^13.7.1"
 textual = "^0.76.0"
+networkx = "^3.3"
+qdrant-client = "^1.11.0"
+sqlmodel = "^0.0.21"
+crewai = "^0.51.1"
+crewai-tools = "^0.8.3"
+langchain-community = "^0.2.12"
+langchain-ollama = "^0.1.1"
+soundfile = "^0.12.1"
+sounddevice = "^0.4.6"
+ipython = "^8.16.1"
 
 [tool.poetry.group.dev.dependencies]
 poetry = "^1.8.3"
 ruff = "^0.5.7"
 uv = "^0.2.35"
 
+[tool.poetry.extras]
+agents = ["crewai", "crewai-tools", "langchain-community", "langchain-ollama"]
+multimodal = ["ipython"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+zyx = "zyx.client.chat.cli:app_cli"
+zyx-chat = "zyx.client.chat.cli:chat_cli"
+
+
