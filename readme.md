@@ -9,6 +9,28 @@
 
 > All examples will soon be available in this [Jupyter Notebook](https://github.com/Hammad-Jutt/zyx/blob/main/notebook.ipynb)
 
+**Table of Contents**
+
+- [Getting Started](#getting-started)
+- [Core Concepts](#core-concepts)
+    - [Generative model hub straight from your CLI](#generative-model-hub-straight-from-your-cli)
+- [Unified Interface for LLM Completions](#unified-interface-for-llm-completions)
+    - [Basic LLM Completion](#basic-llm-completion)
+    - [Pydantic Outputs](#pydantic-outputs)
+    - [Tool Calling & Execution](#tool-calling--execution)
+- [RAG (Retrieval Augmented Generation)](#rag-retrieval-augmented-generation)
+- [LLM-Powered Functions](#llm-powered-functions)
+    - [Create working, generative, usable Python Functions.](#create-working-generative-usable-python-functions)
+    - [Create Synthetic Data Easily](#create-synthetic-data-easily)
+    - [Extract Information From Text](#extract-information-from-text)
+    - [Create Custom LLM-Powered Functions](#create-custom-llm-powered-functions)
+- [Multimodal Generation](#multimodal-generation)
+    - [Image Generation](#image-generation)
+    - [Text-to-Speech](#text-to-speech)
+    - [Speech-to-Text](#speech-to-text)
+- [CrewAI Based Agents (Experimental)](#crewai-based-agents-experimental)
+
+
 ### **Getting Started**
 
 Install zyx through Pypi:
