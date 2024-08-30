@@ -5,6 +5,15 @@
 
 ---
 
+```bash
+# Quick Start
+pip install zyx
+
+zyx --model gpt-4o-mini
+```
+
+---
+
 # **No Fancy Docs; But here's how to use it! (In a nutshell)**
 
 > All examples will soon be available in this [Jupyter Notebook](./notebooks/getting-started.ipynb)
