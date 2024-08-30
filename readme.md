@@ -238,7 +238,7 @@ rag = zyx.Rag(
 rag = zyx.Rag(
     collection_name = "my_collection",
     location = ":memory:",
-    embedding_model = "ollama/nomic-embed-text",
+    # embedding_model = "ollama/nomic-embed-text",
 )
 ```
 ```python
