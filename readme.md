@@ -7,7 +7,7 @@
 
 # **No Fancy Docs; But here's how to use it! (In a nutshell)**
 
-> All examples will soon be available in this [Jupyter Notebook](https://github.com/Hammad-Jutt/zyx/blob/main/notebook.ipynb)
+> All examples will soon be available in this [Jupyter Notebook](./notebooks/getting-started.ipynb)
 
 **Table of Contents**
 
