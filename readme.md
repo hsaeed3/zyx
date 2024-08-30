@@ -2,7 +2,7 @@
 
 > A *hyperfast, multi-modal, ease of use, developer-focused **GenAI toolkit.*** </br>
 > Built with the sole purpose of providing one of the easiest API's and abstractions for working with LLMs, **zyx** works using lazy importing & import injection to bring the entire library into one very quick import. </br>
-> Meant to be used straight from the CLI; if wanted.
+> Almost all functions are meant to be used straight from the CLI; if wanted.
 
 ---
 
