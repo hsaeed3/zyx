@@ -39,8 +39,11 @@ zyx --model gpt-4o-mini
     - [Speech-to-Text](#speech-to-text)
 - [CrewAI Based Agents (Experimental)](#crewai-based-agents-experimental)
 
+---
 
 ### **Getting Started**
+
+---
 
 Install zyx through Pypi:
 
@@ -56,7 +59,11 @@ pip install zyx
 
 </br>
 
+---
+
 ## **Core Concepts**
+
+---
 
 ### **Generative model hub straight from your CLI**
 
@@ -100,6 +107,8 @@ zyx.app()
 ---
 
 ## **Unified Interface for LLM Completions**
+
+---
 
 > **zyx.completion()**
 
@@ -229,6 +238,8 @@ the dramatic winning goal in the 86th minute. For more details, you can read the
 
 ## **RAG (Retrieval Augmented Generation)**
 
+---
+
 > **zyx.Rag()**
 
 Zyx uses the ***qdrant-client*** library to connect to a local QdrantDB instance. This allows you to store data, & query it using LLMs.
@@ -282,6 +293,8 @@ Your favorite animal is a monkey.
 ---
 
 ## **LLM-Powered Functions**
+
+---
 
 Zyx provides a **variety** of incredibly robust and easy to use LLM-powered functions. These were built off of the 
 inspirations of ***@MarvinAI***. The **.function()** decorator allows you to create both generated code results, as well as
@@ -454,6 +467,8 @@ zyx.transcribe("audio.wav")
 ---
 
 ## **CrewAI Based Agents (Experimental)**
+
+---
 
 > **zyx.Agents()**
 While I work on completing a native agentic pipeline; I have built one using CrewAI. </br>
