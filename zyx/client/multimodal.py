@@ -64,6 +64,8 @@ def image(
     quality: Optional[str] = "standard",
     n: Optional[int] = 1,
     display: Optional[bool] = False,
+    optimize_prompt : Optional[bool] = False,
+    optimize_prompt_model : Optional[str] = "openai/gpt-4o-mini",
 ) -> Union[str, Any]:
     """Generates an image using either the FAL_AI API or OpenAI. With an
     optional display function to show the image in a notebook.
@@ -119,6 +121,24 @@ def image(
 
     elif model_config["provider"] == "fal":
         import fal_client
+
+        if optimize_prompt:
+            from ..client.main import completion
+            from ..core.main import BaseModel
+            
+            class OptimizedPrompt(BaseModel):
+                prompt : str
+                
+            optimized_prompt = completion(
+                messages = [
+                {"role" : "system", "content" : f"The original prompt is : [ {prompt} ]. Refactor it to include a lot more description."},
+                {"role" : "user", "content" : "Optimize this prompt for use in image generation. DO NOT INCLUDE ANYTHING ELSE."}
+                ],
+                model = optimize_prompt_model,
+                response_model=OptimizedPrompt
+            )
+            
+            prompt = optimized_prompt.prompt
 
         try:
             handler = fal_client.submit(

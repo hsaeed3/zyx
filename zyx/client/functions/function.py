@@ -2,6 +2,7 @@ __all__ = ["function"]
 
 from typing import Callable, Optional, Literal, get_type_hints, Any
 from ...core.main import BaseModel, Field
+import typing
 
 
 def function(
