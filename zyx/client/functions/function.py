@@ -1,8 +1,9 @@
 __all__ = ["function"]
 
 from typing import Callable, Optional, Literal, get_type_hints, Any
-from ...core.main import BaseModel, Field
-import typing
+from ...core.main import BaseModel, Field, print
+from ... import logger
+import traceback
 
 
 def function(
@@ -10,7 +11,8 @@ def function(
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
     mode: Literal["json", "md_json", "tools"] = "md_json",
-    mock: bool = True,
+    mock: bool = False,
+    verbose: bool = False,
     **kwargs,
 ) -> Callable[[Callable], Callable]:
     """A quick abstraction to create both mock & generated runnable python functions, using LLMs.
@@ -43,7 +45,8 @@ def function(
         @wraps(f)
         @tenacity.retry(
             stop=tenacity.stop_after_attempt(3),
-            retry=tenacity.retry_if_exception_type(RuntimeError),
+            retry=tenacity.retry_if_exception_type((RuntimeError, Exception)),
+            wait=tenacity.wait_exponential(multiplier=1, min=4, max=10)
         )
         def wrapper(*args, **kwargs):
             type_hints = get_type_hints(f)
@@ -59,74 +62,117 @@ def function(
                         ..., description="Complete Python code as a single string"
                     )
 
-                messages = [
-                    {
-                        "role": "system",
-                        "content": f"""
-                        ## CONTEXT ##
-                        
-                        You are a Python code generator. Your goal is to generate a Python function that matches this specification:
-                        Function: {f.__name__}
-                        Arguments and their types: {function_args}
-                        Return type: {return_type}
-                        Description: {f.__doc__} \n
-                        
-                        ## OBJECTIVE ##
-                        
-                        Generate the complete Python code as a single string, including all necessary import statements.
-                        The code should define the function and include a call to the function with the provided inputs.
-                        The last line should assign the result of the function call to a variable named 'result'.
-                        Do not include any JSON encoding, printing, or explanations in your response.
-                        Ensure all required modules are imported.
-                        """,
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Generate code for the function with these inputs: {input_dict}",
-                    },
-                ]
-                response = Client().completion(
-                    messages=messages,
-                    model=model,
-                    api_key=api_key,
-                    base_url=base_url,
-                    response_model=CodeGenerationModel,
-                    mode="md_json"
-                    if model.startswith(("ollama/", "ollama_chat/"))
-                    else mode,
-                    **kwargs,
-                )
+                error_context = ""
+                try:
+                    # Prepare the import statement and return type
+                    import_statement = "import typing\n"
+                    return_type_str = f"typing.Any" if return_type == Any else str(return_type)
 
-                # Create a temporary Python file
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".py", delete=False
-                ) as temp_file:
-                    temp_file.write(response.code)
-
-                # Execute the temporary Python file
-                env = os.environ.copy()
-                env["PYTHONPATH"] = ":".join(sys.path)
-                result = subprocess.run(
-                    [sys.executable, temp_file.name],
-                    capture_output=True,
-                    text=True,
-                    env=env,
-                )
-
-                if result.returncode != 0:
-                    raise RuntimeError(
-                        f"Error executing generated code: {result.stderr}"
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": f"""
+                            ## CONTEXT ##
+                            
+                            You are a Python code generator. Your goal is to generate a Python function that matches this specification:
+                            Function: {f.__name__}
+                            Arguments and their types: {function_args}
+                            Return type: {return_type_str}
+                            Description: {f.__doc__} \n
+                            
+                            ## OBJECTIVE ##
+                            
+                            Generate the complete Python code as a single string, including all necessary import statements.
+                            The code should define the function and include a call to the function with the provided inputs.
+                            The last line should assign the result of the function call to a variable named 'result'.
+                            Do not include any JSON encoding, printing, or explanations in your response.
+                            Ensure all required modules are imported.
+                            {error_context}
+                            """,
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Generate code for the function with these inputs: {input_dict}",
+                        },
+                    ]
+                    response = Client().completion(
+                        messages=messages,
+                        model=model,
+                        api_key=api_key,
+                        base_url=base_url,
+                        response_model=CodeGenerationModel,
+                        mode="md_json"
+                        if model.startswith(("ollama/", "ollama_chat/"))
+                        else mode,
+                        **kwargs,
                     )
 
-                # Import the generated module
-                spec = importlib.util.spec_from_file_location(
-                    "generated_module", temp_file.name
-                )
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+                    if verbose:
+                        logger.info(f"Code generation response: {response}")
 
-                # Return the result directly
-                return module.result
+                    # Prepend the import statement to the generated code
+                    full_code = import_statement + response.code
+
+                    # Create a temporary Python file
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".py", delete=False
+                    ) as temp_file:
+                        temp_file.write(full_code)
+
+                    # Execute the temporary Python file
+                    env = os.environ.copy()
+                    env["PYTHONPATH"] = ":".join(sys.path)
+                    result = subprocess.run(
+                        [sys.executable, temp_file.name],
+                        capture_output=True,
+                        text=True,
+                        env=env,
+                    )
+                    from rich.prompt import Confirm
+                    if result.returncode != 0:
+                        if "ModuleNotFoundError" in result.stderr:
+                            missing_library = result.stderr.split("'")[1]
+                            install = Confirm.ask(prompt=f"The library '[bold blue3]{missing_library}[/bold blue3]' is required but not installed. Do you want to install it?")
+                            if install:
+                                subprocess.check_call([sys.executable, "-m", "pip", "install", missing_library])
+                                logger.info(f"Installed {missing_library}. Rerunning the code.")
+                                # Rerun the code after installation
+                                result = subprocess.run(
+                                    [sys.executable, temp_file.name],
+                                    capture_output=True,
+                                    text=True,
+                                    env=env,
+                                )
+                                if result.returncode != 0:
+                                    raise RuntimeError(f"Error executing generated code after library installation: {result.stderr}")
+                            else:
+                                raise RuntimeError(f"Required library '{missing_library}' is not installed. Please install it manually and try again.")
+                        else:
+                            raise RuntimeError(f"Error executing generated code: {result.stderr}")
+
+                    # Import the generated module
+                    spec = importlib.util.spec_from_file_location(
+                        "generated_module", temp_file.name
+                    )
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+
+                    # Return the result directly
+                    return module.result
+
+                except Exception as e:
+                    logger.warning(f"Error in code generation or execution, retrying...")
+                    
+                    error_context = f"""
+                    Previous attempt failed with the following error:
+                    {str(e)}
+                    
+                    Traceback:
+                    {traceback.format_exc()}
+                    
+                    Please adjust the code to avoid this error and ensure it runs successfully.
+                    """
+                    raise RuntimeError(f"Error in code generation or execution: {str(e)}")
 
             else:
                 FunctionResponseModel = create_model(
