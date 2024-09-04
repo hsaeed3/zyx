@@ -1,9 +1,12 @@
 [tool.poetry]
 name = "zyx"
-version = "0.2.78"
+version = "0.2.79"
 description = "A fun, hyper minimal AI toolkit. Built on the inspirations of marvin-ai."
 authors = ["Hammad Saeed <hammad@supportvectors.com>"]
 readme = "readme.md"
+packages = [
+    { include = "zyx", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
@@ -21,8 +24,6 @@ crewai = "^0.51.1"
 crewai-tools = "^0.8.3"
 langchain-community = "^0.2.12"
 langchain-ollama = "^0.1.1"
-soundfile = "^0.12.1"
-sounddevice = "^0.4.6"
 ipython = "^8.16.1"
 
 [tool.poetry.group.dev.dependencies]
