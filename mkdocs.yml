@@ -1,0 +1,108 @@
+site_name: zyx
+# PyPI URL
+repo_name: zyx
+repo_url: https://github.com/hsaeed3/zyx
+
+plugins:
+  - search
+  - social
+  - tags
+  - mkdocstrings
+
+theme:
+  name: material
+
+  features:
+    # Add-ons
+    # Content
+    - content.tabs
+    - content.tables
+    - content.details
+    - content.diagrams
+    - content.diagrams.mermaid
+    - content.code.annotate
+    - content.code.copy
+    - content.code.line_numbers
+    - content.code.line_spans
+    - content.code.line_spans.superfences
+
+    # Badges
+    - badges
+
+    # Icons
+    - icons.font
+
+    # Navigation
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.sections
+    - navigation.sections.smooth_scroll
+    - navigation.sections.sticky
+    - navigation.sections.tabs
+    - navigation.sections.scroll_spy
+    - navigation.sections.tabs.sticky
+    - navigation.sections.tabs.sticky.scroll_spy
+
+    - toc.follow
+    - toc.integrate
+    - toc.integrate.smooth_scroll
+
+    - search
+    - search.highlight
+    - search.suggest
+    - search.indexing
+
+  icon:
+    logo: material/lightning-bolt
+
+  font:
+    text: DM Sans
+    code: JetBrains Mono
+
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+      primary: ivory
+      accent: slate
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: ivory
+      accent: slate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - abbr
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - zyx: index.md
+  - Examples:
+    - Getting Started: examples/getting-started.md
+    - LLM Completions: examples/completions.md
+    - Memory (Rag): examples/memory.md
+    - Agents: examples/agents.md
+    - Multimodal: examples/multimodal.md
+    - LLM Powered Functions:
+      - Generative Code Functions: examples/llm/code.md
+      - NLP Functions: examples/llm/nlp.md
+      - Create Optimized System Prompts: examples/llm/prompts.md
+      - Reasoning Based Implemenations (From Research Papers): examples/llm/reasoning.md
