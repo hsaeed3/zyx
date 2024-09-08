@@ -1,4 +1,4 @@
-from textual.widgets import Input, RichLog, Button, Tabs, Tab, RadioSet, RadioButton
+from textual.widgets import Input, RichLog, Button, Tabs, Tab, RadioSet, RadioButton, Static
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal, VerticalScroll
 from typing import Any, Union, Optional, List, Callable, Literal
@@ -225,6 +225,31 @@ class ZyxApp(App):
     RadioButton {
         margin-right: 1;
     }
+
+    #params_content {
+        padding: 1 2;
+    }
+
+    .param_label {
+        width: 30%;
+        padding-right: 1;
+        text-align: right;
+        margin-bottom: 1;
+    }
+
+    .param_input {
+        width: 70%;
+        margin-bottom: 1;
+    }
+
+    #params_content Horizontal {
+        height: auto;
+        margin-bottom: 1;
+    }
+
+    #save_button {
+        margin-top: 2;
+    }
     """
 
     def __init__(
@@ -289,10 +314,10 @@ class ZyxApp(App):
             self.transcription = None
 
             self.params = {
-                "model": model,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "instruction": "",
+                "model": model or "openai/gpt-4o-mini",
+                "max_tokens": max_tokens or 1000,  # Set your default max_tokens
+                "temperature": temperature or 0.7,  # Set your default temperature
+                "instruction": "You are a helpful assistant.",  # Set your default instruction if needed
             }
 
         except Exception as e:
@@ -316,23 +341,24 @@ class ZyxApp(App):
 
         with Vertical(id="params_content"):
             yield VerticalScroll(
-                Input(placeholder="Model", id="model_input", classes="param_input"),
-                Input(
-                    placeholder="Max Tokens",
-                    id="max_tokens_input",
-                    classes="param_input",
+                Horizontal(
+                    Static("Model:", classes="param_label"),
+                    Input(id="model_input", classes="param_input"),
                 ),
-                Input(
-                    placeholder="Temperature",
-                    id="temperature_input",
-                    classes="param_input",
+                Horizontal(
+                    Static("Max Tokens:", classes="param_label"),
+                    Input(id="max_tokens_input", classes="param_input"),
                 ),
-                Input(
-                    placeholder="Instruction",
-                    id="instruction_input",
-                    classes="param_input",
+                Horizontal(
+                    Static("Temperature:", classes="param_label"),
+                    Input(id="temperature_input", classes="param_input"),
                 ),
-                Button(label="Save", id="save_button"),
+                Horizontal(
+                    Static("Instruction:", classes="param_label"),
+                    Input(id="instruction_input", classes="param_input"),
+                ),
+                Static("", classes="spacer"),
+                Button(label="Save", id="save_button", variant="primary"),
             )
 
         with Vertical(id="image_content", classes="tab_content"):
@@ -391,6 +417,7 @@ class ZyxApp(App):
         self.set_theme(self.background, self.text, self.input_field)
         self.query_one("#chat_content").display = True
         self.query_one("#params_content").display = False
+        self.load_params()
 
     def set_theme(self, background, text, input_field):
         self.dark = self.theme != "light"
@@ -544,7 +571,7 @@ class ZyxApp(App):
                     )
                     assistant_reply = response.choices[0].message["content"]
                     self.chat_history.append(
-                        {"role": "assistant", "content": assistant_reply}
+                        {"role": "assistant",                         "content": assistant_reply}
                     )
                     response = assistant_reply
 

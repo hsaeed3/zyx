@@ -1,5 +1,14 @@
 # **zyx**
 
+
+``` bash
+pip install zyx --upgrade
+
+zyx
+```
+
+</br>
+
 > **zyx 0.3.00** - the first '*release*' of the library is out! </br>
 > All CrewAI & other obstructions have been removed, and the library is back to being lightweight.
 
@@ -18,9 +27,7 @@ Some of the key features of <code>zyx</code> include:
 
 ## **Getting Started**
 
-### Installation
+### Links
 
-```bash
-pip install zyx
-```
+- [Getting Started](examples/getting-started.md)
 

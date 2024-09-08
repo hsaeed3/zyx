@@ -481,33 +481,37 @@ def completion(
     image_urls: Optional[Union[str, List[str]]] = None,
     **kwargs,
 ) -> Response:
-    """Runs a tool calling & structured output capable completion or completion chain.
+    """
+    Runs a tool calling & structured output capable completion or completion chain.
+    
     Example:
-    ```python
-    import zyx
-    zyx.completion()
-    ```
-    Parameters:
-    - messages (Union[str, list[dict]]): The messages to send to the model.
-    - model (Optional[str]): The model to use for completion.
-    - response_model (Optional[BaseModel]): The response model to use for completion.
-    - mode (Optional[ClientModeParams]): The mode to use for completion.
-    - optimize (Optional[Literal["costar"]]): The optimization to use for completion.
-    - tools (Optional[List[Union[Callable, dict, BaseModel]]]): The tools to use for completion.
-    - run_tools (Optional[bool]): Whether to run the tools.
-    - base_url (Optional[str]): The base URL to use for completion.
-    - api_key (Optional[str]): The API key to use for completion.
-    - organization (Optional[str]): The organization to use for completion.
-    - top_p (Optional[float]): The top p value to use for completion.
-    - temperature (Optional[float]): The temperature value to use for completion.
-    - max_tokens (Optional[int]): The maximum tokens to use for completion.
-    - max_retries (Optional[int]): The maximum retries to use for completion.
-    - params (Optional[ClientParams]): The parameters to use for completion.
-    - verbose (Optional[bool]): Whether to print the parameters.
-    - stream (Optional[bool]): Whether to stream the response.
-    - image_urls (Optional[Union[str, List[str]]]): The image URLs to interpret.
+        ```python
+        import zyx
+        zyx.completion()
+        ```
+        
+    Args:
+        messages (Union[str, List[dict]]): The messages to send to the model.
+        model (Optional[str]): The model to use for completion.
+        response_model (Optional[BaseModel]): The response model to use for structured output.
+        mode (Optional[ClientModeParams]): The mode to use for completion.
+        optimize (Union[Optimizer, None]): The optimization strategy to use for completion.
+        tools (Optional[List[Union[Callable, dict, BaseModel]]]): The tools to use for completion.
+        run_tools (Optional[bool]): Whether to run the tools.
+        base_url (Optional[str]): The base URL to use for the API.
+        api_key (Optional[str]): The API key to use for authentication.
+        organization (Optional[str]): The organization to use for the API.
+        top_p (Optional[float]): The top p value for sampling.
+        temperature (Optional[float]): The temperature value for sampling.
+        max_tokens (Optional[int]): The maximum number of tokens to generate.
+        max_retries (Optional[int]): The maximum number of retries for the API call.
+        params (Optional[ClientParams]): Additional parameters for the completion.
+        verbose (Optional[bool]): Whether to print verbose output.
+        stream (Optional[bool]): Whether to stream the response.
+        image_urls (Optional[Union[str, List[str]]]): The image URLs to interpret.
+    
     Returns:
-    - The completion response, or a generator if streaming.
+        Response: The completion response, or a generator if streaming is enabled.
     """
     import tenacity
 

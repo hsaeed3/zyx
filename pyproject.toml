@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zyx"
-version = "0.3.00"
+version = "0.3.01"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
@@ -37,4 +37,8 @@ extend-select = ["I"]
 # Backend Build System
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+zyx = "zyx._client.terminal:terminal"
+
 

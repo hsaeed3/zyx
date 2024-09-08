@@ -35,11 +35,7 @@ print(df.head())
 2   Doe   22
 ```
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.function.function
-</details>
 
 ## **.code()**
 
@@ -58,11 +54,7 @@ logger.info("Hello, world!")
 2024-09-07 23:57:43,792 - zyx_logger - INFO - Hello, world!
 ```
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.code.code
-</details>
 
 
 

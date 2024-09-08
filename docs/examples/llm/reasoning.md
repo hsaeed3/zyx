@@ -67,11 +67,7 @@ and filling in unique candidates until the puzzle is solved or no further progre
 ```
 </details>
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.plan.plan
-</details>
 
 ## **.least_to_most()**
 
@@ -161,11 +157,7 @@ solved.'
 ```
 </details>
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.least_to_most.least_to_most
-</details>
 
 ## **.self_consistency()**
 
@@ -290,11 +282,7 @@ last decision point.',
 ```
 </details>
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.self_consistency.self_consistency
-</details>
 
 ## **.self_refine()**
 
@@ -381,11 +369,7 @@ verification of the solution."
 ```
 </details>
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.self_refine.self_refine
-</details>
 
 ## **.tree_of_thought()**
 
@@ -532,9 +516,5 @@ Sudoku rules, as they can often lead to more deductions.',
 ```
 </details>
 
-<details closed>
-<summary>API Reference</summary>
-<br>
 ::: zyx._client.llm.tree_of_thought.tree_of_thought
-</details>
 

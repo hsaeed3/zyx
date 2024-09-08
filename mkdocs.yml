@@ -43,6 +43,13 @@ theme:
     - navigation.sections.tabs.sticky
     - navigation.sections.tabs.sticky.scroll_spy
 
+    - navigation.header.links
+    - navigation.header.links.icon
+    - navigation.header.links.icon.font
+
+    - navigation.footer.links
+    - navigation.footer
+
     - toc.follow
     - toc.integrate
     - toc.integrate.smooth_scroll
@@ -77,13 +84,17 @@ theme:
       accent: slate
 
 markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
   - abbr
   - attr_list
   - pymdownx.emoji:
@@ -97,10 +108,10 @@ nav:
   - zyx: index.md
   - Examples:
     - Getting Started: examples/getting-started.md
-    - LLM Completions: examples/completions.md
+    - Global LLM Completion Function: examples/completions.md
     - Memory (Rag): examples/memory.md
     - Agents: examples/agents.md
-    - Multimodal: examples/multimodal.md
+    - Multimodal Generations: examples/multimodal.md
     - LLM Powered Functions:
       - Generative Code Functions: examples/llm/code.md
       - NLP Functions: examples/llm/nlp.md
