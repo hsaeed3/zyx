@@ -7,7 +7,7 @@ New in <samp>zyx</samp> is a newly created multi-agent framework, with support f
 
 ### **Current Features**:
 
-    - ***LLM Based Intent Classification***
+    - ***LLM Based Classification***
     - ***Dynamically Generated Workflows & Tasks***
     - ***Artifact Generation & Guidance (Inspired by Claude)***
     - ***Custom Tool Usage***
@@ -30,7 +30,7 @@ New in <samp>zyx</samp> is a newly created multi-agent framework, with support f
 flowchart TD
     A[on_message] --> B{Workflow state?}
     B -->|IDLE| C[Handle Chat]
-    B -->|Active| D[Classify Intent]
+    B -->|Active| D[Classify]
     
     D --> E{Tool or Retrieve?}
     E -->|Tool| F[Use Tool]
@@ -38,7 +38,7 @@ flowchart TD
     E -->|Neither| H{Stream?}
     
     H -->|Yes| I[Stream Response]
-    H -->|No| J[Handle Intent]
+    H -->|No| J[Classify]
     
     J --> K{Intent Type}
     K -->|Chat| C
