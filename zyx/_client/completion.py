@@ -282,26 +282,13 @@ class CompletionClient:
         if isinstance(image_urls, str):
             image_urls = [image_urls]
 
-        image_content = [
-            {
-                "type": "text",
-                "text": "What's in this image?"
-            }
-        ] + [
-            {
-                "type": "image_url",
-                "image_url": {"url": url}
-            } for url in image_urls
+        image_content = [{"type": "text", "text": "What's in this image?"}] + [
+            {"type": "image_url", "image_url": {"url": url}} for url in image_urls
         ]
 
         response = completion(
             model=model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": image_content
-                }
-            ],
+            messages=[{"role": "user", "content": image_content}],
         )
 
         return response.choices[0].message.content
@@ -394,10 +381,9 @@ class CompletionClient:
                 if response_model or (self.params.tools and self.params.run_tools):
                     # Only interpret images if response_model or tools are provided
                     image_interpretation = self.interpret_images(image_urls, model)
-                    self.params.messages.append({
-                        "role": "assistant",
-                        "content": image_interpretation
-                    })
+                    self.params.messages.append(
+                        {"role": "assistant", "content": image_interpretation}
+                    )
                 else:
                     # If only images are provided, format the message with image content
                     if isinstance(image_urls, str):
@@ -405,13 +391,13 @@ class CompletionClient:
                     image_content = [
                         {
                             "type": "text",
-                            "text": self.params.messages[-1]["content"] if self.params.messages else "What's in this image?"
+                            "text": self.params.messages[-1]["content"]
+                            if self.params.messages
+                            else "What's in this image?",
                         }
                     ] + [
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": url}
-                        } for url in image_urls
+                        {"type": "image_url", "image_url": {"url": url}}
+                        for url in image_urls
                     ]
                     self.params.messages = [{"role": "user", "content": image_content}]
 
@@ -438,7 +424,9 @@ class CompletionClient:
                         while response.choices[0].message.tool_calls:
                             message = response.choices[0].message
                             self.params.messages.append(message)
-                            self.params.messages = self.execute_tools(message.tool_calls)
+                            self.params.messages = self.execute_tools(
+                                message.tool_calls
+                            )
                             response = self.run_base_completion()
                         return response
                 else:
@@ -592,10 +580,9 @@ def completion(
 
         if image_urls:
             image_interpretation = client.interpret_images(image_urls, model)
-            client.params.messages.append({
-                "role": "assistant",
-                "content": image_interpretation
-            })
+            client.params.messages.append(
+                {"role": "assistant", "content": image_interpretation}
+            )
 
         if stream and not response_model:
             return client.stream_completion()

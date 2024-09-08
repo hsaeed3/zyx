@@ -321,9 +321,7 @@ class Memory:
             metadata_str = ", ".join(
                 [f"{key}: {value}" for key, value in metadata.items()]
             )
-            results_content.append(
-                f"Text: {result.text}, Metadata: {metadata_str}"
-            )
+            results_content.append(f"Text: {result.text}, Metadata: {metadata_str}")
 
         if verbose:
             logger.info(f"Search results: {results_content}")

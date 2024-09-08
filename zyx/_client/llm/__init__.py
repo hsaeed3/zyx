@@ -52,7 +52,9 @@ class create_system_prompt(Loader):
     pass
 
 
-create_system_prompt.init("zyx._client.llm.create_system_prompt", "create_system_prompt")
+create_system_prompt.init(
+    "zyx._client.llm.create_system_prompt", "create_system_prompt"
+)
 
 
 class extract(Loader):
@@ -87,7 +89,9 @@ class optimize_system_prompt(Loader):
     pass
 
 
-optimize_system_prompt.init("zyx._client.llm.optimize_system_prompt", "optimize_system_prompt")
+optimize_system_prompt.init(
+    "zyx._client.llm.optimize_system_prompt", "optimize_system_prompt"
+)
 
 
 class plan(Loader):

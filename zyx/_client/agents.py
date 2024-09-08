@@ -432,19 +432,22 @@ class Agents:
         )
 
         return response.answer == "yes"
-    
+
     def _create_tool_model(self, tool: Callable) -> BaseModel:
         """Creates a Pydantic model for a callable tool."""
         sig = signature(tool)
         fields = {
-            param.name: (param.annotation if param.annotation != param.empty else Any, ...)
+            param.name: (
+                param.annotation if param.annotation != param.empty else Any,
+                ...,
+            )
             for param in sig.parameters.values()
         }
         return create_model(f"{tool.__name__}Model", **fields)
 
     def use_tool(self, user_input: str, context: List[dict[str, str]]) -> str:
         """Uses a tool for the agents."""
-        
+
         # Find the tool to use
         class AppropriateTool(BaseModel):
             tool_name: str
@@ -458,7 +461,7 @@ class Agents:
 
         Current user input: {user_input}
         """
-        
+
         tool_selection = completion(
             messages=[
                 {"role": "system", "content": tool_system_prompt},
@@ -472,17 +475,25 @@ class Agents:
             base_url=self.params.base_url,
             response_model=AppropriateTool,
         )
-        
-        selected_tool = next((tool for tool in self.tools if (callable(tool) and tool.__name__ == tool_selection.tool_name) or (isinstance(tool, BaseModel) and tool.__class__.__name__ == tool_selection.tool_name)), None)
-        
+
+        selected_tool = next(
+            (
+                tool
+                for tool in self.tools
+                if (callable(tool) and tool.__name__ == tool_selection.tool_name)
+                or (
+                    isinstance(tool, BaseModel)
+                    and tool.__class__.__name__ == tool_selection.tool_name
+                )
+            ),
+            None,
+        )
+
         if not selected_tool:
             error_message = f"No matching tool found for: {tool_selection.tool_name}"
-            self._update_memory({
-                "role": "assistant",
-                "content": error_message
-            })
+            self._update_memory({"role": "assistant", "content": error_message})
             return error_message
-        
+
         if callable(selected_tool):
             tool_model = self._create_tool_model(selected_tool)
         else:
@@ -515,10 +526,12 @@ class Agents:
         else:
             tool_output = selected_tool(**tool_args.tool_args.dict())
 
-        self._update_memory({
-            "role": "assistant",
-            "content": f"Used tool: {tool_selection.tool_name} with args: {tool_args.tool_args}. Output: {tool_output}"
-        })
+        self._update_memory(
+            {
+                "role": "assistant",
+                "content": f"Used tool: {tool_selection.tool_name} with args: {tool_args.tool_args}. Output: {tool_output}",
+            }
+        )
         return str(tool_output)
 
     def completion(
@@ -603,7 +616,7 @@ class Agents:
         elif intent.intent == "reflect":
             return self.reflect()
         else:
-                        return self._generate_chat_response(context)
+            return self._generate_chat_response(context)
 
     def _generate_chat_response(self, context: List[dict[str, str]]) -> str:
         """Generates the chat response for the agents."""
@@ -1118,6 +1131,3 @@ Respond with:"""
                 break
             response = self.completio(user_input)
             print(f"Assistant: {response}")
-
-
-

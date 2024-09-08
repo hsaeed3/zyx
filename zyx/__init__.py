@@ -73,7 +73,6 @@ class image(Loader):
 image.init("zyx._client.multimodal", "image")
 
 
-
 class logger(Loader):
     pass
 

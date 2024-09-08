@@ -10,7 +10,7 @@ def web_search(query: str, max_results: Optional[int] = 5) -> Union[dict, bool]:
     """
     from tavily import TavilyClient
     import os
-    
+
     key = os.getenv("TAVILY_API_KEY")
 
     if not key:

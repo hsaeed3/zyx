@@ -1,6 +1,6 @@
 from pydantic import BaseModel, create_model
 from typing import Optional, List, Union, Literal
-from ..completion import CompletionClient   
+from ..completion import CompletionClient
 
 
 class Task(BaseModel):
