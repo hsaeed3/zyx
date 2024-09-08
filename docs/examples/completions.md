@@ -46,6 +46,8 @@ Hello! I'm just a program, but I'm here and ready to help you. How can I assist 
 
 ## Instructor Output
 
+Generate a Pydantic structured output using the Instructor library.
+
 ```python
 import zyx
 from pydantic import BaseModel
@@ -75,6 +77,8 @@ Person Name: 'John Doe', Person Age: '30'
 
 ## Tool Calling & Execution
 
+Tool calling & execution allows you to call a tool with one function. Supports Python functions, OpenAI dictionaries, and Pydantic models.
+
 ```python
 # Lets return a tool call
 import zyx
@@ -97,6 +101,8 @@ details about the match (https://en.wikipedia.org/wiki/UEFA_Euro_2024_Final).
 ```
 
 ## Prompt Optimization
+
+Optimize a prompt using either the COSTAR or TIDD-EC frameworks.
 
 ```python
 # No Optimization
