@@ -9,6 +9,7 @@ The library uses methods such as lazy-loading to provide a single import for all
 
 Some of the key features of <code>zyx</code> include:
 
+
 - **Universal Completion Client** : A singular function that handles *all LiteLLM compatible models*, *Pydantic structured outputs*, *tool calling & execution*, *prompt optimization*, *streaming* & *vision support*.
 - **A Large Collection of LLM Powered Functions** : This library is inspired by <code>MarvinAI</code>, and it's quick LLM function style framework and has built upon it vastly.
 - **Easy to Use Memory (Rag)** : A <code>Qdrant</code> wrapper, built to support easy *store creation*, *text/document/pydantic model data insertion*, *universal embedding provider support*, *LLM completions for RAG* & more.
