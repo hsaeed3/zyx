@@ -12,7 +12,7 @@
         <link rel="prev" href="../memory/">
       
       
-        <link rel="next" href="../llm/code/">
+        <link rel="next" href="../multimodal/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -100,6 +100,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#conversational-agents-very-experimental" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -367,7 +372,7 @@
         
   
   <span class="md-ellipsis">
-    LLM Completions
+    Global LLM Completion Function
   </span>
   
 
@@ -411,6 +416,19 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Agents
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -421,6 +439,106 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#current-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Features:
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#planned-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Planned Features:
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-conversational-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Conversational Agents?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-the-agentic-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating the Agentic Workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-a-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sending a Message
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-goals-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Goals &amp; Artifacts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#artifact-reflection-regeneration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact Reflection &amp; Regeneration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lets-change-the-topic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lets Change the Topic
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#now-lets-go-back-to-our-original-artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Now lets go back to our original artifact
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -434,11 +552,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../multimodal.md" class="md-nav__link">
+      <a href="../multimodal/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Multimodal
+    Multimodal Generations
   </span>
   
 
@@ -602,9 +720,250 @@
   
 
 
-  <h1>Agents</h1>
+<h1 id="conversational-agents-very-experimental"><strong>Conversational Agents</strong> | <em>Very Experimental</em></h1>
+<p>New in <samp>zyx</samp> is a newly created multi-agent framework, with support for tools, planning, supervision and more. </br></p>
+<ul>
+<li>This framework follows the <samp>zyx</samp> architecture, and is built on top of the <code>LiteLLM</code> &amp; <code>Instructor</code> completion module. </br></li>
+<li>This framework presents a new way of looking at a multi-agent system, to be used as a state managed, conversational orchestration. </br></br></li>
+</ul>
+<h3 id="current-features"><strong>Current Features</strong>:</h3>
+<div class="language-text highlight"><pre><span></span><code>- ***LLM Based Intent Classification***
+- ***Dynamically Generated Workflows &amp; Tasks***
+- ***Artifact Generation &amp; Guidance (Inspired by Claude)***
+- ***Custom Tool Usage***
+- ***Dynamic Short-Term Memory Management***
+- ***Supervision of Workflows***
+- ***Reflective Analysis of Tools &amp; Workflows***
+</code></pre></div>
+<h3 id="planned-features"><strong>Planned Features</strong>:</h3>
+<div class="language-text highlight"><pre><span></span><code>- ***Long-Term Memory Management (Enter Old Workflows)***
+- ***Add More &#39;Worker Agents&#39;***
+- ***Graph Based Tool Classification (To allow &#39;unlimited&#39; tools) (Very Soon)***
+- ***Chat Response Customization (Very Soon)***
+</code></pre></div>
+<p><strong>Additional &amp; Complex Customization and Modularity will be introduced in time, dont worry.</strong></br></br></p>
+<p><strong><em>Below is a high level flowchart of the implementation of this framework.</em></strong></p>
+<pre class="mermaid"><code>flowchart TD
+    A[on_message] --&gt; B{Workflow state?}
+    B --&gt;|IDLE| C[Handle Chat]
+    B --&gt;|Active| D[Classify Intent]
 
+    D --&gt; E{Tool or Retrieve?}
+    E --&gt;|Tool| F[Use Tool]
+    E --&gt;|Retrieve| G[Retrieve Info]
+    E --&gt;|Neither| H{Stream?}
 
+    H --&gt;|Yes| I[Stream Response]
+    H --&gt;|No| J[Handle Intent]
+
+    J --&gt; K{Intent Type}
+    K --&gt;|Chat| C
+    K --&gt;|Plan| L[Plan]
+    K --&gt;|Execute| M[Execute]
+    K --&gt;|Evaluate| N[Evaluate]
+    K --&gt;|Generate| O[Generate]
+    K --&gt;|Reflect| P[Reflect]
+
+    C --&gt; Q[Update Memory]
+    F --&gt; Q
+    G --&gt; Q
+    I --&gt; Q
+    L --&gt; Q
+    M --&gt; Q
+    N --&gt; Q
+    O --&gt; Q
+    P --&gt; Q
+
+    Q --&gt; R{Generate Artifact?}
+    R --&gt;|Yes| S[Generate Artifact]
+    R --&gt;|No| T[Return Response]
+    S --&gt; T
+
+    F --&gt; U[Select Tool]
+    U --&gt; V[Get Tool Args]
+    V --&gt; W[Execute Tool]
+    W --&gt; Q
+
+    G --&gt; X[Use Retriever Tool]
+    X --&gt; Y[Summarize Retrieved Info]
+    Y --&gt; Q
+
+    classDef default fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef process fill:#bbf,stroke:#333,stroke-width:2px,color:#000,stroke-dasharray: 5 5;
+    classDef decision fill:#ff7,stroke:#333,stroke-width:2px;
+    classDef io fill:#beb,stroke:#333,stroke-width:2px;
+
+    class A,C,F,G,I,L,M,N,O,P,S,U,V,W,X,Y process;
+    class B,E,H,J,K,R decision;
+    class Q io;
+    class T io;</code></pre>
+<h2 id="why-conversational-agents"><strong><em>Why Conversational Agents?</em></strong></h2>
+<p>Creating conversational agents, with an ability to save complex state &amp; workflows, allows for an organic way of interacting with LLMs. Currently, most agentic frameworks are focused on single or few shot workflows, diminishing the customization or tweakable ability of the user's desired outcome.</p>
+<h2 id="creating-the-agentic-workflow"><strong>Creating the Agentic Workflow</strong></h2>
+<p>Lets create an agentic pipeline. </br></p>
+<p>Tools can be added in two ways, either by the <code>tools=[]</code> argument, or with the optimized <code>retriever_tools=[]</code> argument if tools are retrievers, query engines, etc.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">zyx</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Create the workflow</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">agents</span> <span class="o">=</span> <span class="n">zyx</span><span class="o">.</span><span class="n">Agents</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="c1"># Lets use some prebuilt zyx tools</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="n">zyx</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">execute_code</span><span class="p">,</span>  <span class="c1"># Code Executor</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="n">zyx</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">write_file</span><span class="p">,</span>  <span class="c1"># File Writer</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="p">],</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># OUTPUT</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">02</span>:04:12.779<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:_create_collection:73<span class="w"> </span>-<span class="w"> </span>Collection<span class="w"> </span><span class="s1">&#39;agents_memory&#39;</span><span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>exist.<span class="w"> </span>Creating<span class="w"> </span>it<span class="w"> </span>now.
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">02</span>:04:12.779<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:_create_collection:82<span class="w"> </span>-<span class="w"> </span>Collection<span class="w"> </span><span class="s1">&#39;agents_memory&#39;</span><span class="w"> </span>created<span class="w"> </span>successfully.
+</span></code></pre></div>
+<h2 id="sending-a-message"><strong>Sending a Message</strong></h2>
+<p>Messages will run through an intent classification step, to determine the next action. This allows for the creation of <code>Artifacts</code> &amp; <code>Dynamic Workflows</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">agents</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="s2">&quot;Hi&quot;</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">02</span>:04:13.801<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:add:156<span class="w"> </span>-<span class="w"> </span>Successfully<span class="w"> </span>added<span class="w"> </span><span class="m">1</span><span class="w"> </span>points<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>collection.
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">02</span>:04:14.667<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:add:156<span class="w"> </span>-<span class="w"> </span>Successfully<span class="w"> </span>added<span class="w"> </span><span class="m">1</span><span class="w"> </span>points<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>collection.
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Hello!<span class="w"> </span>How<span class="w"> </span>can<span class="w"> </span>I<span class="w"> </span>assist<span class="w"> </span>you<span class="w"> </span>today?
+</span></code></pre></div>
+<blockquote>
+<p>The response was short and simple, as it was classified as a simple chat intent. Lets start asking the agents to help us write some code.</p>
+</blockquote>
+<h2 id="creating-goals-artifacts"><strong>Creating Goals &amp; Artifacts</strong></h2>
+<p>Goals are optimized towards the type of tools presented to the agents. The framework will reason differently based on the toolset it has access to. </p>
+<blockquote>
+<p>In a soon update, the concept behind contextual memory will be implemented for tools, allowing 'infinite' tools to be used.</p>
+</blockquote>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">agents</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="s2">&quot;I want to start writing an HTML page, that has a nice title in a box.&quot;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>An artifact file was created for us, with our newly created HTML code. Lets view the file.</strong></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Nice Title</title>
+    <style>
+        .title-box_0 {
+            border: 2px solid #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-box_0">
+        My Nice Title
+    </div>
+</body>
+</html>
+
+<h2 id="artifact-reflection-regeneration"><strong>Artifact Reflection &amp; Regeneration</strong></h2>
+<p>Lets change the color of our artifact.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">agents</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="s2">&quot;Make the title red&quot;</span><span class="p">)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Now lets view the file again.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Nice Title</title>
+    <style>
+        .title-box_1 {
+            border: 2px solid #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            background-color: #f0f0f0;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-box_1">
+        My Nice Title
+    </div>
+</body>
+</html>
+
+<p>The agentic framework was able to capture our intent and reflect the changes in our artfiact. This is a specific example, and the framework will adapt to the specific list of tools presented to it.</p>
+<h2 id="lets-change-the-topic"><strong>Lets Change the Topic</strong></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">agents</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="s2">&quot;I want to get started learning python&quot;</span><span class="p">)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">05</span>:34:36.361<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:add:156<span class="w"> </span>-<span class="w"> </span>Successfully<span class="w"> </span>added<span class="w"> </span><span class="m">1</span><span class="w"> </span>points<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>collection.
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="m">2024</span>-09-08<span class="w"> </span><span class="m">05</span>:34:41.562<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>zyx._client.memory:add:156<span class="w"> </span>-<span class="w"> </span>Successfully<span class="w"> </span>added<span class="w"> </span><span class="m">1</span><span class="w"> </span>points<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>collection.
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>To<span class="w"> </span>get<span class="w"> </span>started<span class="w"> </span>learning<span class="w"> </span>Python,<span class="w"> </span>you<span class="w"> </span>can<span class="w"> </span>follow<span class="w"> </span>these<span class="w"> </span>steps:
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="m">1</span>.<span class="w"> </span>**Install<span class="w"> </span>Python**:<span class="w"> </span>Download<span class="w"> </span>and<span class="w"> </span>install<span class="w"> </span>the<span class="w"> </span>latest<span class="w"> </span>version<span class="w"> </span>of<span class="w"> </span>Python<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>official<span class="w"> </span>website<span class="w"> </span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="o">(</span>https://www.python.org/downloads/<span class="o">)</span>.
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="m">2</span>.<span class="w"> </span>**Set<span class="w"> </span>Up<span class="w"> </span>an<span class="w"> </span>IDE**:<span class="w"> </span>Choose<span class="w"> </span>an<span class="w"> </span>Integrated<span class="w"> </span>Development<span class="w"> </span>Environment<span class="w"> </span><span class="o">(</span>IDE<span class="o">)</span><span class="w"> </span>to<span class="w"> </span>write<span class="w"> </span>your<span class="w"> </span>code.<span class="w"> </span>Popular<span class="w"> </span>options<span class="w"> </span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>include<span class="w"> </span>PyCharm,<span class="w"> </span>Visual<span class="w"> </span>Studio<span class="w"> </span>Code,<span class="w"> </span>or<span class="w"> </span>even<span class="w"> </span>simple<span class="w"> </span>text<span class="w"> </span>editors<span class="w"> </span>like<span class="w"> </span>Sublime<span class="w"> </span>Text.
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="m">3</span>.<span class="w"> </span>**Learn<span class="w"> </span>the<span class="w"> </span>Basics**:<span class="w"> </span>Familiarize<span class="w"> </span>yourself<span class="w"> </span>with<span class="w"> </span>the<span class="w"> </span>basic<span class="w"> </span>syntax,<span class="w"> </span>data<span class="w"> </span>types,<span class="w"> </span>and<span class="w"> </span>control<span class="w"> </span>structures<span class="w"> </span><span class="k">in</span><span class="w"> </span>Python.<span class="w"> </span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>Resources<span class="w"> </span>like<span class="w"> </span><span class="s2">&quot;Automate the Boring Stuff with Python&quot;</span><span class="w"> </span>and<span class="w"> </span>Codecademy<span class="s1">&#39;s Python course are great starting points.</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="s1">4. **Practice Coding**: Start solving problems on platforms like LeetCode, HackerRank, or Codewars to improve your </span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="s1">coding skills.</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="s1">5. **Build Projects**: Work on small projects that interest you, such as a calculator, web scraper, or simple game,</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="s1">to apply what you&#39;</span>ve<span class="w"> </span>learned.
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="m">6</span>.<span class="w"> </span>**Join<span class="w"> </span>a<span class="w"> </span>Community**:<span class="w"> </span>Engage<span class="w"> </span>with<span class="w"> </span>other<span class="w"> </span>learners<span class="w"> </span>by<span class="w"> </span>joining<span class="w"> </span>forums<span class="w"> </span>like<span class="w"> </span>Stack<span class="w"> </span>Overflow<span class="w"> </span>or<span class="w"> </span>Reddit<span class="s1">&#39;s r/learnpython</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="s1">to ask questions and share knowledge.</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="s1">7. **Explore Advanced Topics**: Once you&#39;</span>re<span class="w"> </span>comfortable<span class="w"> </span>with<span class="w"> </span>the<span class="w"> </span>basics,<span class="w"> </span>explore<span class="w"> </span>more<span class="w"> </span>advanced<span class="w"> </span>topics<span class="w"> </span>like<span class="w"> </span>web<span class="w"> </span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>development<span class="w"> </span>with<span class="w"> </span>Flask<span class="w"> </span>or<span class="w"> </span>Django,<span class="w"> </span>data<span class="w"> </span>analysis<span class="w"> </span>with<span class="w"> </span>Pandas,<span class="w"> </span>or<span class="w"> </span>machine<span class="w"> </span>learning<span class="w"> </span>with<span class="w"> </span>TensorFlow.
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>Remember,<span class="w"> </span>practice<span class="w"> </span>and<span class="w"> </span>consistency<span class="w"> </span>are<span class="w"> </span>key<span class="w"> </span>to<span class="w"> </span>becoming<span class="w"> </span>proficient<span class="w"> </span><span class="k">in</span><span class="w"> </span>Python!
+</span></code></pre></div>
+<h2 id="now-lets-go-back-to-our-original-artifact"><strong>Now lets go back to our original artifact</strong></h2>
+<blockquote>
+<p>We'll send a broad message, to test the agent.</p>
+</blockquote>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">agents</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="s2">&quot;Change the title to blue and name is &#39;My Website!&#39;&quot;</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Lets view the file again.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website!</title>
+    <style>
+        .title-box_2 {
+            border: 2px solid #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            background-color: #f0f0f0;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-box_2">
+        My Website!
+    </div>
+</body>
+</html>
 
 
 
@@ -632,6 +991,46 @@
       
         <footer class="md-footer">
   
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../memory/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Memory (Rag)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Memory (Rag)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../multimodal/" class="md-footer__link md-footer__link--next" aria-label="Next: Multimodal Generations">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Multimodal Generations
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
@@ -654,7 +1053,7 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["content.tabs", "content.tables", "content.details", "content.diagrams", "content.diagrams.mermaid", "content.code.annotate", "content.code.copy", "content.code.line_numbers", "content.code.line_spans", "content.code.line_spans.superfences", "badges", "icons.font", "navigation.instant", "navigation.instant.prefetch", "navigation.sections", "navigation.sections.smooth_scroll", "navigation.sections.sticky", "navigation.sections.tabs", "navigation.sections.scroll_spy", "navigation.sections.tabs.sticky", "navigation.sections.tabs.sticky.scroll_spy", "toc.follow", "toc.integrate", "toc.integrate.smooth_scroll", "search", "search.highlight", "search.suggest", "search.indexing"], "search": "../../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.tabs", "content.tables", "content.details", "content.diagrams", "content.diagrams.mermaid", "content.code.annotate", "content.code.copy", "content.code.line_numbers", "content.code.line_spans", "content.code.line_spans.superfences", "badges", "icons.font", "navigation.instant", "navigation.instant.prefetch", "navigation.sections", "navigation.sections.smooth_scroll", "navigation.sections.sticky", "navigation.sections.tabs", "navigation.sections.scroll_spy", "navigation.sections.tabs.sticky", "navigation.sections.tabs.sticky.scroll_spy", "navigation.header.links", "navigation.header.links.icon", "navigation.header.links.icon.font", "navigation.footer.links", "navigation.footer", "toc.follow", "toc.integrate", "toc.integrate.smooth_scroll", "search", "search.highlight", "search.suggest", "search.indexing"], "search": "../../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.56dfad97.min.js"></script>
