@@ -272,7 +272,14 @@ class Agents:
             raise Exception(f"Error building memory: {e}")
 
     def _update_memory(self, message: dict[str, str]):
-        """Updates the memory for the agents."""
+        """Updates the memory for the agents.
+        
+        Parameters:
+            - message (dict): The message to update the memory with.
+            
+        Returns:
+            - None
+        """
 
         try:
             self.workflow.memory.current_context_thread.append(message)
@@ -297,7 +304,11 @@ class Agents:
             self.logger.error(f"Error updating memory: {e}")
 
     def _get_context(self) -> List[dict[str, str]]:
-        """Gets the context for the agents."""
+        """Gets the context for the agents.
+        
+        Returns:
+            - List[dict[str, str]]: The context for the agents.
+        R"""
 
         try:
             context = self.workflow.memory.current_context_thread[-5:]
@@ -323,7 +334,14 @@ class Agents:
         return [context_message] + context
 
     def _classify_intent(self, user_input: str) -> UserIntent:
-        """Classifies the intent for the agents."""
+        """Classifies the intent for the agents.
+        
+        Parameters:
+            - user_input (str): The user input to classify.
+            
+        Returns:
+            - UserIntent: The intent for the agents.
+        P"""
 
         from .llm.classify import classify
 
@@ -353,7 +371,14 @@ class Agents:
             return UserIntent(intent="chat", confidence=0.0)
 
     def _extract_goal(self, user_input: str) -> str:
-        """Extracts the goal for the agents."""
+        """Extracts the goal for the agents.
+        
+        Parameters:
+            - user_input (str): The user input to extract the goal from.
+            
+        Returns:
+            - str: The goal for the agents.
+        P"""
 
         from .llm.extract import extract
 
@@ -381,7 +406,14 @@ class Agents:
             return ""
 
     def _should_use_tool(self, context: List[dict[str, str]]) -> bool:
-        """Checks if the agents should use a tool."""
+        """Checks if the agents should use a tool.
+        
+        Parameters:
+            - context (List[dict[str, str]]): The context for the agents.
+            
+        Returns:
+            - bool: Whether the agents should use a tool.
+        P"""
 
         try:
             if not self.tools:
@@ -413,7 +445,14 @@ class Agents:
             return False
 
     def _should_retrieve(self, context: List[dict[str, str]]) -> bool:
-        """Checks if the agents should retrieve information."""
+        """Checks if the agents should retrieve information.
+        
+        Parameters:
+            - context (List[dict[str, str]]): The context for the agents.
+            
+        Returns:
+            - bool: Whether the agents should retrieve information.
+        P"""
 
         if not self.retriever_tools:
             return False
@@ -434,7 +473,14 @@ class Agents:
         return response.answer == "yes"
 
     def _create_tool_model(self, tool: Callable) -> BaseModel:
-        """Creates a Pydantic model for a callable tool."""
+        """Creates a Pydantic model for a callable tool. Uses the tool's signature to create the model.
+        
+        Parameters:
+            - tool (Callable): The tool to create a model for.
+            
+        Returns:
+            - BaseModel: The Pydantic model for the tool.
+        P"""
         sig = signature(tool)
         fields = {
             param.name: (
@@ -446,7 +492,15 @@ class Agents:
         return create_model(f"{tool.__name__}Model", **fields)
 
     def use_tool(self, user_input: str, context: List[dict[str, str]]) -> str:
-        """Uses a tool for the agents."""
+        """Uses a tool for the agents. Executes the tool and updates the memory.
+        
+        Parameters:
+            - user_input (str): The user input to use the tool with.
+            - context (List[dict[str, str]]): The context for the agents.
+            
+        Returns:
+            - str: The response from the agents.
+        P"""
 
         # Find the tool to use
         class AppropriateTool(BaseModel):
@@ -586,7 +640,16 @@ class Agents:
     def _handle_chat(
         self, user_input: str, stream: bool
     ) -> Union[str, Generator[str, None, None]]:
-        """Handles the chat for the agents."""
+        """Handles the chat for the agents.
+        
+        Parameters:
+            - user_input (str): The user input to handle.
+            - stream (bool): Whether to stream the response.
+
+        Returns:
+            - str: The response from the agents.
+            - generator: A generator that yields the response from the agents.
+        """
 
         self.workflow.state = EnumWorkflowState.CHAT
         context = self._get_context()
@@ -600,8 +663,16 @@ class Agents:
     def _handle_intent(
         self, intent: UserIntent, user_input: str, context: List[dict[str, str]]
     ) -> str:
-        """Handles the intent for the agents."""
+        """Handles the intent for the agents.
+        
+        Parameters:
+            - intent (UserIntent): The intent for the agents.
+            - user_input (str): The user input to handle.
+            - context (List[dict[str, str]]): The context for the agents.
 
+        Returns:
+            - str: The response from the agents.
+        """
         if intent.intent == "chat":
             return self._generate_chat_response(context)
         elif intent.intent == "plan":
@@ -619,7 +690,14 @@ class Agents:
             return self._generate_chat_response(context)
 
     def _generate_chat_response(self, context: List[dict[str, str]]) -> str:
-        """Generates the chat response for the agents."""
+        """Generates the chat response for the agents.
+        
+        Parameters:
+            - context (List[dict[str, str]]): The context for the agents.
+
+        Returns:
+            - str: The response from the agents.
+        """
 
         response = completion(
             messages=context,
@@ -641,7 +719,12 @@ class Agents:
         return assistant_message["content"]
 
     def _handle_artifact_generation(self, context: List[dict[str, str]], content: str):
-        """Handles the artifact generation for the agents."""
+        """Handles the artifact generation for the agents.
+        
+        Parameters:
+            - context (List[dict[str, str]]): The context for the agents.
+            - content (str): The content to generate an artifact from.
+        """
 
         if self.generate_artifacts:
             recent_artifact = self.artifact_thread[-1] if self.artifact_thread else None
@@ -654,7 +737,16 @@ class Agents:
     def _stream_response(
         self, intent: UserIntent, user_input: str, context: List[dict[str, str]]
     ) -> Generator[str, None, None]:
-        """Streams the response for the agents."""
+        """Streams the response for the agents.
+        
+        Parameters:
+            - intent (UserIntent): The intent for the agents.
+            - user_input (str): The user input to handle.
+            - context (List[dict[str, str]]): The context for the agents.
+
+        Returns:
+            - generator: A generator that yields the response from the agents.
+        """
 
         if intent.intent == "chat":
             yield from self._stream_chat_response(context)
@@ -672,7 +764,14 @@ class Agents:
     def _stream_chat_response(
         self, context: List[dict[str, str]]
     ) -> Generator[str, None, None]:
-        """Streams the chat response for the agents."""
+        """Streams the chat response for the agents.
+        
+        Parameters:
+            - context (List[dict[str, str]]): The context for the agents.
+
+        Returns:
+            - generator: A generator that yields the response from the agents.
+        """
         from .completion import completion
 
         full_response = ""
