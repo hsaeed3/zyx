@@ -1,0 +1,263 @@
+:root {
+  --slate-dark: #191919;
+  --slate-medium: #262625;
+  --slate-light: #40403E;
+  --cloud-dark: #666663;
+  --cloud-medium: #91918D;
+  --cloud-light: #BFBFBA;
+  --ivory-dark: #E5E4DF;
+  --ivory-medium: #F0F0EB;
+  --ivory-light: #FAFAF7;
+  --book-cloth: #CC7B5C;
+  --kraft: #D4A27F;
+  --manilla: #EBDBBC;
+  --black: #000000;
+  --white: #FFFFFF;
+  --focus: #6BAAF2;
+  --error: #BF4043;
+}
+
+[data-md-color-scheme="light"] {
+  --md-primary-fg-color: var(--ivory-medium);
+  --md-accent-fg-color: var(--slate-dark);
+  --md-default-bg-color: var(--ivory-light);
+  --md-text-fg-color: var(--slate-dark);
+  --md-typeset-a-color: var(--slate-medium);
+  --md-code-bg-color: var(--ivory-dark);
+  --md-code-fg-color: var(--slate-medium);
+  --md-footer-bg-color: var(--ivory-dark);
+  --md-footer-fg-color: var(--slate-medium);
+}
+
+[data-md-color-scheme="dark"] {
+  --md-primary-fg-color: var(--black);
+  --md-accent-fg-color: var(--ivory-light);
+  --md-default-bg-color: var(--slate-dark);
+  --md-text-fg-color: var(--ivory-light);
+  --md-typeset-a-color: var(--ivory-medium);
+  --md-code-bg-color: var(--slate-medium);
+  --md-code-fg-color: var(--ivory-medium);
+  --md-footer-bg-color: var(--black);
+  --md-footer-fg-color: var(--ivory-medium);
+}
+
+/* Common styles for both schemes */
+.md-header,
+.md-tabs {
+  background-color: var(--md-primary-fg-color);
+}
+
+.md-header__topic,
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg,
+.md-nav__title,
+.md-nav__link {
+  color: var(--md-text-fg-color);
+}
+
+.md-typeset a {
+  color: var(--md-typeset-a-color);
+}
+
+.md-typeset code {
+  background-color: var(--md-code-bg-color);
+  color: var(--md-code-fg-color);
+}
+
+.md-footer {
+  background-color: var(--md-footer-bg-color);
+  color: var(--md-footer-fg-color);
+}
+
+/* Specific styles */
+.md-typeset .admonition,
+.md-typeset details {
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  background-color: var(--md-code-bg-color);
+}
+
+.md-search-result mark {
+  color: var(--md-accent-fg-color);
+  background-color: var(--md-code-bg-color);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset .md-button {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset .md-button:hover {
+  background-color: var(--md-typeset-a-color);
+}
+
+.md-typeset hr {
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset blockquote {
+  border-left-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .task-list-control .task-list-indicator::before {
+  background-color: var(--md-default-bg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .task-list-control [type="checkbox"]:checked + .task-list-indicator::before {
+  background-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .md-typeset__table {
+  background-color: var(--md-default-bg-color);
+}
+
+.md-typeset code.highlight {
+  background-color: var(--md-code-bg-color);
+}
+
+.md-annotation__index {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-primary-fg-color);
+}
+
+/* Focus and error states */
+:focus {
+  outline-color: var(--focus);
+}
+
+.md-typeset .md-typeset__table .md-typeset__table--error {
+  background-color: var(--error);
+}
+
+/* Typography styles */
+.md-typeset h1 {
+  color: var(--slate-dark);
+}
+
+.md-typeset h2 {
+  color: var(--slate-medium);
+}
+
+.md-typeset h3 {
+  color: var(--slate-light);
+}
+
+.md-typeset h4 {
+  color: var(--cloud-dark);
+}
+
+.md-typeset h5 {
+  color: var(--cloud-medium);
+}
+
+.md-typeset h6 {
+  color: var(--cloud-light);
+}
+
+.md-typeset p {
+  color: var(--md-text-fg-color);
+}
+
+.md-typeset strong {
+  color: var(--slate-dark);
+}
+
+.md-typeset em {
+  color: var(--slate-medium);
+}
+
+.md-typeset blockquote {
+  border-left-color: var(--book-cloth);
+  color: var(--cloud-dark);
+}
+
+.md-typeset code {
+  background-color: var(--ivory-dark);
+  color: var(--slate-medium);
+}
+
+.md-typeset pre {
+  background-color: var(--ivory-medium);
+}
+
+.md-typeset kbd {
+  background-color: var(--ivory-dark);
+  color: var(--slate-dark);
+  box-shadow: 0 2px 0 var(--cloud-medium);
+}
+
+[data-md-color-scheme="dark"] .md-typeset h1,
+[data-md-color-scheme="dark"] .md-typeset h2,
+[data-md-color-scheme="dark"] .md-typeset h3,
+[data-md-color-scheme="dark"] .md-typeset h4,
+[data-md-color-scheme="dark"] .md-typeset h5,
+[data-md-color-scheme="dark"] .md-typeset h6,
+[data-md-color-scheme="dark"] .md-typeset p,
+[data-md-color-scheme="dark"] .md-typeset strong,
+[data-md-color-scheme="dark"] .md-typeset em {
+  color: var(--ivory-light);
+}
+
+[data-md-color-scheme="dark"] .md-typeset blockquote {
+  border-left-color: var(--book-cloth);
+  color: var(--cloud-light);
+}
+
+[data-md-color-scheme="dark"] .md-typeset code {
+  background-color: var(--slate-medium);
+  color: var(--ivory-light);
+}
+
+[data-md-color-scheme="dark"] .md-typeset pre {
+  background-color: var(--slate-dark);
+}
+
+[data-md-color-scheme="dark"] .md-typeset kbd {
+  background-color: var(--slate-medium);
+  color: var(--ivory-light);
+  box-shadow: 0 2px 0 var(--cloud-dark);
+}
+
+.md-social {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.md-social a {
+  color: var(--md-text-fg-color);
+}
+
+/* Styling for repository icon and text */
+.md-header__source {
+  color: var(--ivory-light);
+}
+
+[data-md-color-scheme="light"] .md-header__source {
+  color: var(--slate-dark);
+}
+
+/* Styling for theme toggle icon */
+.md-header__button.md-icon {
+  color: var(--ivory-light);
+}
+
+[data-md-color-scheme="light"] .md-header__button.md-icon {
+  color: var(--slate-dark);
+}
+
+/* Hover effects */
+.md-header__source:hover,
+.md-header__button.md-icon:hover {
+  opacity: 0.7;
+}
