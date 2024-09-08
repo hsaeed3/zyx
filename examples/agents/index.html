@@ -844,7 +844,7 @@
 <li>This framework presents a new way of looking at a multi-agent system, to be used as a state managed, conversational orchestration. </br></br></li>
 </ul>
 <h3 id="current-features"><strong>Current Features</strong>:</h3>
-<div class="language-text highlight"><pre><span></span><code>- ***LLM Based Intent Classification***
+<div class="language-text highlight"><pre><span></span><code>- ***LLM Based Classification***
 - ***Dynamically Generated Workflows &amp; Tasks***
 - ***Artifact Generation &amp; Guidance (Inspired by Claude)***
 - ***Custom Tool Usage***
@@ -863,7 +863,7 @@
 <pre class="mermaid"><code>flowchart TD
     A[on_message] --&gt; B{Workflow state?}
     B --&gt;|IDLE| C[Handle Chat]
-    B --&gt;|Active| D[Classify Intent]
+    B --&gt;|Active| D[Classify]
 
     D --&gt; E{Tool or Retrieve?}
     E --&gt;|Tool| F[Use Tool]
@@ -871,7 +871,7 @@
     E --&gt;|Neither| H{Stream?}
 
     H --&gt;|Yes| I[Stream Response]
-    H --&gt;|No| J[Handle Intent]
+    H --&gt;|No| J[Classify]
 
     J --&gt; K{Intent Type}
     K --&gt;|Chat| C
