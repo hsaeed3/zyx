@@ -20,6 +20,9 @@ theme:
     - content.details
     - content.diagrams
     - content.diagrams.mermaid
+    - content.code
+    - content.code.line_numbers
+    - content.code.select
     - content.code.annotate
     - content.code.copy
     - content.code.line_numbers

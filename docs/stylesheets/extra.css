@@ -261,3 +261,42 @@
 .md-header__button.md-icon:hover {
   opacity: 0.7;
 }
+
+.md-typeset .highlight .md-clipboard::before,
+.md-typeset .highlight .md-clipboard:hover::before {
+  color: var(--md-code-fg-color);
+}
+
+.md-typeset .highlight:hover .md-clipboard::before {
+  color: var(--md-accent-fg-color);
+}
+
+.md-typeset pre > code {
+  scrollbar-color: var(--md-code-fg-color) var(--md-code-bg-color);
+}
+
+/* Code block line number styles */
+.md-typeset .highlight .linenos {
+  background-color: var(--md-code-bg-color);
+  color: var(--md-code-fg-color);
+  opacity: 0.5;
+}
+
+/* Code annotation styles */
+.md-annotation__index {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-primary-fg-color);
+}
+
+.md-annotation__index:hover {
+  background-color: var(--md-typeset-a-color);
+}
+
+/* Code select button styles */
+.md-clipboard--select {
+  color: var(--md-code-fg-color);
+}
+
+.md-clipboard--select:hover {
+  color: var(--md-accent-fg-color);
+}
