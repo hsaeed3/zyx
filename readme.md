@@ -1,6 +1,6 @@
 # **zyx**
 
-[Documentation](zyx.hammad.fun)
+[Documentation](https://zyx.hammad.fun)
 
 > **zyx 0.3.00** - the first '*release*' of the library is out! </br>
 > All CrewAI & other obstructions have been removed, and the library is back to being lightweight.
