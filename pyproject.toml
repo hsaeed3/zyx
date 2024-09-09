@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "zyx"
-version = "0.3.01"
+version = "0.3.02"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
 
 [tool.poetry.dependencies]
 # Primary Dependencies
-python = "^3.11"
+python = "^3.9"
 instructor = "^1.4.0"
 litellm = "^1.44.18"
 loguru = "^0.7.2"
