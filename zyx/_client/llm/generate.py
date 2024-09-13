@@ -51,7 +51,10 @@ def generate(
     from ..completion import CompletionClient
     from pydantic import create_model
 
-    ResponseModel = create_model("ResponseModel", items=(List[target], ...))
+    if n == 1:
+        ResponseModel = target
+    else:
+        ResponseModel = create_model("ResponseModel", items=(List[target], ...))
 
     system_message = f"""
     You are a data generator. Your task is to generate {n} valid instance(s) of the following Pydantic model:
@@ -82,4 +85,16 @@ def generate(
         mode="md_json" if model.startswith(("ollama/", "ollama_chat/")) else mode,
         response_model=ResponseModel,
     )
+    if n == 1:
+        return response
     return response.items
+
+
+if __name__ == "__main__":
+    import zyx
+
+    class User(BaseModel):
+        name: str
+        age: int
+
+    print(zyx.generate(User))

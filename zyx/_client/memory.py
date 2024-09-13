@@ -30,9 +30,11 @@ class Memory:
     def __init__(
         self,
         collection_name: str = "my_collection",
+        model_class: Optional[Type[BaseModel]] = None,
         vector_size: int = 1536,
         distance: Literal["Cosine", "Euclid", "Dot"] = "Cosine",
-        location: str = ":memory:",
+        location: Literal["zyxstore.db", ":memory:"] = "zyxstore.db",
+        path : Union[str, Literal["zyxstore.db"]] = None,
         host: str = None,
         port: int = 6333,
         embedding_model: str = "text-embedding-3-small",
@@ -40,12 +42,32 @@ class Memory:
         embedding_api_key: Optional[str] = None,
         embedding_api_base: Optional[str] = None,
         embedding_api_version: Optional[str] = None,
-        model_class: Optional[Type[BaseModel]] = None,
     ):
+        """
+        Memory class for storing and retrieving data using Qdrant.
+
+        Args:
+            collection_name (str): The name of the collection to store data in.
+            model_class (Type[BaseModel]): The class of the model to be used for storing and retrieving data. Defaults to None.
+            vector_size (int): The size of the vectors to be used for embedding.
+            distance (str): The distance metric to be used for similarity search.
+            location (str): The location of the Qdrant server. Defaults to ":memory:".
+            path (str): The path to the Qdrant server. Defaults to None.
+            host (str): The host of the Qdrant server. Defaults to None.
+            port (int): The port of the Qdrant server. Defaults to 6333.
+            embedding_model (str): The model to be used for embedding. Defaults to "text-embedding-3-small".
+            embedding_dimensions (int): The dimensions of the embedding model. Defaults to None.
+            embedding_api_key (str): The API key for the embedding model. Defaults to None.
+            embedding_api_base (str): The base URL for the embedding model. Defaults to None.
+        """
+        
         from qdrant_client.http.models import Distance, VectorParams
         from qdrant_client import QdrantClient
 
         self.collection_name = collection_name
+        self.path = path
+        self.host = host
+        self.port = port
         self.vector_size = vector_size
         self.distance = Distance(distance)
         self.location = location
@@ -59,7 +81,10 @@ class Memory:
         if location == ":memory:" or host:
             self.client = QdrantClient(location=location, host=host, port=port)
         else:
-            self.client = QdrantClient(path=location)
+            if path:
+                self.client = QdrantClient(path=path)
+            else:
+                self.client = QdrantClient(path=location)
 
         self._create_collection()
 
@@ -464,6 +489,7 @@ if __name__ == "__main__":
             collection_name="pydantic_collection",
             vector_size=1536,
             model_class=TestModel,
+            location="zyxstore.db"
         )
 
         # Add some test models
