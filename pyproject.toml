@@ -1,13 +1,17 @@
 [tool.poetry]
 name = "zyx"
-version = "0.3.03"
+version = "0.3.04"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
 [tool.poetry.dependencies]
 # Primary Dependencies
-python = "^3.9"
+python = ">=3.10,<4.0"
 instructor = "^1.4.0"
 litellm = "^1.44.18"
 loguru = "^0.7.2"
@@ -23,6 +27,7 @@ poetry = "^1.8.3"
 ruff = "^0.6.4"
 uv = "^0.4.5"
 pytest = "^8.3.2"
+python-fasthtml = "^0.6.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs-material = {extras = ["imaging"], version = "^9.5.34"}
@@ -40,5 +45,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 zyx = "zyx._client.terminal:terminal"
-
-

@@ -1,3 +1,4 @@
+from .. import logger
 from pydantic import BaseModel
 from typing import (
     Any,
@@ -44,7 +45,7 @@ class ClientParams(BaseModel):
     model: Optional[str] = "gpt-4o-mini"
     tools: Optional[ClientToolParams] = None
     run_tools: Optional[bool] = True
-    response_model: Optional[Union[Any, BaseModel]] = None
+    response_model: Optional[Union[Any, Type[BaseModel]]] = None
     mode: Optional[ClientModeParams] = "tools"
 
     base_url: Optional[str] = None
@@ -64,8 +65,49 @@ class ClientParams(BaseModel):
 class CompletionClient:
     def __init__(
         self,
+        provider : Optional[Union[Literal["openai"], None]] = None,
+        api_key : Optional[str] = None,
+        base_url : Optional[str] = None,
+        organization : Optional[str] = None,
+        verbose : Optional[bool] = False,
     ):
+        self.client_init = False
+        self.verbose = verbose
+
+        if provider == "openai":
+            self.params = ClientParams(
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
+            )
+
+            if provider == "openai":
+                self._init_openai_client()
+                self.client_init = True
+
         pass
+
+
+    def _init_openai_client(self):
+        """
+        Initializes the OpenAI client
+        """
+        from openai import OpenAI
+
+        try:
+            self.client = OpenAI(
+                api_key=self.params.api_key,
+                base_url=self.params.base_url,
+                organization=self.params.organization,
+            )
+
+            if self.verbose:
+                logger.info("OpenAI Client Initialized")
+
+        except Exception as e:
+            print(f"Error initializing OpenAI client: {e}")
+            return None
+
 
     @staticmethod
     def format_messages(messages: Union[str, list[dict]] = None) -> list[dict]:
@@ -85,6 +127,7 @@ class CompletionClient:
         except Exception as e:
             print(f"Error formatting messages: {e}")
             return []
+
 
     @staticmethod
     def format_tools(tools: List[Union[Callable, dict, BaseModel]] = None):
@@ -122,21 +165,41 @@ class CompletionClient:
 
     def run_base_completion(self):
         try:
-            from litellm.main import completion
+            if not self.client_init:
+                from litellm.main import completion
 
-            # Run a standard LiteLLM completion
-            return completion(
-                model=self.params.model,
-                messages=self.params.messages,
-                base_url=self.params.base_url,
-                tools=self.params.tools.openai_tools if self.params.tools else None,
-                api_key=self.params.api_key,
-                organization=self.params.organization,
-                top_p=self.params.top_p,
-                temperature=self.params.temperature,
-                max_tokens=self.params.max_tokens,
-                **self.params.kwargs,
-            )
+                if self.verbose:
+                    logger.info(f"Running LiteLLM Completion for {self.params.model}")
+
+                # Run a standard LiteLLM completion
+                return completion(
+                    model=self.params.model,
+                    messages=self.params.messages,
+                    base_url=self.params.base_url,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    api_key=self.params.api_key,
+                    organization=self.params.organization,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    **self.params.kwargs,
+                )
+
+            else:
+
+                if self.verbose:
+                    logger.info(f"Running OpenAI Completion for {self.params.model}")
+
+                return self.client.chat.completions.create(
+                    model=self.params.model,
+                    messages=self.params.messages,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    **self.params.kwargs,
+                )
+
         except Exception as e:
             print(f"Error running base completion: {e}")
             return None
@@ -144,22 +207,43 @@ class CompletionClient:
     def stream_completion(self):
         """Streams Basic Text Response"""
         try:
-            from litellm.main import completion
+            if not self.client_init:
 
-            # Run a streamed LiteLLM completion
-            response = completion(
-                model=self.params.model,
-                messages=self.params.messages,
-                base_url=self.params.base_url,
-                tools=self.params.tools.openai_tools if self.params.tools else None,
-                api_key=self.params.api_key,
-                organization=self.params.organization,
-                top_p=self.params.top_p,
-                temperature=self.params.temperature,
-                max_tokens=self.params.max_tokens,
-                stream=True,
-                **self.params.kwargs,
-            )
+                from litellm.main import completion
+
+                if self.verbose:
+                    logger.info(f"Running LiteLLM Streamed Completion for {self.params.model}")
+
+                # Run a streamed LiteLLM completion
+                response = completion(
+                    model=self.params.model,
+                    messages=self.params.messages,
+                    base_url=self.params.base_url,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    api_key=self.params.api_key,
+                    organization=self.params.organization,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    stream=True,
+                    **self.params.kwargs,
+                )
+
+            else:
+
+                if self.verbose:
+                    logger.info(f"Running OpenAI Streamed Completion for {self.params.model}")
+
+                response = self.client.chat.completions.create(
+                    model=self.params.model,
+                    messages=self.params.messages,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    stream=True,
+                    **self.params.kwargs,
+                )
 
             for chunk in response:
                 yield chunk.choices[0].delta.content or ""
@@ -171,36 +255,73 @@ class CompletionClient:
     def run_instructor_completion(self):
         """Runs Structured Pydnatic Completion"""
         try:
-            from litellm.main import completion
-            from instructor import from_litellm, Mode
+            if not self.client_init:
 
-            if self.params.mode:
-                if self.params.mode == "json":
-                    mode = Mode.JSON
-                elif self.params.mode == "json_schema":
-                    mode = Mode.JSON_SCHEMA
-                elif self.params.mode == "md_json":
-                    mode = Mode.MD_JSON
-                elif self.params.mode == "parallel":
-                    mode = Mode.PARALLEL_TOOLS
-                elif self.params.mode == "tools":
-                    mode = Mode.TOOLS
+                from litellm.main import completion
+                from instructor import from_litellm, Mode
 
-            client = from_litellm(completion, mode=mode if mode else None)
-            return client.chat.completions.create(
-                messages=self.params.messages,
-                model=self.params.model,
-                response_model=self.params.response_model,
-                base_url=self.params.base_url,
-                api_key=self.params.api_key,
-                tools=self.params.tools.openai_tools if self.params.tools else None,
-                organization=self.params.organization,
-                top_p=self.params.top_p,
-                temperature=self.params.temperature,
-                max_tokens=self.params.max_tokens,
-                max_retries=self.params.max_retries,
-                **self.params.kwargs,
-            )
+                if self.params.mode:
+                    if self.params.mode == "json":
+                        mode = Mode.JSON
+                    elif self.params.mode == "json_schema":
+                        mode = Mode.JSON_SCHEMA
+                    elif self.params.mode == "md_json":
+                        mode = Mode.MD_JSON
+                    elif self.params.mode == "parallel":
+                        mode = Mode.PARALLEL_TOOLS
+                    elif self.params.mode == "tools":
+                        mode = Mode.TOOLS
+
+                client = from_litellm(completion, mode=mode if mode else None)
+
+                if self.verbose:
+                    logger.info(f"Running LiteLLM & Instructor Completion for {self.params.model}")
+
+                return client.chat.completions.create(
+                    messages=self.params.messages,
+                    model=self.params.model,
+                    response_model=self.params.response_model,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    max_retries=self.params.max_retries,
+                    **self.params.kwargs,
+                )
+
+            else:
+
+                from instructor import from_openai, Mode
+
+                if self.params.mode:
+                    if self.params.mode == "json":
+                        mode = Mode.JSON
+                    elif self.params.mode == "json_schema":
+                        mode = Mode.JSON_SCHEMA
+                    elif self.params.mode == "md_json":
+                        mode = Mode.MD_JSON
+                    elif self.params.mode == "parallel":
+                        mode = Mode.PARALLEL_TOOLS
+                    elif self.params.mode == "tools":
+                        mode = Mode.TOOLS
+
+                client = from_openai(self.client, mode = mode if mode else None)
+
+                if self.verbose:
+                    logger.info(f"Running OpenAI & Instructor Completion for {self.params.model}")
+
+                return client.chat.completions.create(
+                    messages=self.params.messages,
+                    model=self.params.model,
+                    response_model=self.params.response_model,
+                    tools=self.params.tools.openai_tools if self.params.tools else None,
+                    top_p=self.params.top_p,
+                    temperature=self.params.temperature,
+                    max_tokens=self.params.max_tokens,
+                    max_retries=self.params.max_retries,
+                    **self.params.kwargs,
+                )
+
         except Exception as e:
             print(f"Error running instructor completion: {e}")
             return None
@@ -297,7 +418,7 @@ class CompletionClient:
         self,
         messages: Union[str, list[dict]] = None,
         model: Optional[str] = "gpt-4o-mini",
-        response_model: Optional[BaseModel] = None,
+        response_model: Optional[Type[BaseModel]] = None,
         mode: Optional[ClientModeParams] = "md_json",
         optimize: Union[Optimizer, None] = None,
         tools: Optional[List[Union[Callable, dict, BaseModel]]] = None,
@@ -349,6 +470,7 @@ class CompletionClient:
             - The completion response.
         """
         try:
+
             if params:
                 self.params = params
             else:
@@ -463,7 +585,7 @@ class CompletionClient:
 def completion(
     messages: Union[str, List[dict]] = None,
     model: Optional[str] = "gpt-4o-mini",
-    response_model: Optional[BaseModel] = None,
+    response_model: Optional[Type[BaseModel]] = None,
     mode: Optional[ClientModeParams] = "md_json",
     optimize: Union[Optimizer, None] = None,
     tools: Optional[List[Union[Callable, dict, BaseModel]]] = None,
@@ -483,13 +605,13 @@ def completion(
 ) -> Response:
     """
     Runs a tool calling & structured output capable completion or completion chain.
-    
+
     Example:
         ```python
         import zyx
         zyx.completion()
         ```
-        
+
     Args:
         messages (Union[str, List[dict]]): The messages to send to the model.
         model (Optional[str]): The model to use for completion.
@@ -509,7 +631,7 @@ def completion(
         verbose (Optional[bool]): Whether to print verbose output.
         stream (Optional[bool]): Whether to stream the response.
         image_urls (Optional[Union[str, List[str]]]): The image URLs to interpret.
-    
+
     Returns:
         Response: The completion response, or a generator if streaming is enabled.
     """
@@ -558,7 +680,37 @@ def completion(
                 raise e
 
     try:
-        client = CompletionClient()
+        if model.startswith((
+            "openai/", "gpt-", "o1", "ollama/"
+        )):
+
+            if model.startswith("openai/"):
+                model = model.replace("openai/", "")
+            elif model.startswith("ollama/"):
+                if base_url is None:
+                    base_url = "http://localhost:11434"
+                    api_key = "ollama"
+
+                model = model.replace("ollama/", "")
+
+            client = CompletionClient(
+                provider = "openai",
+                base_url=base_url,
+                api_key=api_key,
+                organization=organization,
+                verbose = verbose
+            )
+
+        else:
+
+            client = CompletionClient(
+                api_key = api_key,
+                base_url = base_url,
+                organization = organization,
+                verbose = verbose
+            )
+
+
         client_params = params or ClientParams(
             messages=client.format_messages(messages),
             model=model,
@@ -599,4 +751,10 @@ def completion(
 
 
 if __name__ == "__main__":
-    print(completion("hi"))
+    from pydantic import BaseModel
+
+    class Response(BaseModel):
+        choices: List[str]
+
+    print(completion("hi, how are you?", verbose = True,
+                     response_model = Response))
