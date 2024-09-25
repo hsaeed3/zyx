@@ -159,6 +159,12 @@ class ChatClient:
 
             return client, model, base_url, api_key
         
+        elif base_url is not None:
+            
+            client = "openai"
+
+            return client, model, base_url, api_key
+        
         else:
             client = "litellm"
             
