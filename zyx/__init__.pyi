@@ -27,7 +27,9 @@ __all__ = [
     "VectorStore",
 
     "logger",
-    "utils"
+    "utils",
+
+    "zyx"
 ]
 
 
@@ -70,3 +72,9 @@ from .lib.routes.data import (
 # Utils
 from loguru import logger
 from .lib import utils
+
+
+from typing import Any, Callable
+
+
+zyx: Callable[..., Any]
