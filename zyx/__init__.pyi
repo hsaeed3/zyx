@@ -1,15 +1,12 @@
 __all__ = [
-    "Agents",
     "completion",
-    "embedding",
-    "image",
+
     "llm",
-    "logger",
-    "Memory",
-    "speak",
-    "tools",
-    "terminal",
-    "transcribe",
+    "data",
+
+    "ChatClient",
+
+    "Agents",
     "classify",
     "code",
     "create_system_prompt",
@@ -23,23 +20,32 @@ __all__ = [
     "self_refine",
     "step_back",
     "tree_of_thought",
+    "query",
+
+    "SqlStore",
+    "Rag",
+    "VectorStore",
+
+    "logger",
+    "utils"
 ]
 
-from ._client.agents import Agents
-from ._client.completion import completion
-from litellm.main import embedding
-from ._client.multimodal import image
-from ._client import llm as llm
-from loguru import logger
-from ._client.memory import Memory
-from ._client.multimodal import speak
-from ._client import tools as tools
-from ._client.terminal import terminal
-from ._client.multimodal import transcribe
-from ._client.llm import (
+
+# Internal
+from .lib.client.chat import completion
+
+# Routes
+from .lib.routes import (
+    llm,
+    data
+)
+
+
+from .lib.routes.llm import (
+    ChatClient,
+    agents as Agents,
     classify,
     code,
-    completion,
     create_system_prompt,
     extract,
     function,
@@ -51,4 +57,16 @@ from ._client.llm import (
     self_refine,
     step_back,
     tree_of_thought,
+    query
 )
+
+
+from .lib.routes.data import (
+    sql_store as SqlStore,
+    rag as Rag,
+    vector_store as VectorStore
+)
+
+# Utils
+from loguru import logger
+from .lib import utils

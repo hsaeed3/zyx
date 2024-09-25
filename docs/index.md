@@ -1,8 +1,12 @@
 # **zyx**
 
 
+[!NOTICE]
+> This documentation is for `zyx` version `0.3.04 and below`. New docs will be added soon.
+
+
 ``` bash
-pip install zyx --upgrade
+pip install zyx==0.3.04
 
 zyx
 ```

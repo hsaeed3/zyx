@@ -1,15 +1,12 @@
 __all__ = [
-    "Agents",
     "completion",
-    "embedding",
-    "image",
+
     "llm",
-    "logger",
-    "Memory",
-    "speak",
-    "tools",
-    "terminal",
-    "transcribe",
+    "data",
+
+    "ChatClient",
+
+    "Agents",
     "classify",
     "code",
     "create_system_prompt",
@@ -23,14 +20,45 @@ __all__ = [
     "self_refine",
     "step_back",
     "tree_of_thought",
+    "query",
+
+    "SqlStore",
+    "Rag",
+    "VectorStore",
+
+    "logger",
+    "utils"
 ]
 
-from ._client.utils.loader import Loader
-from ._client import tools
-from ._client.llm import (
+
+from .lib.utils._loader import loader
+
+
+from .lib.routes import (
+    llm as llm,
+    data as data
+)
+
+
+class completion(loader):
+    pass
+
+
+completion.init("zyx.lib.client.chat", "completion")
+
+
+from .lib.routes.data import (
+    sql_store as SqlStore,
+    rag as Rag,
+    vector_store as VectorStore
+)
+
+
+from .lib.routes.llm import (
+    ChatClient,
+    agents as Agents,
     classify,
     code,
-    completion,
     create_system_prompt,
     extract,
     function,
@@ -42,67 +70,17 @@ from ._client.llm import (
     self_refine,
     step_back,
     tree_of_thought,
+    query
 )
 
 
-class Agents(Loader):
-    pass
-
-
-Agents.init("zyx._client.agents", "Agents")
-
-
-class completion(Loader):
-    pass
-
-
-completion.init("zyx._client.completion", "completion")
-
-
-class embedding(Loader):
-    pass
-
-
-embedding.init("litellm.main", "embedding")
-
-
-class image(Loader):
-    pass
-
-
-image.init("zyx._client.multimodal", "image")
-
-
-class logger(Loader):
+class logger(loader):
     pass
 
 
 logger.init("loguru", "logger")
 
 
-class Memory(Loader):
-    pass
+from .lib import utils
 
 
-Memory.init("zyx._client.memory", "Memory")
-
-
-class speak(Loader):
-    pass
-
-
-speak.init("zyx._client.multimodal", "speak")
-
-
-class terminal(Loader):
-    pass
-
-
-terminal.init("zyx._client.terminal", "terminal")
-
-
-class transcribe(Loader):
-    pass
-
-
-transcribe.init("zyx._client.multimodal", "transcribe")
