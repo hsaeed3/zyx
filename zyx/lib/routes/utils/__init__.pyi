@@ -24,7 +24,6 @@ __all__ = [
 from ...utils.data import (
     load_docs,
     simple_text_loader,
-    chunk_document,
     extract_metadata,
     hash_documents,
     extract_keywords,

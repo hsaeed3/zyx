@@ -2,11 +2,11 @@ from typing import List, Optional, Union, Any
 from pydantic import BaseModel
 from pathlib import Path
 
-
 # Import the VectorStore and Store classes
 from .vector_store import VectorStore
 from .sql_store import Sql
 from loguru import logger
+from ..types.document import Document  # Import Document from document.py
 
 
 class CombinedSearchResult(BaseModel):
@@ -43,7 +43,7 @@ class Rag:
         self.bm25_store = Sql(db_url=db_url, model_class=model_class)
         self.model_class = model_class
 
-    def add(self, data: Union[str, List[str], BaseModel, List[BaseModel]], metadata: Optional[dict] = None):
+    def add(self, data: Union[str, List[str], Document, List[Document]], metadata: Optional[dict] = None):
         self.vector_store.add(data, metadata)
         self.bm25_store.add(data, metadata)
 

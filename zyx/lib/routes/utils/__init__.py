@@ -2,7 +2,6 @@ __all__ = [
     "convert_to_openai_tool",
     "load_docs",
     "simple_text_loader",
-    "chunk_document",
     "extract_metadata",
     "hash_documents",
     "extract_keywords",
@@ -51,16 +50,6 @@ class simple_text_loader(loader):
 simple_text_loader.init(
     "zyx.lib.utils.data",
     "simple_text_loader"
-)
-
-
-class chunk_document(loader):
-    pass
-
-
-chunk_document.init(
-    "zyx.lib.utils.data",
-    "chunk_document"
 )
 
 

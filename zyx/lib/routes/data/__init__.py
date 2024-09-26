@@ -3,7 +3,10 @@ __all__ = [
 
     "Rag",
     "Sql",
-    "VectorStore"
+    "VectorStore",
+
+    "chunk",
+    "read"
 ]
 
 
@@ -36,3 +39,17 @@ class VectorStore(loader):
 
 
 VectorStore.init("zyx.lib.data.vector_store", "VectorStore")
+
+
+class chunk(loader):
+    pass
+
+
+chunk.init("zyx.lib.data.chunk", "chunk")
+
+
+class read(loader):
+    pass
+
+
+read.init("zyx.lib.data.reader", "read")

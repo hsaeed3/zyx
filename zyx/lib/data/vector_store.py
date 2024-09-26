@@ -4,6 +4,7 @@ from typing import Callable, List, Union, Optional, Literal, Type, Any
 import uuid
 import json
 
+from ..types.document import Document  # Import Document from document.py
 from ..types.client import InstructorMode
 from loguru import logger
 
@@ -13,12 +14,6 @@ class QdrantNode(BaseModel):
     text: str
     embedding: List[float]
     metadata: Optional[dict] = None
-
-
-class Document(BaseModel):
-    document_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    text: str
-    metadata: dict = Field(default_factory=dict)
 
 
 class SearchResponse(BaseModel):
@@ -142,22 +137,22 @@ class VectorStore:
 
     def add(
         self,
-        data: Union[str, List[str], BaseModel, List[BaseModel]],
+        data: Union[str, List[str], Document, List[Document]],
         metadata: Optional[dict] = None,
     ):
         from qdrant_client.http.models import PointStruct
 
         if isinstance(data, str):
             data = [data]
-        elif isinstance(data, BaseModel):
+        elif isinstance(data, Document):
             data = [data]
 
         points = []
         for item in data:
             try:
-                if isinstance(item, BaseModel):
-                    text = json.dumps(item.dict())
-                    metadata = item.dict()
+                if isinstance(item, Document):
+                    text = item.content
+                    metadata = item.metadata
                 else:
                     text = item
 
@@ -168,7 +163,7 @@ class VectorStore:
                     payload={
                         "text": text,
                         "metadata": metadata or {},
-                        "is_model": isinstance(item, BaseModel),
+                        "is_model": isinstance(item, Document),
                     },
                 )
                 points.append(point)
@@ -213,7 +208,7 @@ class VectorStore:
                     embedding = self._get_embedding(chunk)
                     document = Document(
                         document_id=document_id,
-                        text=chunk,
+                        content=chunk,
                         metadata={"file_path": str(path)},
                     )
 
@@ -364,23 +359,14 @@ class VectorStore:
             else:
                 for message in messages:
                     if message.get("role", "") == "system":
-                        message["content"] += (
-                            f" You have retrieved the following relevant information. Use only if relevant \n {str(results_content)}"
-                        )
+                        message["content"] += f"\nAdditional context: {str(results_content)}"
                         if verbose:
-                            logger.info(f"Updated system message: {messages}")
-                        break
-
-        if verbose:
-            logger.info(f"Final messages before ClientParams: {messages}")
-
-        from ..completions.client import Client, completion
-
-        messages = Client.format_messages(messages=messages)
+                            logger.info(f"Updated system message: {message}")
 
         try:
+            from litellm.main import completion as litellm_completion
 
-            result = completion(
+            result = litellm_completion(
                 messages=messages,
                 model=model,
                 tools=tools,
@@ -394,7 +380,6 @@ class VectorStore:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 max_retries=max_retries,
-                verbose=verbose,
             )
 
             if verbose:

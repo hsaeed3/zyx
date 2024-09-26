@@ -7,12 +7,8 @@ import json
 from pathlib import Path
 from loguru import logger
 
+from ..types.document import Document  
 
-
-class Document(SQLModel, table=True):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    text: str
-    metadata: dict = Field(default_factory=dict)
 
 class SearchResult(BaseModel):
     id: str
@@ -40,24 +36,24 @@ class Sql:
     def _load_documents(self):
         with Session(self.engine) as session:
             documents = session.exec(select(Document)).all()
-            self.documents = [doc.text for doc in documents]
+            self.documents = [doc.content for doc in documents]
         self.bm25 = BM25Okapi([doc.split() for doc in self.documents])
 
-    def add(self, data: Union[str, List[str], BaseModel, List[BaseModel]], metadata: Optional[dict] = None):
+    def add(self, data: Union[str, List[str], Document, List[Document]], metadata: Optional[dict] = None):
         with Session(self.engine) as session:
             if isinstance(data, str):
                 data = [data]
-            elif isinstance(data, BaseModel):
+            elif isinstance(data, Document):
                 data = [data]
 
             for item in data:
-                if isinstance(item, BaseModel):
-                    text = json.dumps(item.dict())
-                    metadata = item.dict()
+                if isinstance(item, Document):
+                    text = item.content
+                    metadata = item.metadata
                 else:
                     text = item
 
-                document = Document(text=text, metadata=metadata or {})
+                document = Document(content=text, metadata=metadata or {})
                 session.add(document)
                 self.documents.append(text)
 
@@ -76,8 +72,8 @@ class Sql:
                 document = session.exec(select(Document).offset(idx).limit(1)).first()
                 if document:
                     result = SearchResult(
-                        id=document.id,
-                        text=document.text,
+                        id=document.document_id,
+                        text=document.content,
                         metadata=document.metadata,
                         score=score
                     )
@@ -114,7 +110,7 @@ class Sql:
         with Session(self.engine) as source_session, Session(new_engine) as target_session:
             documents = source_session.exec(select(Document)).all()
             for document in documents:
-                new_document = Document(id=document.id, text=document.text, metadata=document.metadata)
+                new_document = Document(document_id=document.document_id, content=document.content, metadata=document.metadata)
                 target_session.add(new_document)
             target_session.commit()
 

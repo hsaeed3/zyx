@@ -7,11 +7,7 @@ import re
 import json
 import csv
 
-
-class Document:
-    def __init__(self, content: str, metadata: Dict[str, Any]):
-        self.content = content
-        self.metadata = metadata
+from ..types.document import Document
 
 
 def load_docs(file_paths: List[Path], loader_func: Callable[[Path], str]) -> List[str]:
@@ -45,26 +41,6 @@ def simple_text_loader(file_path: Path) -> str:
     return content
 
 
-def chunk_document(doc: Union[str, Document], chunk_size: int = 512) -> List[str]:
-    """
-    Split a document into semantic chunks using semchunk.
-    
-    Args:
-    doc (Union[str, Document]): The document to chunk.
-    chunk_size (int): The target size of each chunk.
-    
-    Returns:
-    List[str]: List of chunked document strings.
-    """
-
-    from semchunk import chunkerify
-    
-    content = convert_document_to_string(doc)
-    chunker = chunkerify("gpt-4", chunk_size=chunk_size)
-    chunks = chunker(content)
-    return chunks
-
-
 def extract_metadata(file_path: Path) -> Dict[str, str]:
     """
     Extract metadata from a filename.
@@ -89,12 +65,12 @@ def extract_metadata(file_path: Path) -> Dict[str, str]:
     return metadata
 
 
-def hash_documents(docs: List[Union[str, Document]]) -> List[str]:
+def hash_documents(docs: Union[str, Document, List[Union[str, Document]]]) -> List[str]:
     """
     Calculate MD5 hashes for a list of document contents in parallel.
     
     Args:
-    docs (List[Union[str, Document]]): List of document contents to hash.
+    docs (Union[str, Document, List[Union[str, Document]]]): List of document contents to hash.
     
     Returns:
     List[str]: List of MD5 hashes.
@@ -104,44 +80,51 @@ def hash_documents(docs: List[Union[str, Document]]) -> List[str]:
         hasher.update(content.encode('utf-8'))
         return hasher.hexdigest()
 
-    contents = [convert_document_to_string(doc) for doc in docs]
+    # Handle single string or Document by converting to list
+    if isinstance(docs, (str, Document)):
+        docs = [docs]
+
+    contents = [convert_to_string(doc) for doc in docs]
     with concurrent.futures.ThreadPoolExecutor() as executor:
         hashes = list(executor.map(calculate_hash, contents))
 
     return hashes
 
 
-def extract_keywords(doc: Union[str, Document], top_n: int = 10) -> List[str]:
+def extract_keywords(doc: Union[str, Document, List[Union[str, Document]]], top_n: int = 10) -> List[str]:
     """
     Extract top keywords from a document using TF-IDF.
     Note: This is a simplified version. For production, consider using libraries like sklearn.
     
     Args:
-    doc (Union[str, Document]): The document content to extract keywords from.
+    doc (Union[str, Document, List[Union[str, Document]]]): The document content to extract keywords from.
     top_n (int): Number of top keywords to extract.
     
     Returns:
     List[str]: List of extracted keywords.
     """
-    content = convert_document_to_string(doc)
+    # Handle single string or Document by converting to list
+    if isinstance(doc, (str, Document)):
+        doc = [doc]
+
+    content = convert_to_string(doc[0])
     words = re.findall(r'\w+', content.lower())
     word_freq = {}
     for word in words:
         word_freq[word] = word_freq.get(word, 0) + 1
     
-    # Simple TF-IDF (assuming this document is the only one in the corpus)
     tfidf = {word: freq / len(words) for word, freq in word_freq.items()}
     top_keywords = sorted(tfidf, key=tfidf.get, reverse=True)[:top_n]
     
     return top_keywords
 
 
-def summarize(doc: Union[str, Document], summary_length: int = 200, model: str = "gpt-3.5-turbo") -> str:
+def summarize(doc: Union[str, Document, List[Union[str, Document]]], summary_length: int = 200, model: str = "gpt-3.5-turbo") -> str:
     """
     Create a summary of the document using a language model.
     
     Args:
-    doc (Union[str, Document]): The document content to summarize.
+    doc (Union[str, Document, List[Union[str, Document]]]): The document content to summarize.
     summary_length (int): Approximate length of the summary in characters.
     model (str): The model to use for completion.
     
@@ -150,7 +133,11 @@ def summarize(doc: Union[str, Document], summary_length: int = 200, model: str =
     """
     from ..completions.client import completion
 
-    content = convert_document_to_string(doc)
+    # Handle single string or Document by converting to list
+    if isinstance(doc, (str, Document)):
+        doc = [doc]
+
+    content = convert_to_string(doc[0])
     prompt = f"""Please provide a concise summary of the following text in approximately {summary_length} characters:
 
 {content}
@@ -161,7 +148,7 @@ Summary:"""
         response = completion(
             messages=[{"role": "user", "content": prompt}],
             model=model,
-            max_tokens=summary_length // 4  # Assuming average token is 4 characters
+            max_tokens=summary_length // 4
         )
         
         if isinstance(response, str):
@@ -173,21 +160,25 @@ Summary:"""
 
     except Exception as e:
         print(f"Error generating summary: {e}")
-        summary = content[:summary_length] + "..."  # Fallback to simple truncation
+        summary = content[:summary_length] + "..."
 
     return summary
 
 
-def export_documents_to_json(docs: List[Union[str, Document]], metadata_list: List[Dict[str, Any]], output_file: Path) -> None:
+def export_documents_to_json(docs: Union[str, Document, List[Union[str, Document]]], metadata_list: List[Dict[str, Any]], output_file: Path) -> None:
     """
     Export a list of document contents and metadata to a JSON file.
     
     Args:
-    docs (List[Union[str, Document]]): List of document contents to export.
+    docs (Union[str, Document, List[Union[str, Document]]]): List of document contents to export.
     metadata_list (List[Dict[str, Any]]): List of metadata dictionaries corresponding to the contents.
     output_file (Path): Path to the output JSON file.
     """
-    contents = [convert_document_to_string(doc) for doc in docs]
+    # Handle single string or Document by converting to list
+    if isinstance(docs, (str, Document)):
+        docs = [docs]
+
+    contents = [convert_to_string(doc) for doc in docs]
     data = [{'content': content, 'metadata': metadata} for content, metadata in zip(contents, metadata_list)]
     with output_file.open('w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
@@ -227,9 +218,9 @@ def generate_document_report(metadata_list: List[Dict[str, Any]], output_file: P
             writer.writerow(metadata)
 
 
-def convert_document_to_string(doc: Union[str, Document]) -> str:
+def convert_to_string(doc: Union[str, Document]) -> str:
     """
-    Convert a Document object to a string if necessary.
+    Convert Document or a string to a string.
     
     Args:
     doc (Union[str, Document]): The document to convert.
@@ -242,7 +233,23 @@ def convert_document_to_string(doc: Union[str, Document]) -> str:
     return doc
 
 
+def convert_to_document(doc: Union[str, Document]) -> Document:
+    """
+    Convert a string to a Document.
+    
+    Args:
+    doc (Union[str, Document]): The input document.
+    
+    Returns:
+    Document: A Document instance.
+    """
+    if isinstance(doc, Document):
+        return doc
+    return Document(content=doc, metadata={"file_type": "text"})
+
+
 if __name__ == "__main__":
+    # Example usage of the functions
     text = """
     John is a software engineer. He works for a tech company.
     Some people say that John is a genius.
@@ -250,6 +257,15 @@ if __name__ == "__main__":
     That is not the kind of behavior we expect from our employees.
     """
 
-    chunks = chunk_document(text)
-    for chunk in chunks:
-        print(chunk)
+    # Example: Hashing documents
+    document = Document(content=text, metadata={"title": "Sample Document"})
+    hashes = hash_documents([document])
+    print(f"MD5 Hashes: {hashes}")
+
+    # Example: Extracting keywords
+    keywords = extract_keywords(document)
+    print(f"Keywords: {keywords}")
+
+    # Example: Summarizing
+    summary = summarize(document)
+    print(f"Summary: {summary}")
