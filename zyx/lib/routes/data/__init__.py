@@ -6,7 +6,8 @@ __all__ = [
     "VectorStore",
 
     "chunk",
-    "read"
+    "read",
+    "scrape"
 ]
 
 
@@ -53,3 +54,10 @@ class read(loader):
 
 
 read.init("zyx.lib.data.reader", "read")
+
+
+class scrape(loader):
+    pass
+
+
+scrape.init("zyx.lib.completions.resources.scrape", "scrape")

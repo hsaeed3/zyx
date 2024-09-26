@@ -14,6 +14,7 @@ __all__ = [
     "optimize_system_prompt",
     "plan",
     "query",
+    "scrape",
     "self_consistency",
     "self_refine",
     "solve",
@@ -47,6 +48,7 @@ from ...completions.resources.least_to_most import least_to_most
 from ...completions.resources.optimize_system_prompt import optimize_system_prompt
 from ...completions.resources.plan import plan
 from ...completions.resources.query import query
+from ...completions.resources.scrape import scrape
 from ...completions.resources.self_consistency import self_consistency
 from ...completions.resources.self_refine import self_refine
 from ...completions.resources.solve import solve

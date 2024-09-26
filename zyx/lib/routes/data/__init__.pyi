@@ -6,7 +6,8 @@ __all__ = [
     "VectorStore",
 
     "chunk",
-    "read"
+    "read",
+    "scrape"
 ]
 
 
@@ -20,3 +21,6 @@ from ...data.vector_store import VectorStore
 
 from ...data.chunk import chunk
 from ...data.reader import read
+
+
+from ...completions.resources.scrape import scrape

@@ -4,44 +4,86 @@ from loguru import logger
 from pathlib import Path
 import mimetypes
 import json
-from typing import Dict, List, Optional, Literal, Union
+from typing import Dict, List, Optional, Literal, Union, Type
 from contextlib import suppress
 import xml.etree.ElementTree as ET
 import PyPDF2
 import docx
 import openpyxl
 import csv
+import requests
+from urllib.parse import urlparse
 
 
 from ..types.document import Document
 
 
 OutputType = Literal["markdown", "text", "json"]
+OutputFormat = Literal["document"]
 
+
+import requests
+from urllib.parse import urlparse
 
 def read(
     path: Union[str, Path],
+    output : Union[Type[str], OutputFormat] = "document",
     target: OutputType = "text",
     verbose: bool = False
-) -> Union[Document, List[Document]]:
+) -> Union[Document, List[Document], str]:
     """
     Reads either a file or a directory and returns the content.
     """
+    path = _download_if_url(path)
     path = Path(path)
     if path.is_file():
-        return _read_single_file(path, target, verbose)
+        return _read_single_file(
+            path = path,
+            output = output,
+            target = target,
+            verbose = verbose
+        )
     elif path.is_dir():
         with ThreadPoolExecutor(max_workers=mp.cpu_count()) as executor:
-            futures = [executor.submit(_read_single_file, file, target, verbose)
+            futures = [executor.submit(_read_single_file, file, output, target, verbose)
                        for file in path.glob('*') if file.is_file()]
             results = [future.result() for future in futures]
         return [result for result in results if result is not None]
     else:
         raise ValueError(f"Invalid path: {path}")
 
+def _download_if_url(path: Union[str, Path]) -> Union[str, Path]:
+    """
+    Downloads the file if the path is a URL and returns the local file path.
+    """
+    if isinstance(path, str) and urlparse(path).scheme in ('http', 'https'):
+        response = requests.get(path)
+        response.raise_for_status()
+
+        # Extract filename from URL or use a default one
+        filename = Path(urlparse(path).path).name
+        if not filename:
+            filename = 'downloaded_file'
+
+        # Try to get extension from Content-Type header if not in filename
+        if not Path(filename).suffix:
+            content_type = response.headers.get('Content-Type')
+            if content_type:
+                extension = mimetypes.guess_extension(content_type.split(';')[0])
+                if extension:
+                    filename += extension
+
+        local_path = Path("/tmp") / filename
+        with open(local_path, 'wb') as file:
+            file.write(response.content)
+        return local_path
+    return path
+
+
 def _read_single_file(
     path: Union[str, Path],
     target: OutputType = "text",
+    output : Union[Type[str], OutputFormat] = "document",
     verbose: bool = False
 ) -> Optional[Document]:
     """
@@ -49,6 +91,28 @@ def _read_single_file(
     """
     path = Path(path)
     mime_type, _ = mimetypes.guess_type(str(path))
+
+    if mime_type is None:
+        # Attempt to detect file type by reading the first few bytes
+        with open(path, 'rb') as f:
+            header = f.read(5)
+            if header == b'%PDF-':
+                mime_type = 'application/pdf'
+            elif header[:2] == b'PK':
+                # Possible DOCX or XLSX (which are zip files)
+                # Read the content types in the file to distinguish
+                f.seek(0)
+                file_content = f.read()
+                if b'word/' in file_content:
+                    mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                elif b'xl/' in file_content:
+                    mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            elif header.startswith(b'\xEF\xBB\xBF') or header.startswith(b'\xFE\xFF') or header.startswith(b'\xFF\xFE'):
+                # Possible text file with BOM
+                mime_type = 'text/plain'
+            else:
+                # Default to binary if no match
+                mime_type = 'application/octet-stream'
 
     try:
         content = None
@@ -82,12 +146,18 @@ def _read_single_file(
             "file_size": path.stat().st_size
         }
 
+        if output == "document":
+            return Document(content=content, metadata=metadata)
+        elif output == str:
+            return content
+
         return Document(content=content, metadata=metadata)
 
     except Exception as e:
         if verbose:
             logger.error(f"Error reading file {path}: {str(e)}")
         return None
+
 
 def _read_pdf(path: Path) -> str:
     """

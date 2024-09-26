@@ -1,35 +1,25 @@
-from typing import Optional, Union
+from typing import Optional, List, Dict, Any
 
 
-def web_search(query: str, max_results: Optional[int] = 5) -> Union[dict, bool]:
-    """A tool that searches the web for information
+def web_search(query: str, max_results: Optional[int] = 5) -> List[Dict[str, Any]]:
+    """
+    A tool that searches the web for information using DuckDuckGo Search API.
 
-    Parameters:
-        - query: The query to search for
-        - max_results: The maximum number of results to return (Default: 5)
+    Args:
+        query (str): The query to search for
+        max_results (int): The maximum number of results to return (Default: 5)
+
+    Returns:
+        - A list of dictionaries containing 'title' and 'href' of the search results
     """
     try:
-        from tavily import TavilyClient
-        import os
+        from duckduckgo_search import DDGS
     except ImportError:
-        print("tavily is not installed, please install it with `pip install tavily-python`")
+        print("duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`")
         raise ImportError
 
-    key = os.getenv("TAVILY_API_KEY")
-
-    if not key:
-        raise ValueError(
-            "TAVILY_API_KEY is not set, please set the environment variable"
-        )
-
-    client = TavilyClient(api_key=key)
-
-    try:
-        return client.search(
-            query=query, search_depth="advanced", max_results=max_results
-        )
-    except Exception as e:
-        return False
+    results = DDGS().text(keywords = query, max_results=max_results)
+    return results
 
 
 if __name__ == "__main__":

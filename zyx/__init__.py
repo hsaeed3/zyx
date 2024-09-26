@@ -2,6 +2,7 @@ __all__ = [
 
     "Agents",
     "Client",
+    "Judge",
     "completion",
     "embeddings",
     "Rag",
@@ -11,6 +12,7 @@ __all__ = [
     "data",
     "llm",
     "multimodal",
+    "tools",
     "utils",
 
     "chunk",
@@ -26,10 +28,13 @@ __all__ = [
     "optimize_system_prompt",
     "plan",
     "query",
+    "scrape",
     "self_consistency",
     "self_refine",
+    "solve",
     "step_back",
     "tree_of_thought",
+    "verifier",
 
     "image",
     "speech",
@@ -43,6 +48,9 @@ __all__ = [
 ]
 
 
+from .lib.completions import tools
+
+
 from .lib.routes.llm import (
     Agents,
     Client,
@@ -54,15 +62,19 @@ from .lib.routes.llm import (
     extract,
     function,
     generate,
+    Judge,
     least_to_most,
     optimize_system_prompt,
     plan,
     query,
+    scrape,
     self_consistency,
     self_refine,
+    solve,
     step_back,
     tree_of_thought,
-    terminal
+    terminal,
+    verifier
 )
 
 

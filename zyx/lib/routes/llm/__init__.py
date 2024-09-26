@@ -14,6 +14,7 @@ __all__ = [
     "optimize_system_prompt",
     "plan",
     "query",
+    "scrape",
     "self_consistency",
     "self_refine",
     "solve",
@@ -124,6 +125,13 @@ class query(loader):
 
 
 query.init("zyx.lib.completions.resources.query", "query")
+
+
+class scrape(loader):
+    pass
+
+
+scrape.init("zyx.lib.completions.resources.scrape", "scrape")
 
 
 class self_consistency(loader):
