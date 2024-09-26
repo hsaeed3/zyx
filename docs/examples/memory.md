@@ -121,9 +121,9 @@ friend) went to the park yesterday.
 
 ## **SqlStore**
 
-::: zyx.lib.data.sql_store.SqlStore
+::: zyx.lib.data.sql_store.Sql
 
 ## **RagStore**
 
-::: zyx.lib.data.rag_store.RagStore
+::: zyx.lib.data.rag_store.Rag
 
