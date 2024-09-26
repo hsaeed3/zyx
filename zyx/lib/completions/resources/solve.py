@@ -12,7 +12,7 @@ def solve(
     client: Literal["openai", "litellm"] = "openai",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
-    mode: clienttypes.InstructorMode = "chat",
+    mode: clienttypes.InstructorMode = "tool_call",
     max_retries: int = 3,
     run_tools: Optional[bool] = True,
     tools: Optional[List[clienttypes.ToolType]] = None,
@@ -101,7 +101,7 @@ def solve(
             )
 
             # Extract the generated content
-            sample = response.choices[0].message['content']
+            sample = response.choices[0].message.content
 
             if verbose:
                 print(f"Sample {attempt}: {sample}")

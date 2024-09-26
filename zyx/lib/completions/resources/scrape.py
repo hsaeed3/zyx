@@ -22,7 +22,7 @@ def web_search(query: str, max_results: Optional[int] = 5) -> List[Dict[str, Any
         print("duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`")
         raise ImportError
 
-    results = DDGS.text(keywords = query, max_results=max_results)
+    results = DDGS().text(keywords = query, max_results=max_results)
     return results
 
 def scrape(
@@ -33,7 +33,7 @@ def scrape(
     client: Literal["openai", "litellm"] = "openai",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
-    mode: clienttypes.InstructorMode = "chat",
+    mode: clienttypes.InstructorMode = "tool_call",
     max_retries: int = 3,
     temperature: float = 0.5,
     run_tools: Optional[bool] = False,
@@ -146,7 +146,7 @@ def scrape(
     )
 
     # Extract the summary
-    summary = response.choices[0].message["content"]
+    summary = response.choices[0].message.content
 
     if verbose:
         print("Generated summary:")

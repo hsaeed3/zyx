@@ -133,7 +133,7 @@ def verifier(
     )
 
     # Extract the content from the response
-    judgment = response.choices[0].message["content"]
+    judgment = response.choices[0].message.content
 
     if verbose:
         print(f"Verifier Judgment:\n{judgment}")

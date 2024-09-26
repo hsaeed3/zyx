@@ -141,6 +141,7 @@ class VectorStore:
         metadata: Optional[dict] = None,
     ):
         from qdrant_client.http.models import PointStruct
+        from semchunk import chunkerify  # Import chunkerify for chunking
 
         if isinstance(data, str):
             data = [data]
@@ -153,20 +154,24 @@ class VectorStore:
                 if isinstance(item, Document):
                     text = item.content
                     metadata = item.metadata
+                    # Chunk the content of the Document
+                    chunker = chunkerify(self.embedding_model, chunk_size=self.vector_size)
+                    chunks = chunker(text)
                 else:
-                    text = item
+                    chunks = [item]
 
-                embedding_vector = self._get_embedding(text)
-                point = PointStruct(
-                    id=str(uuid.uuid4()),
-                    vector=embedding_vector,
-                    payload={
-                        "text": text,
-                        "metadata": metadata or {},
-                        "is_model": isinstance(item, Document),
-                    },
-                )
-                points.append(point)
+                for chunk in chunks:
+                    embedding_vector = self._get_embedding(chunk)
+                    point = PointStruct(
+                        id=str(uuid.uuid4()),
+                        vector=embedding_vector,
+                        payload={
+                            "text": chunk,
+                            "metadata": metadata or {},
+                            "is_model": isinstance(item, Document),
+                        },
+                    )
+                    points.append(point)
             except Exception as e:
                 logger.error(f"Error processing item: {item}. Error: {e}")
 
@@ -364,9 +369,9 @@ class VectorStore:
                             logger.info(f"Updated system message: {message}")
 
         try:
-            from litellm.main import completion as litellm_completion
+            from ..completions.client import completion
 
-            result = litellm_completion(
+            result = completion(
                 messages=messages,
                 model=model,
                 tools=tools,

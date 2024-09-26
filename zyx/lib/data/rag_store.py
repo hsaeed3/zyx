@@ -124,7 +124,6 @@ class Rag:
         else:
             messages.insert(0, {"role": "system", "content": f"You have the following context:\n{context}"})
 
-        # Use VectorStore's completion method (assuming it handles the actual API call)
         return self.vector_store.completion(messages=messages, **kwargs)
 
     def save(self, path: Optional[str] = None):
