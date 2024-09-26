@@ -9,15 +9,18 @@ __all__ = [
     "extract",
     "function",
     "generate",
+    "Judge",
     "least_to_most",
     "optimize_system_prompt",
     "plan",
     "query",
     "self_consistency",
     "self_refine",
+    "solve",
     "step_back",
     "tree_of_thought",
-    "terminal"
+    "terminal",
+    "verifier",
 ]
 
 
@@ -26,6 +29,11 @@ from ...completions.agents import Agents
 
 from ...completions.client import (
     Client, completion
+)
+
+
+from ...completions.resources.judge import (
+    Judge, verifier
 )
 
 
@@ -41,6 +49,7 @@ from ...completions.resources.plan import plan
 from ...completions.resources.query import query
 from ...completions.resources.self_consistency import self_consistency
 from ...completions.resources.self_refine import self_refine
+from ...completions.resources.solve import solve
 from ...completions.resources.step_back import step_back
 from ...completions.resources.tree_of_thought import tree_of_thought
 

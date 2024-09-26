@@ -9,14 +9,17 @@ __all__ = [
     "extract",
     "function",
     "generate",
+    "Judge",
     "least_to_most",
     "optimize_system_prompt",
     "plan",
     "query",
     "self_consistency",
     "self_refine",
+    "solve",
     "step_back",
     "tree_of_thought",
+    "verifier",
 
     "terminal",
 ]
@@ -88,6 +91,13 @@ class generate(loader):
 generate.init("zyx.lib.completions.resources.generate", "generate")
 
 
+class Judge(loader):
+    pass
+
+
+Judge.init("zyx.lib.completions.resources.judge", "Judge")
+
+
 class least_to_most(loader):
     pass
 
@@ -130,6 +140,13 @@ class self_refine(loader):
 self_refine.init("zyx.lib.completions.resources.self_refine", "self_refine")
 
 
+class solve(loader):
+    pass
+
+
+solve.init("zyx.lib.completions.resources.solve", "solve")
+
+
 class step_back(loader):
     pass
 
@@ -149,3 +166,11 @@ class terminal(loader):
 
 
 terminal.init("zyx.lib.app", "terminal")
+
+
+class verifier(loader):
+    pass
+
+
+verifier.init("zyx.lib.completions.resources.judge", "verifier")
+
