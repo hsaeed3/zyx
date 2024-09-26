@@ -13,6 +13,9 @@ __all__ = [
     "multimodal",
     "utils",
 
+    "chunk",
+    "read",
+
     "classify",
     "code",
     "create_system_prompt",
@@ -71,7 +74,7 @@ from .lib.routes.multimodal import (
 
 
 from .lib.routes.data import (
-    embeddings,
+    embeddings, chunk, read,
     Rag, Sql, VectorStore
 )
 
