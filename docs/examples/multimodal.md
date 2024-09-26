@@ -2,12 +2,12 @@
 
 ## .image()
 
-::: zyx._client.multimodal.image
+::: zyx.lib.multimodal.image
 
 ## .speak()
 
-::: zyx._client.multimodal.speak
+::: zyx.lib.multimodal.speak
 
 ## .transcribe()
 
-::: zyx._client.multimodal.transcribe
+::: zyx.lib.multimodal.transcribe

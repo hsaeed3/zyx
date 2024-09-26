@@ -60,7 +60,7 @@ incorporate dialogue, descriptive passages, and internal monologue to create a r
 experience.
 ```
 
-::: zyx._client.llm.create_system_prompt.create_system_prompt
+::: zyx.lib.completions.resources.create_system_prompt.create_system_prompt
 
 ## **.optimize_system_prompt()**
 
@@ -127,4 +127,4 @@ provide a timeline for when you can deliver a more comprehensive response. Your 
 trustworthy assistant, not just a source of quick, potentially inaccurate information.
 ```
 
-::: zyx._client.llm.optimize_system_prompt.optimize_system_prompt
+::: zyx.lib.completions.resources.optimize_system_prompt.optimize_system_prompt

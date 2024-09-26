@@ -115,4 +115,15 @@ friend) went to the park yesterday.
 
 ## **API Reference**
 
-::: zyx._client.memory.Memory
+## **VectorStore (Memory)**
+
+::: zyx.lib.data.vector_store.VectorStore
+
+## **SqlStore**
+
+::: zyx.lib.data.sql_store.SqlStore
+
+## **RagStore**
+
+::: zyx.lib.data.rag_store.RagStore
+

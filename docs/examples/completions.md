@@ -302,4 +302,4 @@ And in the chaotic dance of time and fate, love had authored a new chapter worth
 
 ## API Reference
 
-::: zyx._client.completion.completion
+::: zyx.lib.completions.client.completion

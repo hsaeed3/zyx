@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zyx"
-version = "0.3.08"
+version = "0.3.13"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
@@ -17,7 +17,9 @@ python = "^3.10"
 instructor = "^1.4.2"
 litellm = "^1.46.5"
 # Data / Vector Store
+rank-bm25 = "^0.2.2"
 semchunk = "^2.2.0"
+sqlmodel = "^0.0.22"
 qdrant-client = "^1.11.2"
 # Utilities
 loguru = "^0.7.2"
@@ -33,7 +35,7 @@ uv = "^0.4.12"
 
 
 [tool.poetry.scripts]
-zyx = "zyx.lib.app.cli:terminal"
+zyx = "zyx.lib.app:terminal"
 
 
 [build-system]

@@ -285,4 +285,4 @@ Lets view the file again.
 
 ## **API Reference**
 
-::: zyx._client.agents.Agents
+::: zyx.lib.completions.agents.Agents

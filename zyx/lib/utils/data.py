@@ -59,7 +59,7 @@ def chunk_document(doc: Union[str, Document], chunk_size: int = 512) -> List[str
 
     from semchunk import chunkerify
     
-    content = convert_to_string(doc)
+    content = convert_document_to_string(doc)
     chunker = chunkerify("gpt-4", chunk_size=chunk_size)
     chunks = chunker(content)
     return chunks
@@ -104,7 +104,7 @@ def hash_documents(docs: List[Union[str, Document]]) -> List[str]:
         hasher.update(content.encode('utf-8'))
         return hasher.hexdigest()
 
-    contents = [convert_to_string(doc) for doc in docs]
+    contents = [convert_document_to_string(doc) for doc in docs]
     with concurrent.futures.ThreadPoolExecutor() as executor:
         hashes = list(executor.map(calculate_hash, contents))
 
@@ -123,7 +123,7 @@ def extract_keywords(doc: Union[str, Document], top_n: int = 10) -> List[str]:
     Returns:
     List[str]: List of extracted keywords.
     """
-    content = convert_to_string(doc)
+    content = convert_document_to_string(doc)
     words = re.findall(r'\w+', content.lower())
     word_freq = {}
     for word in words:
@@ -148,9 +148,9 @@ def summarize(doc: Union[str, Document], summary_length: int = 200, model: str =
     Returns:
     str: The summary of the document.
     """
-    from ... import completion
+    from ..completions.client import completion
 
-    content = convert_to_string(doc)
+    content = convert_document_to_string(doc)
     prompt = f"""Please provide a concise summary of the following text in approximately {summary_length} characters:
 
 {content}
@@ -187,7 +187,7 @@ def export_documents_to_json(docs: List[Union[str, Document]], metadata_list: Li
     metadata_list (List[Dict[str, Any]]): List of metadata dictionaries corresponding to the contents.
     output_file (Path): Path to the output JSON file.
     """
-    contents = [convert_to_string(doc) for doc in docs]
+    contents = [convert_document_to_string(doc) for doc in docs]
     data = [{'content': content, 'metadata': metadata} for content, metadata in zip(contents, metadata_list)]
     with output_file.open('w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
@@ -227,7 +227,7 @@ def generate_document_report(metadata_list: List[Dict[str, Any]], output_file: P
             writer.writerow(metadata)
 
 
-def convert_to_string(doc: Union[str, Document]) -> str:
+def convert_document_to_string(doc: Union[str, Document]) -> str:
     """
     Convert a Document object to a string if necessary.
     

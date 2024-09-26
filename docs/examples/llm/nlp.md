@@ -39,7 +39,7 @@ print(classifications)
 ]
 ```
 
-::: zyx._client.llm.classify.classify
+::: zyx.lib.completions.resources.classify.classify
 
 
 ## **.extract()**
@@ -67,7 +67,7 @@ print(extracted)
 Entities(names=['John'], places=['store', 'park'], items=['book', 'pen', 'football'])
 ```
 
-::: zyx._client.llm.extract.extract
+::: zyx.lib.completions.resources.extract.extract
 
 ## **.generate()**
 
@@ -103,4 +103,4 @@ print(books)
 ]
 ```
 
-::: zyx._client.llm.generate.generate
+::: zyx.lib.completions.resources.generate.generate

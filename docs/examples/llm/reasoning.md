@@ -67,7 +67,7 @@ and filling in unique candidates until the puzzle is solved or no further progre
 ```
 </details>
 
-::: zyx._client.llm.plan.plan
+::: zyx.lib.completions.resources.plan.plan
 
 ## **.least_to_most()**
 
@@ -157,7 +157,7 @@ solved.'
 ```
 </details>
 
-::: zyx._client.llm.least_to_most.least_to_most
+::: zyx.lib.completions.resources.least_to_most.least_to_most
 
 ## **.self_consistency()**
 
@@ -369,7 +369,7 @@ verification of the solution."
 ```
 </details>
 
-::: zyx._client.llm.self_refine.self_refine
+::: zyx.lib.completions.resources.self_refine.self_refine
 
 ## **.tree_of_thought()**
 
@@ -516,5 +516,5 @@ Sudoku rules, as they can often lead to more deductions.',
 ```
 </details>
 
-::: zyx._client.llm.tree_of_thought.tree_of_thought
+::: zyx.lib.completions.resources.tree_of_thought.tree_of_thought
 

@@ -35,7 +35,7 @@ print(df.head())
 2   Doe   22
 ```
 
-::: zyx._client.llm.function.function
+::: zyx.lib.completions.resources.function.function
 
 ## **.code()**
 
@@ -54,7 +54,7 @@ logger.info("Hello, world!")
 2024-09-07 23:57:43,792 - zyx_logger - INFO - Hello, world!
 ```
 
-::: zyx._client.llm.code.code
+::: zyx.lib.completions.resources.code.code
 
 
 

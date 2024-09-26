@@ -6,7 +6,7 @@
 
 
 ``` bash
-pip install zyx==0.3.04
+pip install zyx==0.3.04 # For documentation compatibility
 
 zyx
 ```
