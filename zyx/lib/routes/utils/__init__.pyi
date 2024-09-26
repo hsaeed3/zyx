@@ -15,11 +15,9 @@ __all__ = [
     "swap_system_prompt",
     "repair_messages",
     "add_messages",
-
     "logger",
-    "tqdm"
+    "tqdm",
 ]
-
 
 from ...utils.data import (
     load_docs,
@@ -44,7 +42,6 @@ from ...utils.messages import (
 from ...utils.convert_to_openai_tool import (
     convert_to_openai_tool,
 )
-
 
 from loguru import logger
 from tqdm import tqdm

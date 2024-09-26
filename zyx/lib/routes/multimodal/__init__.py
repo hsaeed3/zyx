@@ -1,8 +1,4 @@
-__all__ = [
-    "image",
-    "speech",
-    "transcribe"
-]
+__all__ = ["image", "speech", "transcribe"]
 
 
 from .._loader import loader

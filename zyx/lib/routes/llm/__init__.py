@@ -2,7 +2,6 @@ __all__ = [
     "Agents",
     "Client",
     "completion",
-
     "classify",
     "code",
     "create_system_prompt",
@@ -21,7 +20,6 @@ __all__ = [
     "step_back",
     "tree_of_thought",
     "verifier",
-
     "terminal",
 ]
 
@@ -68,7 +66,9 @@ class create_system_prompt(loader):
     pass
 
 
-create_system_prompt.init("zyx.lib.completions.resources.create_system_prompt", "create_system_prompt")
+create_system_prompt.init(
+    "zyx.lib.completions.resources.create_system_prompt", "create_system_prompt"
+)
 
 
 class extract(loader):
@@ -110,7 +110,9 @@ class optimize_system_prompt(loader):
     pass
 
 
-optimize_system_prompt.init("zyx.lib.completions.resources.optimize_system_prompt", "optimize_system_prompt")
+optimize_system_prompt.init(
+    "zyx.lib.completions.resources.optimize_system_prompt", "optimize_system_prompt"
+)
 
 
 class plan(loader):
@@ -138,7 +140,9 @@ class self_consistency(loader):
     pass
 
 
-self_consistency.init("zyx.lib.completions.resources.self_consistency", "self_consistency")
+self_consistency.init(
+    "zyx.lib.completions.resources.self_consistency", "self_consistency"
+)
 
 
 class self_refine(loader):
@@ -181,4 +185,3 @@ class verifier(loader):
 
 
 verifier.init("zyx.lib.completions.resources.judge", "verifier")
-

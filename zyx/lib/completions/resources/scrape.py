@@ -19,11 +19,14 @@ def web_search(query: str, max_results: Optional[int] = 5) -> List[Dict[str, Any
     try:
         from duckduckgo_search import DDGS
     except ImportError:
-        print("duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`")
+        print(
+            "duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`"
+        )
         raise ImportError
 
-    results = DDGS().text(keywords = query, max_results=max_results)
+    results = DDGS().text(keywords=query, max_results=max_results)
     return results
+
 
 def scrape(
     query: str,
@@ -64,7 +67,7 @@ def scrape(
 
     # Step 1: Use web_search() to get search results
     search_results = web_search(query, max_results=max_results)
-    urls = [result['href'] for result in search_results if 'href' in result]
+    urls = [result["href"] for result in search_results if "href" in result]
 
     if verbose:
         print(f"Found {len(urls)} URLs")
@@ -72,15 +75,15 @@ def scrape(
     # Step 2: Define a function to fetch and parse content from a URL
     def fetch_content(url: str) -> str:
         try:
-            headers = {'User-Agent': 'Mozilla/5.0'}
+            headers = {"User-Agent": "Mozilla/5.0"}
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
             # Extract text content from the page
             # You might want to refine this to get more meaningful content
             texts = soup.find_all(text=True)
             visible_texts = filter(tag_visible, texts)
-            content = u" ".join(t.strip() for t in visible_texts)
+            content = " ".join(t.strip() for t in visible_texts)
             return content
         except Exception as e:
             if verbose:
@@ -89,8 +92,16 @@ def scrape(
 
     # Helper function to filter visible text
     from bs4.element import Comment
+
     def tag_visible(element):
-        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        if element.parent.name in [
+            "style",
+            "script",
+            "head",
+            "title",
+            "meta",
+            "[document]",
+        ]:
             return False
         if isinstance(element, Comment):
             return False
@@ -160,15 +171,16 @@ def scrape(
             "urls": urls,
             "model": model,
             "client": client,
-        }
+        },
     )
 
     return document
 
+
 # Example usage
 if __name__ == "__main__":
     # Replace 'YOUR_API_KEY' with your actual API key
-    api_key = 'YOUR_API_KEY'
+    api_key = "YOUR_API_KEY"
     result_document = scrape(
         query="Latest advancements in renewable energy",
         max_results=5,

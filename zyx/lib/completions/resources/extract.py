@@ -17,9 +17,8 @@ def extract(
     mode: clienttypes.InstructorMode = "markdown_json_mode",
     verbose: bool = False,
 ):
-    
     """An LLM abstraction for extracting structured information from text.
-    
+
     Example:
         ```python
         import zyx
@@ -61,7 +60,9 @@ def extract(
         max_retries=max_retries,
         temperature=temperature,
         verbose=verbose,
-        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+        mode="markdown_json_mode"
+        if model.startswith(("ollama/", "ollama_chat/"))
+        else mode,
         response_model=target,
     )
 

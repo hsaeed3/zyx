@@ -275,10 +275,10 @@ class Agents:
 
     def _update_memory(self, message: dict[str, str]):
         """Updates the memory for the agents.
-        
+
         Parameters:
             - message (dict): The message to update the memory with.
-            
+
         Returns:
             - None
         """
@@ -307,7 +307,7 @@ class Agents:
 
     def _get_context(self) -> List[dict[str, str]]:
         """Gets the context for the agents.
-        
+
         Returns:
             - List[dict[str, str]]: The context for the agents.
         R"""
@@ -337,10 +337,10 @@ class Agents:
 
     def _classify_intent(self, user_input: str) -> UserIntent:
         """Classifies the intent for the agents.
-        
+
         Parameters:
             - user_input (str): The user input to classify.
-            
+
         Returns:
             - UserIntent: The intent for the agents.
         P"""
@@ -374,10 +374,10 @@ class Agents:
 
     def _extract_goal(self, user_input: str) -> str:
         """Extracts the goal for the agents.
-        
+
         Parameters:
             - user_input (str): The user input to extract the goal from.
-            
+
         Returns:
             - str: The goal for the agents.
         P"""
@@ -409,10 +409,10 @@ class Agents:
 
     def _should_use_tool(self, context: List[dict[str, str]]) -> bool:
         """Checks if the agents should use a tool.
-        
+
         Parameters:
             - context (List[dict[str, str]]): The context for the agents.
-            
+
         Returns:
             - bool: Whether the agents should use a tool.
         P"""
@@ -448,10 +448,10 @@ class Agents:
 
     def _should_retrieve(self, context: List[dict[str, str]]) -> bool:
         """Checks if the agents should retrieve information.
-        
+
         Parameters:
             - context (List[dict[str, str]]): The context for the agents.
-            
+
         Returns:
             - bool: Whether the agents should retrieve information.
         P"""
@@ -476,10 +476,10 @@ class Agents:
 
     def _create_tool_model(self, tool: Callable) -> BaseModel:
         """Creates a Pydantic model for a callable tool. Uses the tool's signature to create the model.
-        
+
         Parameters:
             - tool (Callable): The tool to create a model for.
-            
+
         Returns:
             - BaseModel: The Pydantic model for the tool.
         P"""
@@ -495,11 +495,11 @@ class Agents:
 
     def use_tool(self, user_input: str, context: List[dict[str, str]]) -> str:
         """Uses a tool for the agents. Executes the tool and updates the memory.
-        
+
         Parameters:
             - user_input (str): The user input to use the tool with.
             - context (List[dict[str, str]]): The context for the agents.
-            
+
         Returns:
             - str: The response from the agents.
         P"""
@@ -643,7 +643,7 @@ class Agents:
         self, user_input: str, stream: bool
     ) -> Union[str, Generator[str, None, None]]:
         """Handles the chat for the agents.
-        
+
         Parameters:
             - user_input (str): The user input to handle.
             - stream (bool): Whether to stream the response.
@@ -666,7 +666,7 @@ class Agents:
         self, intent: UserIntent, user_input: str, context: List[dict[str, str]]
     ) -> str:
         """Handles the intent for the agents.
-        
+
         Parameters:
             - intent (UserIntent): The intent for the agents.
             - user_input (str): The user input to handle.
@@ -693,7 +693,7 @@ class Agents:
 
     def _generate_chat_response(self, context: List[dict[str, str]]) -> str:
         """Generates the chat response for the agents.
-        
+
         Parameters:
             - context (List[dict[str, str]]): The context for the agents.
 
@@ -722,7 +722,7 @@ class Agents:
 
     def _handle_artifact_generation(self, context: List[dict[str, str]], content: str):
         """Handles the artifact generation for the agents.
-        
+
         Parameters:
             - context (List[dict[str, str]]): The context for the agents.
             - content (str): The content to generate an artifact from.
@@ -740,7 +740,7 @@ class Agents:
         self, intent: UserIntent, user_input: str, context: List[dict[str, str]]
     ) -> Generator[str, None, None]:
         """Streams the response for the agents.
-        
+
         Parameters:
             - intent (UserIntent): The intent for the agents.
             - user_input (str): The user input to handle.
@@ -767,7 +767,7 @@ class Agents:
         self, context: List[dict[str, str]]
     ) -> Generator[str, None, None]:
         """Streams the chat response for the agents.
-        
+
         Parameters:
             - context (List[dict[str, str]]): The context for the agents.
 

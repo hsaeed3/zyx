@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from loguru import logger
 
-from ..types.document import Document  
+from ..types.document import Document
 
 
 class SearchResult(BaseModel):
@@ -16,9 +16,11 @@ class SearchResult(BaseModel):
     metadata: Optional[dict] = None
     score: float
 
+
 class SearchResponse(BaseModel):
     query: str
     results: List[SearchResult] = Field(default_factory=list)
+
 
 class Sql:
     def __init__(
@@ -39,7 +41,11 @@ class Sql:
             self.documents = [doc.content for doc in documents]
         self.bm25 = BM25Okapi([doc.split() for doc in self.documents])
 
-    def add(self, data: Union[str, List[str], Document, List[Document]], metadata: Optional[dict] = None):
+    def add(
+        self,
+        data: Union[str, List[str], Document, List[Document]],
+        metadata: Optional[dict] = None,
+    ):
         with Session(self.engine) as session:
             if isinstance(data, str):
                 data = [data]
@@ -75,7 +81,7 @@ class Sql:
                         id=document.document_id,
                         text=document.content,
                         metadata=document.metadata,
-                        score=score
+                        score=score,
                     )
                     results.append(result)
 
@@ -107,10 +113,16 @@ class Sql:
         new_engine = create_engine(f"sqlite:///{db_path}")
         SQLModel.metadata.create_all(new_engine)
 
-        with Session(self.engine) as source_session, Session(new_engine) as target_session:
+        with Session(self.engine) as source_session, Session(
+            new_engine
+        ) as target_session:
             documents = source_session.exec(select(Document)).all()
             for document in documents:
-                new_document = Document(document_id=document.document_id, content=document.content, metadata=document.metadata)
+                new_document = Document(
+                    document_id=document.document_id,
+                    content=document.content,
+                    metadata=document.metadata,
+                )
                 target_session.add(new_document)
             target_session.commit()
 
@@ -125,6 +137,7 @@ class Sql:
         store = cls(db_url=f"sqlite:///{db_path}")
         store._load_documents()
         return store
+
 
 if __name__ == "__main__":
     # Test the Store class

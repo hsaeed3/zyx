@@ -15,10 +15,12 @@ def web_search(query: str, max_results: Optional[int] = 5) -> List[Dict[str, Any
     try:
         from duckduckgo_search import DDGS
     except ImportError:
-        print("duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`")
+        print(
+            "duckduckgo_search is not installed, please install it with `pip install duckduckgo_search`"
+        )
         raise ImportError
 
-    results = DDGS().text(keywords = query, max_results=max_results)
+    results = DDGS().text(keywords=query, max_results=max_results)
     return results
 
 

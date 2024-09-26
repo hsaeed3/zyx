@@ -29,7 +29,7 @@ class VectorStore:
         vector_size: int = 1536,
         distance: Literal["Cosine", "Euclid", "Dot"] = "Cosine",
         location: Literal["zyxstore.db", ":memory:"] = "zyxstore.db",
-        path : Union[str, Literal["zyxstore.db"]] = None,
+        path: Union[str, Literal["zyxstore.db"]] = None,
         host: str = None,
         port: int = 6333,
         embedding_model: str = "text-embedding-3-small",
@@ -55,7 +55,7 @@ class VectorStore:
             embedding_api_key (str): The API key for the embedding model. Defaults to None.
             embedding_api_base (str): The base URL for the embedding model. Defaults to None.
         """
-        
+
         from qdrant_client.http.models import Distance, VectorParams
         from qdrant_client import QdrantClient
 
@@ -155,7 +155,9 @@ class VectorStore:
                     text = item.content
                     metadata = item.metadata
                     # Chunk the content of the Document
-                    chunker = chunkerify(self.embedding_model, chunk_size=self.vector_size)
+                    chunker = chunkerify(
+                        self.embedding_model, chunk_size=self.vector_size
+                    )
                     chunks = chunker(text)
                 else:
                     chunks = [item]
@@ -185,7 +187,6 @@ class VectorStore:
                 logger.error(f"Error upserting points to collection: {e}")
         else:
             logger.warning("No valid points to add to the collection.")
-
 
     def add_docs(self, file_paths: Union[str, List[str]]):
         from pathlib import Path
@@ -364,7 +365,9 @@ class VectorStore:
             else:
                 for message in messages:
                     if message.get("role", "") == "system":
-                        message["content"] += f"\nAdditional context: {str(results_content)}"
+                        message["content"] += (
+                            f"\nAdditional context: {str(results_content)}"
+                        )
                         if verbose:
                             logger.info(f"Updated system message: {message}")
 
@@ -479,7 +482,7 @@ if __name__ == "__main__":
             collection_name="pydantic_collection",
             vector_size=1536,
             model_class=TestModel,
-            location="zyxstore.db"
+            location="zyxstore.db",
         )
 
         # Add some test models

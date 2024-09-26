@@ -1,4 +1,13 @@
-from textual.widgets import Input, RichLog, Button, Tabs, Tab, RadioSet, RadioButton, Static
+from textual.widgets import (
+    Input,
+    RichLog,
+    Button,
+    Tabs,
+    Tab,
+    RadioSet,
+    RadioButton,
+    Static,
+)
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal, VerticalScroll
 from typing import Any, Union, Optional, List, Callable, Literal
@@ -280,7 +289,7 @@ class ZyxApp(App):
             from .completions.client import Client
 
             super().__init__()
-            self.client = Client(client = "litellm")
+            self.client = Client(client="litellm")
             self.provider = provider
             self.chat_history = (
                 self.client.format_messages(messages) if messages else []
@@ -571,7 +580,7 @@ class ZyxApp(App):
                     )
                     assistant_reply = response.choices[0].message["content"]
                     self.chat_history.append(
-                        {"role": "assistant",                         "content": assistant_reply}
+                        {"role": "assistant", "content": assistant_reply}
                     )
                     response = assistant_reply
 
@@ -714,10 +723,13 @@ class ZyxApp(App):
                 import sounddevice as sd
             except ImportError:
                 from .multimodal import prompt_cli_install
-                print("The zyx library requires the sounddevice library to play audio. Please install it with 'pip install sounddevice'.")
+
+                print(
+                    "The zyx library requires the sounddevice library to play audio. Please install it with 'pip install sounddevice'."
+                )
                 prompt_cli_install("sounddevice")
                 return
-            
+
             audio_array, sample_rate = self.audio_data
             sd.play(audio_array, sample_rate)
             sd.wait()
@@ -726,10 +738,13 @@ class ZyxApp(App):
         try:
             import sounddevice as sd
             import numpy as np
-            
+
         except ImportError:
             from .multimodal import prompt_cli_install
-            print("The zyx library requires the sounddevice library to record audio. Please install it with 'pip install sounddevice'.")
+
+            print(
+                "The zyx library requires the sounddevice library to record audio. Please install it with 'pip install sounddevice'."
+            )
             prompt_cli_install("sounddevice")
             return
 

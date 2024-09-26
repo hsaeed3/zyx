@@ -4,6 +4,4 @@ def generate_image(prompt: str) -> str:
 
     from ...multimodal import image
 
-    return str(image(
-        prompt = prompt
-    ))
+    return str(image(prompt=prompt))

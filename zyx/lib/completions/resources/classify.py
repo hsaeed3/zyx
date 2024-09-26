@@ -7,7 +7,7 @@ def classify(
     inputs: Union[str, List[str]],
     labels: List[str],
     n: int = 1,
-    client : Literal["litellm", "openai"] = "openai",
+    client: Literal["litellm", "openai"] = "openai",
     model: str = "gpt-4o-mini",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
@@ -67,7 +67,7 @@ def classify(
     user_message = "Classify the following text(s):\n\n" + "\n\n".join(inputs)
 
     response = completion(
-        client = client,
+        client=client,
         messages=[
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},
@@ -80,7 +80,9 @@ def classify(
         max_retries=max_retries,
         temperature=temperature,
         verbose=verbose,
-        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+        mode="markdown_json_mode"
+        if model.startswith(("ollama/", "ollama_chat/"))
+        else mode,
         response_model=ResponseModel,
     )
 

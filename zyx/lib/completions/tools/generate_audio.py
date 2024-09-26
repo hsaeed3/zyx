@@ -4,6 +4,4 @@ def generate_audio(prompt: str) -> str:
 
     from ...multimodal import speech
 
-    return str(speech(
-        prompt = prompt
-    ))
+    return str(speech(prompt=prompt))

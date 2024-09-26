@@ -16,7 +16,7 @@ def function(
     base_url: Optional[str] = None,
     mode: clienttypes.InstructorMode = "markdown_json_mode",
     mock: bool = False,
-    return_code : bool = False,
+    return_code: bool = False,
     verbose: bool = False,
     **kwargs,
 ) -> Callable[[Callable], Callable]:
@@ -230,7 +230,7 @@ def function(
                     api_key=api_key,
                     base_url=base_url,
                     response_model=FunctionResponseModel,
-                    mode = "markdown_json_mode"
+                    mode="markdown_json_mode"
                     if model.startswith(("ollama/", "ollama_chat/"))
                     else mode,
                     **kwargs,

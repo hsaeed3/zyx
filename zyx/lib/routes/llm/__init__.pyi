@@ -2,7 +2,6 @@ __all__ = [
     "Agents",
     "Client",
     "completion",
-
     "classify",
     "code",
     "create_system_prompt",
@@ -24,19 +23,11 @@ __all__ = [
     "verifier",
 ]
 
-
 from ...completions.agents import Agents
 
+from ...completions.client import Client, completion
 
-from ...completions.client import (
-    Client, completion
-)
-
-
-from ...completions.resources.judge import (
-    Judge, verifier
-)
-
+from ...completions.resources.judge import Judge, verifier
 
 from ...completions.resources.classify import classify
 from ...completions.resources.code import code
@@ -54,6 +45,5 @@ from ...completions.resources.self_refine import self_refine
 from ...completions.resources.solve import solve
 from ...completions.resources.step_back import step_back
 from ...completions.resources.tree_of_thought import tree_of_thought
-
 
 from ...app import terminal

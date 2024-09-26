@@ -64,13 +64,15 @@ def code(
             },
         ]
         response = completion(
-            client = client,
+            client=client,
             messages=messages,
             model=model,
             api_key=api_key,
             base_url=base_url,
             response_model=CodeGenerationModel,
-            mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+            mode="markdown_json_mode"
+            if model.startswith(("ollama/", "ollama_chat/"))
+            else mode,
             **kwargs,
         )
 

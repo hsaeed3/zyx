@@ -3,9 +3,8 @@ __all__ = [
     "generate_audio",
     "generate_image",
     "web_search",
-    "write_file"
+    "write_file",
 ]
-
 
 from ...completions.tools.execute_code import execute_code
 from ...completions.tools.generate_audio import generate_audio

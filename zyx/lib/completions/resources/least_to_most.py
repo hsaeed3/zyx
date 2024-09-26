@@ -76,7 +76,9 @@ def least_to_most(
         max_retries=max_retries,
         temperature=temperature,
         verbose=verbose,
-        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+        mode="markdown_json_mode"
+        if model.startswith(("ollama/", "ollama_chat/"))
+        else mode,
         response_model=List[str],
     )
 
@@ -111,7 +113,9 @@ def least_to_most(
             max_retries=max_retries,
             temperature=temperature,
             verbose=verbose,
-            mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+            mode="markdown_json_mode"
+            if model.startswith(("ollama/", "ollama_chat/"))
+            else mode,
             response_model=str,
         )
 
@@ -141,7 +145,9 @@ def least_to_most(
         max_retries=max_retries,
         temperature=temperature,
         verbose=verbose,
-        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+        mode="markdown_json_mode"
+        if model.startswith(("ollama/", "ollama_chat/"))
+        else mode,
         response_model=str,
     )
 

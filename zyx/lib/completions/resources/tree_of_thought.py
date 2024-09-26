@@ -65,7 +65,6 @@ def tree_of_thought(
     """
     from ..client import completion
 
-
     def generate_thoughts(current_problem: str, depth: int) -> TreeNode:
         if depth >= max_depth:
             return TreeNode(thought=Thought(content="Reached max depth", score=0))

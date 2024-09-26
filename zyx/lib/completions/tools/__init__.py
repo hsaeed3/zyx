@@ -3,7 +3,7 @@ __all__ = [
     "generate_audio",
     "generate_image",
     "web_search",
-    "write_file"
+    "write_file",
 ]
 
 from .execute_code import execute_code

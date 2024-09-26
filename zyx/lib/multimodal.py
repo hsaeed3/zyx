@@ -4,13 +4,13 @@ from typing import Literal, Optional, Any, Union
 __all__ = ["image", "speak", "transcribe"]
 
 
-def prompt_cli_install(library : str):
+def prompt_cli_install(library: str):
     """Installs a specified library"""
 
     import os
 
     os.system(f"pip install {library}")
-    
+
 
 ModelType = Literal[
     "dall-e-2",
@@ -135,7 +135,6 @@ def image(
             import fal_client
         except ImportError:
             from .. import logger
-        
 
             logger.critical(
                 "The FAL_AI API requires the 'fal-client' package. Please install it with `pip install fal-client`."
@@ -199,7 +198,6 @@ def image(
                     from IPython.display import display, Image
                 except ImportError:
                     from .. import logger
-                
 
                     logger.critical(
                         "The display function requires IPython, which is not included in the base 'zyx' package. Please install it with `pip install ipython`."
@@ -248,7 +246,6 @@ def speech(
         import soundfile as sf
     except ImportError:
         from .. import logger
-    
 
         logger.critical(
             "The [italic]speak[/italic] function requires sounddevice and soundfile, which are not included in the base 'zyx' package. Please install them with [bold]`pip install sounddevice soundfile`[/bold]."
@@ -277,7 +274,6 @@ def speech(
                 from IPython.display import Audio
             except ImportError:
                 from .. import logger
-            
 
                 logger.critical(
                     "The [italic]play[/italic] function requires IPython, which is not included in the base 'zyx' package. Please install it with [bold]`pip install ipython`[/bold]."
@@ -326,7 +322,6 @@ def transcribe(
         import soundfile as sf
     except ImportError:
         from .. import logger
-    
 
         logger.critical(
             "The [italic]speak[/italic] function requires sounddevice and soundfile, which are not included in the base 'zyx' package. Please install them with [bold]`pip install sounddevice soundfile`[/bold]."
@@ -363,10 +358,9 @@ def transcribe(
         return transcription
     except Exception as e:
         return str(e)
-    
+
 
 class MultimodalClient:
-
     @staticmethod
     def image(
         prompt: str,
@@ -398,7 +392,6 @@ class MultimodalClient:
             optimize_prompt=optimize_prompt,
             optimize_prompt_model=optimize_prompt_model,
         )
-    
 
     @staticmethod
     def speech(
@@ -419,7 +412,7 @@ class MultimodalClient:
             filename=filename,
             play=play,
         )
-    
+
     @staticmethod
     def transcribe(
         model: str = "whisper-1",
@@ -439,7 +432,7 @@ class MultimodalClient:
             record=record,
             duration=duration,
         )
-    
+
 
 if __name__ == "__main__":
     print(

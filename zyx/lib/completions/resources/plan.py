@@ -71,7 +71,7 @@ def plan(
         Plan: A Plan object containing a list of generated tasks.
     """
 
-    client = Client(client = "litellm")
+    client = Client(client="litellm")
 
     if process == "least_to_most":
         if isinstance(input, str):

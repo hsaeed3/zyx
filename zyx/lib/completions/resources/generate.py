@@ -7,7 +7,7 @@ def generate(
     target: BaseModel,
     instructions: Optional[str] = None,
     n: int = 1,
-    process: Literal["multi", "sequential"] = "multi", 
+    process: Literal["multi", "sequential"] = "multi",
     client: Literal["litellm", "openai"] = "openai",
     model: str = "gpt-4o-mini",
     api_key: Optional[str] = None,
@@ -76,7 +76,9 @@ def generate(
 
     # Function to generate a single instance
     def generate_single(previous_instances=None):
-        user_message = instructions if instructions else f"Generate 1 instance of the given model."
+        user_message = (
+            instructions if instructions else f"Generate 1 instance of the given model."
+        )
         if previous_instances:
             user_message += f"\nPreviously generated instances: {previous_instances}\nEnsure this new instance is different."
 
@@ -94,13 +96,19 @@ def generate(
             max_retries=max_retries,
             temperature=temperature,
             verbose=verbose,
-            mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+            mode="markdown_json_mode"
+            if model.startswith(("ollama/", "ollama_chat/"))
+            else mode,
             response_model=target,
         )
 
     if n == 1 or process == "multi":
         # Existing logic for single or multi-generation
-        user_message = instructions if instructions else f"Generate {n} instance(s) of the given model."
+        user_message = (
+            instructions
+            if instructions
+            else f"Generate {n} instance(s) of the given model."
+        )
         response = completion(
             client=client,
             messages=[
@@ -115,14 +123,18 @@ def generate(
             max_retries=max_retries,
             temperature=temperature,
             verbose=verbose,
-            mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+            mode="markdown_json_mode"
+            if model.startswith(("ollama/", "ollama_chat/"))
+            else mode,
             response_model=ResponseModel,
         )
         return response if n == 1 else response.items
     else:  # Sequential generation
         results = []
         for _ in range(n):
-            result = generate_single(previous_instances=results[-3:] if results else None)
+            result = generate_single(
+                previous_instances=results[-3:] if results else None
+            )
             results.append(result)
         return results
 

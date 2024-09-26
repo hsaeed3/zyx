@@ -25,11 +25,12 @@ OutputFormat = Literal["document"]
 import requests
 from urllib.parse import urlparse
 
+
 def read(
     path: Union[str, Path],
-    output : Union[Type[str], OutputFormat] = "document",
+    output: Union[Type[str], OutputFormat] = "document",
     target: OutputType = "text",
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Union[Document, List[Document], str]:
     """
     Reads either a file or a directory and returns the content.
@@ -38,43 +39,44 @@ def read(
     path = Path(path)
     if path.is_file():
         return _read_single_file(
-            path = path,
-            output = output,
-            target = target,
-            verbose = verbose
+            path=path, output=output, target=target, verbose=verbose
         )
     elif path.is_dir():
         with ThreadPoolExecutor(max_workers=mp.cpu_count()) as executor:
-            futures = [executor.submit(_read_single_file, file, output, target, verbose)
-                       for file in path.glob('*') if file.is_file()]
+            futures = [
+                executor.submit(_read_single_file, file, output, target, verbose)
+                for file in path.glob("*")
+                if file.is_file()
+            ]
             results = [future.result() for future in futures]
         return [result for result in results if result is not None]
     else:
         raise ValueError(f"Invalid path: {path}")
 
+
 def _download_if_url(path: Union[str, Path]) -> Union[str, Path]:
     """
     Downloads the file if the path is a URL and returns the local file path.
     """
-    if isinstance(path, str) and urlparse(path).scheme in ('http', 'https'):
+    if isinstance(path, str) and urlparse(path).scheme in ("http", "https"):
         response = requests.get(path)
         response.raise_for_status()
 
         # Extract filename from URL or use a default one
         filename = Path(urlparse(path).path).name
         if not filename:
-            filename = 'downloaded_file'
+            filename = "downloaded_file"
 
         # Try to get extension from Content-Type header if not in filename
         if not Path(filename).suffix:
-            content_type = response.headers.get('Content-Type')
+            content_type = response.headers.get("Content-Type")
             if content_type:
-                extension = mimetypes.guess_extension(content_type.split(';')[0])
+                extension = mimetypes.guess_extension(content_type.split(";")[0])
                 if extension:
                     filename += extension
 
         local_path = Path("/tmp") / filename
-        with open(local_path, 'wb') as file:
+        with open(local_path, "wb") as file:
             file.write(response.content)
         return local_path
     return path
@@ -83,8 +85,8 @@ def _download_if_url(path: Union[str, Path]) -> Union[str, Path]:
 def _read_single_file(
     path: Union[str, Path],
     target: OutputType = "text",
-    output : Union[Type[str], OutputFormat] = "document",
-    verbose: bool = False
+    output: Union[Type[str], OutputFormat] = "document",
+    verbose: bool = False,
 ) -> Optional[Document]:
     """
     Reads a single file and returns its content based on the target format.
@@ -94,40 +96,44 @@ def _read_single_file(
 
     if mime_type is None:
         # Attempt to detect file type by reading the first few bytes
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             header = f.read(5)
-            if header == b'%PDF-':
-                mime_type = 'application/pdf'
-            elif header[:2] == b'PK':
+            if header == b"%PDF-":
+                mime_type = "application/pdf"
+            elif header[:2] == b"PK":
                 # Possible DOCX or XLSX (which are zip files)
                 # Read the content types in the file to distinguish
                 f.seek(0)
                 file_content = f.read()
-                if b'word/' in file_content:
-                    mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                elif b'xl/' in file_content:
-                    mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            elif header.startswith(b'\xEF\xBB\xBF') or header.startswith(b'\xFE\xFF') or header.startswith(b'\xFF\xFE'):
+                if b"word/" in file_content:
+                    mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                elif b"xl/" in file_content:
+                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            elif (
+                header.startswith(b"\xef\xbb\xbf")
+                or header.startswith(b"\xfe\xff")
+                or header.startswith(b"\xff\xfe")
+            ):
                 # Possible text file with BOM
-                mime_type = 'text/plain'
+                mime_type = "text/plain"
             else:
                 # Default to binary if no match
-                mime_type = 'application/octet-stream'
+                mime_type = "application/octet-stream"
 
     try:
         content = None
         match mime_type:
-            case 'application/pdf':
+            case "application/pdf":
                 content = _read_pdf(path)
-            case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                 content = _read_docx(path)
-            case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 content = _read_xlsx(path)
-            case 'text/csv':
+            case "text/csv":
                 content = _read_csv(path)
-            case _ if mime_type and mime_type.startswith('text/'):
+            case _ if mime_type and mime_type.startswith("text/"):
                 content = _read_text(path)
-            case 'application/xml':
+            case "application/xml":
                 content = _read_xml(path)
             case _:
                 content = _read_binary(path)
@@ -143,7 +149,7 @@ def _read_single_file(
         metadata = {
             "file_name": path.name,
             "file_type": mime_type or "unknown",
-            "file_size": path.stat().st_size
+            "file_size": path.stat().st_size,
         }
 
         if output == "document":
@@ -164,7 +170,7 @@ def _read_pdf(path: Path) -> str:
     Extracts text from a PDF, including proper formatting for tables and paragraphs.
     """
     try:
-        with open(path, 'rb') as file:
+        with open(path, "rb") as file:
             reader = PyPDF2.PdfReader(file)
             text = ""
             for page_num in range(len(reader.pages)):
@@ -177,6 +183,7 @@ def _read_pdf(path: Path) -> str:
     except Exception as e:
         logger.error(f"Error reading PDF {path}: {str(e)}")
         return ""
+
 
 def _format_pdf_text(extracted_text: str) -> str:
     """
@@ -196,6 +203,7 @@ def _format_pdf_text(extracted_text: str) -> str:
             formatted_lines.append(line)
     return "\n".join(formatted_lines)
 
+
 def _read_docx(path: Path) -> str:
     """
     Reads text from a DOCX file, including tables.
@@ -205,17 +213,20 @@ def _read_docx(path: Path) -> str:
         full_text = []
         for para in doc.paragraphs:
             full_text.append(para.text)
-        
+
         # Handle tables in the DOCX file
         for table in doc.tables:
             for row in table.rows:
                 row_data = [cell.text for cell in row.cells]
-                full_text.append(" | ".join(row_data))  # Simple table formatting with '|'
+                full_text.append(
+                    " | ".join(row_data)
+                )  # Simple table formatting with '|'
 
         return "\n".join(full_text)
     except Exception as e:
         logger.error(f"Error reading DOCX {path}: {str(e)}")
         return ""
+
 
 def _read_xlsx(path: Path) -> List[List[str]]:
     """
@@ -226,35 +237,40 @@ def _read_xlsx(path: Path) -> List[List[str]]:
             sheet = workbook.active
             data = []
             for row in sheet.iter_rows():
-                row_data = [str(cell.value) if cell.value is not None else "" for cell in row]
+                row_data = [
+                    str(cell.value) if cell.value is not None else "" for cell in row
+                ]
                 data.append(row_data)
             return data
     except Exception as e:
         logger.error(f"Error reading XLSX {path}: {str(e)}")
         return []
 
+
 def _read_csv(path: Path) -> List[List[str]]:
     """
     Reads CSV data.
     """
     try:
-        with open(path, 'r', newline='', encoding='utf-8') as csvfile:
+        with open(path, "r", newline="", encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile)
             return list(reader)
     except Exception as e:
         logger.error(f"Error reading CSV {path}: {str(e)}")
         return []
 
+
 def _read_text(path: Path) -> str:
     """
     Reads plain text files.
     """
     try:
-        with open(path, 'r', encoding='utf-8') as file:
+        with open(path, "r", encoding="utf-8") as file:
             return file.read()
     except Exception as e:
         logger.error(f"Error reading text file {path}: {str(e)}")
         return ""
+
 
 def _read_xml(path: Path) -> Dict:
     """
@@ -268,8 +284,10 @@ def _read_xml(path: Path) -> Dict:
         logger.error(f"Error reading XML {path}: {str(e)}")
         return {}
 
+
 def _read_binary(path: Path) -> str:
     return f"Binary file: {path.name}"
+
 
 def _element_to_dict(element):
     """
@@ -282,6 +300,7 @@ def _element_to_dict(element):
         else:
             result[child.tag] = _element_to_dict(child)
     return result
+
 
 def _to_markdown(content: Union[str, List, Dict]) -> str:
     """

@@ -1,5 +1,4 @@
 __all__ = [
-
     "Agents",
     "Client",
     "Judge",
@@ -8,16 +7,13 @@ __all__ = [
     "Rag",
     "Sql",
     "VectorStore",
-    
     "data",
     "llm",
     "multimodal",
     "tools",
     "utils",
-
     "chunk",
     "read",
-
     "classify",
     "code",
     "create_system_prompt",
@@ -35,16 +31,12 @@ __all__ = [
     "step_back",
     "tree_of_thought",
     "verifier",
-
     "image",
     "speech",
     "transcribe",
-
     "terminal",
-
     "logger",
-    "tqdm"
-
+    "tqdm",
 ]
 
 
@@ -55,7 +47,6 @@ from .lib.routes.llm import (
     Agents,
     Client,
     completion,
-
     classify,
     code,
     create_system_prompt,
@@ -74,35 +65,17 @@ from .lib.routes.llm import (
     step_back,
     tree_of_thought,
     terminal,
-    verifier
+    verifier,
 )
 
 
-from .lib.routes.multimodal import (
-    image,
-    speech,
-    transcribe
-)
+from .lib.routes.multimodal import image, speech, transcribe
 
 
-from .lib.routes.data import (
-    embeddings, chunk, read,
-    Rag, Sql, VectorStore
-)
+from .lib.routes.data import embeddings, chunk, read, Rag, Sql, VectorStore
 
 
-from .lib.routes.utils import (
-    logger,
-    tqdm
-)
+from .lib.routes.utils import logger, tqdm
 
 
-from .lib.routes import (
-    data,
-    llm,
-    multimodal,
-    utils
-)
-
-
-
+from .lib.routes import data, llm, multimodal, utils

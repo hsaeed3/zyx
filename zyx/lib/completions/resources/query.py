@@ -5,6 +5,7 @@ from typing import List, Optional, Union, Literal, Any, Type
 from ..client import completion
 from ...types import client as client_types
 
+
 class EnumAgentRoles(Enum):
     SUPERVISOR = "supervisor"
     PLANNER = "planner"
@@ -14,6 +15,7 @@ class EnumAgentRoles(Enum):
     CHAT = "chat"
     TOOL = "tool"
     RETRIEVER = "retriever"
+
 
 class EnumWorkflowState(Enum):
     IDLE = "idle"
@@ -27,14 +29,17 @@ class EnumWorkflowState(Enum):
     USING_TOOL = "using_tool"
     RETRIEVING = "retrieving"
 
+
 class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     description: str
+
 
 class Plan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     goal: str
     tasks: List[Task] = Field(default_factory=list)
+
 
 class Workflow(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -46,9 +51,11 @@ class Workflow(BaseModel):
     completed_tasks: List[Task] = Field(default_factory=list)
     task_queue: List[Task] = Field(default_factory=list)
 
+
 class UserIntent(BaseModel):
     intent: str
     confidence: float
+
 
 class QueryParams(BaseModel):
     model: str = "gpt-4o-mini"
@@ -70,48 +77,71 @@ class QueryParams(BaseModel):
     stream: Optional[bool] = False
     verbose: Optional[bool] = False
 
+
 class TaskCompletionCheck(BaseModel):
     is_complete: bool
 
+
 def classify_intent(user_input: str, params: QueryParams) -> UserIntent:
-    intent_labels = ["chat", "plan", "execute", "evaluate", "generate", "reflect", "use_tool", "retrieve"]
+    intent_labels = [
+        "chat",
+        "plan",
+        "execute",
+        "evaluate",
+        "generate",
+        "reflect",
+        "use_tool",
+        "retrieve",
+    ]
     classification = completion(
         client="openai",
         messages=[
-            {"role": "system", "content": "Classify the following text into one of the intents: " + ", ".join(intent_labels)},
-            {"role": "user", "content": user_input}
+            {
+                "role": "system",
+                "content": "Classify the following text into one of the intents: "
+                + ", ".join(intent_labels),
+            },
+            {"role": "user", "content": user_input},
         ],
         model=params.model,
         api_key=params.api_key,
         base_url=params.base_url,
         temperature=params.temperature,
         mode=params.mode,
-        response_model=UserIntent
+        response_model=UserIntent,
     )
     return classification
+
 
 def generate_plan(goal: str, params: QueryParams) -> Plan:
     plan_response = completion(
         client="openai",
         messages=[
-            {"role": "system", "content": "Generate a plan for the following goal: " + goal},
-            {"role": "user", "content": goal}
+            {
+                "role": "system",
+                "content": "Generate a plan for the following goal: " + goal,
+            },
+            {"role": "user", "content": goal},
         ],
         model=params.model,
         api_key=params.api_key,
         base_url=params.base_url,
         temperature=params.temperature,
         mode=params.mode,
-        response_model=Plan
+        response_model=Plan,
     )
     return plan_response
+
 
 def execute_task(task: Task, params: QueryParams) -> str:
     execute_response = completion(
         client="openai",
         messages=[
-            {"role": "system", "content": "Execute the following task: " + task.description},
-            {"role": "user", "content": task.description}
+            {
+                "role": "system",
+                "content": "Execute the following task: " + task.description,
+            },
+            {"role": "user", "content": task.description},
         ],
         model=params.model,
         api_key=params.api_key,
@@ -121,21 +151,27 @@ def execute_task(task: Task, params: QueryParams) -> str:
     )
     return execute_response.choices[0].message.content
 
+
 def check_task_completion(task: Task, result: str, params: QueryParams) -> bool:
     check_response = completion(
         client="openai",
         messages=[
-            {"role": "system", "content": "Check if the following task is complete: " + task.description},
-            {"role": "user", "content": result}
+            {
+                "role": "system",
+                "content": "Check if the following task is complete: "
+                + task.description,
+            },
+            {"role": "user", "content": result},
         ],
         model=params.model,
         api_key=params.api_key,
         base_url=params.base_url,
         temperature=params.temperature,
         mode=params.mode,
-        response_model=TaskCompletionCheck
+        response_model=TaskCompletionCheck,
     )
     return check_response.is_complete
+
 
 def query(
     prompt: str,
@@ -156,7 +192,7 @@ def query(
     presence_penalty: Optional[float] = None,
     stop: Optional[List[str]] = None,
     stream: Optional[bool] = False,
-    verbose: Optional[bool] = False
+    verbose: Optional[bool] = False,
 ) -> str:
     params = QueryParams(
         model=model,
@@ -176,7 +212,7 @@ def query(
         presence_penalty=presence_penalty,
         stop=stop,
         stream=stream,
-        verbose=verbose
+        verbose=verbose,
     )
 
     workflow = Workflow()
@@ -206,8 +242,14 @@ def query(
                 reflection_response = completion(
                     client="openai",
                     messages=[
-                        {"role": "system", "content": "Reflect on the current state of the workflow and suggest improvements or next steps."},
-                        {"role": "user", "content": "Reflect on the current state of the workflow and suggest improvements or next steps."}
+                        {
+                            "role": "system",
+                            "content": "Reflect on the current state of the workflow and suggest improvements or next steps.",
+                        },
+                        {
+                            "role": "user",
+                            "content": "Reflect on the current state of the workflow and suggest improvements or next steps.",
+                        },
                     ],
                     model=params.model,
                     api_key=params.api_key,
@@ -220,8 +262,14 @@ def query(
         final_summary = completion(
             client="openai",
             messages=[
-                {"role": "system", "content": "Summarize the results of the executed plan."},
-                {"role": "user", "content": "Summarize the results of the executed plan."}
+                {
+                    "role": "system",
+                    "content": "Summarize the results of the executed plan.",
+                },
+                {
+                    "role": "user",
+                    "content": "Summarize the results of the executed plan.",
+                },
             ],
             model=params.model,
             api_key=params.api_key,
@@ -236,8 +284,11 @@ def query(
         response = completion(
             client="openai",
             messages=[
-                {"role": "system", "content": "Handle the following user input: " + prompt},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "Handle the following user input: " + prompt,
+                },
+                {"role": "user", "content": prompt},
             ],
             model=params.model,
             api_key=params.api_key,
@@ -246,7 +297,7 @@ def query(
             mode=params.mode,
         )
         return response.choices[0].message.content
-    
+
 
 if __name__ == "__main__":
-    print(query("I want to learn how to code", verbose = True))
+    print(query("I want to learn how to code", verbose=True))

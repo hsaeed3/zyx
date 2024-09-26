@@ -51,7 +51,7 @@ def verifier(
     print("\nFinal Judgment from verifier function:")
     print(judgment)
     ```
-    
+
     Args:
         prompt (str): The initial prompt or user question.
         assistant_responses (List[str]): A list containing two responses from different assistants/models.
@@ -69,12 +69,13 @@ def verifier(
         tool_choice (Optional[Literal["none", "auto", "required"]]): The tool choice to use for the verifier.
         verbose (Optional[bool]): Whether to print the verifier's output.
         **kwargs: Additional keyword arguments to pass to the verifier.
-    
+
     Returns:
         str: The judgment of the verifier.
     """
 
     from ..client import completion
+
     if user_question is None:
         user_question = prompt
 
@@ -215,7 +216,7 @@ class Judge:
             assistant_responses (List[str]): A list containing two responses from different assistants/models.
             user_question (Optional[str]): (Optional) The user question if different from the prompt.
             **kwargs: Additional keyword arguments to pass to the judge.
-        
+
         Returns:
             str: The judgment of the judge.
         """
@@ -253,7 +254,7 @@ class Judge:
             assistant_responses (List[str]): A list of responses from different assistants/models.
             user_question (Optional[str]): (Optional) The user question if different from the prompt.
             **kwargs: Additional keyword arguments to pass to the judge.
-        
+
         Returns:
             str: The judgment of the judge.
         """
@@ -262,7 +263,9 @@ class Judge:
 
         num_responses = len(assistant_responses)
         if num_responses < 2:
-            raise ValueError("At least two assistant responses are required for comparison.")
+            raise ValueError(
+                "At least two assistant responses are required for comparison."
+            )
 
         # Prepare the messages for the LLM judge
         assistant_content = ""
@@ -339,7 +342,7 @@ class Judge:
             assistant_responses_list (List[List[str]]): A list of lists of responses from different assistants/models.
             user_questions (Optional[List[str]]): (Optional) A list of user questions if different from the prompts.
             **kwargs: Additional keyword arguments to pass to the judge.
-        
+
         Returns:
             List[str]: A list of judgments for each prompt.
         """
@@ -347,10 +350,14 @@ class Judge:
             user_questions = prompts
 
         if not (len(prompts) == len(assistant_responses_list) == len(user_questions)):
-            raise ValueError("prompts, assistant_responses_list, and user_questions must have the same length.")
+            raise ValueError(
+                "prompts, assistant_responses_list, and user_questions must have the same length."
+            )
 
         judgments = []
-        for prompt, responses, question in zip(prompts, assistant_responses_list, user_questions):
+        for prompt, responses, question in zip(
+            prompts, assistant_responses_list, user_questions
+        ):
             judgment = self.judge_multiple(
                 prompt=prompt,
                 assistant_responses=responses,
@@ -363,10 +370,13 @@ class Judge:
 
         return judgments
 
+
 # Example usage
 if __name__ == "__main__":
     # Use the standalone verifier function for a single use case
-    prompt = "Explain the significance of the Emancipation Proclamation in American history."
+    prompt = (
+        "Explain the significance of the Emancipation Proclamation in American history."
+    )
 
     assistant_response_a = (
         "The Emancipation Proclamation, issued by President Abraham Lincoln on January 1, 1863, "
@@ -418,7 +428,11 @@ if __name__ == "__main__":
 
     multiple_judgment = judge.judge_multiple(
         prompt=prompt,
-        assistant_responses=[assistant_response_a, assistant_response_b, assistant_response_c],
+        assistant_responses=[
+            assistant_response_a,
+            assistant_response_b,
+            assistant_response_c,
+        ],
     )
 
     print("\nFinal Judgment from judge_multiple method:")
@@ -433,12 +447,12 @@ if __name__ == "__main__":
     assistant_responses_list = [
         [
             "Climate change is primarily caused by the increase in greenhouse gases like carbon dioxide in the atmosphere due to human activities such as burning fossil fuels, deforestation, and industrial processes.",
-            "The main causes of climate change are natural phenomena like volcanic eruptions and variations in solar radiation."
+            "The main causes of climate change are natural phenomena like volcanic eruptions and variations in solar radiation.",
         ],
         [
             "Photosynthesis is the process by which green plants use sunlight to convert carbon dioxide and water into glucose and oxygen.",
-            "Photosynthesis is how plants make food."
-        ]
+            "Photosynthesis is how plants make food.",
+        ],
     ]
 
     batch_judgments = judge.batch_judge(
