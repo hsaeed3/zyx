@@ -282,7 +282,7 @@ last decision point.',
 ```
 </details>
 
-::: zyx._client.llm.self_consistency.self_consistency
+::: zyx.lib.completions.resources.self_consistency.self_consistency
 
 ## **.self_refine()**
 
