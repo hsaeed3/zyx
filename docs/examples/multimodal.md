@@ -6,7 +6,7 @@
 
 ## .speak()
 
-::: zyx.lib.multimodal.speak
+::: zyx.lib.multimodal.speech
 
 ## .transcribe()
 
