@@ -1,81 +1,85 @@
 __all__ = [
-    "Agents",
-    "Client",
-    "Judge",
-    "completion",
-    "embeddings",
-    "Rag",
-    "Sql",
-    "VectorStore",
-    "data",
+    # utils
+    "logger",
+
+    # modules
     "llm",
-    "multimodal",
+    "agents",
+    "data",
     "tools",
-    "utils",
+
+    # Core (Types)
+    "BaseModel",
+    "Field",
+    "Document",
+
+    # data - core
+    "Memory",
+
+    # data - tools
+    "embeddings",
     "chunk",
     "read",
+
+    # llm - core
+    "Client",
+    "completion",
+
+    # llm - base functions
     "classify",
     "code",
-    "create_system_prompt",
     "extract",
     "function",
     "generate",
-    "least_to_most",
-    "optimize_system_prompt",
+    "system_prompt",
+
+    # llm - agentic reasoning
+    "judge",
     "plan",
     "query",
     "scrape",
-    "self_consistency",
-    "self_refine",
     "solve",
-    "step_back",
-    "tree_of_thought",
-    "verifier",
+
+    # ext - multimodal
     "image",
-    "speech",
+    "audio",
     "transcribe",
-    "terminal",
-    "logger",
-    "tqdm",
+
+    # ext - app
+    "app",
 ]
 
 
-from .lib.completions import tools
+# utils
+from .lib.utils.logger import logger
 
+# modules
+from .lib.router import (
+    llm, agents, data
+)
+from .resources import tools
 
-from .lib.routes.llm import (
-    Agents,
-    Client,
-    completion,
-    classify,
-    code,
-    create_system_prompt,
-    extract,
-    function,
-    generate,
-    Judge,
-    least_to_most,
-    optimize_system_prompt,
-    plan,
-    query,
-    scrape,
-    self_consistency,
-    self_refine,
-    solve,
-    step_back,
-    tree_of_thought,
-    terminal,
-    verifier,
+# data
+from .lib.router.data import (
+    Memory,
+    Document,
+    embeddings,
+    chunk, read
 )
 
+# llm - base & core
+from .lib.router.llm import (
+    Client, completion,
+    classify, code, extract, function, generate, system_prompt
+)
 
-from .lib.routes.multimodal import image, speech, transcribe
+# llm - agents
+from .lib.router.agents import (
+    judge, plan, query, scrape, solve
+)
 
-
-from .lib.routes.data import embeddings, chunk, read, Rag, Sql, VectorStore
-
-
-from .lib.routes.utils import logger, tqdm
-
-
-from .lib.routes import data, llm, multimodal, utils
+# ext
+from .lib.router.ext import (
+    BaseModel, Field,
+    app, image, audio, transcribe
+)

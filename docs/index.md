@@ -1,34 +1,56 @@
-# **zyx**
+# `zyx`
+
+---
+
+### An Easier Way to Work With LLMs
+
+`zyx` is a python package built with the sole purpose of providing an intutive
+and simple API when working and building with LLMs. It aims to remove the
+current boilerplate of most LLM libraries, through *quick-use* functions and
+modules.
 
 
-[!NOTICE]
-> This documentation is for `zyx` version `0.3.04 and below`. New docs will be added soon.
+**The point of `zyx` is not to be a flashy new library, everything here can be
+done without much effort, it just helps you do them quicker.** `zyx` is a developer
+focused library, it's built so your ideas come out easier.
 
 
-``` bash
-pip install zyx==0.3.04 # For documentation compatibility
+The framework is built off of incredibly well-built libraries, most notably:
 
-zyx
+- [Instructor](https://github.com/jxnl/instructor)
+- [LiteLLM](https://github.com/BerriAI/litellm)
+- [Chroma](https://github.com/chroma-core/chroma)
+- [Pydantic](https://github.com/pydantic/pydantic)
+
+---
+
+## Quick Start
+
+### Installation
+
+Install `zyx` using pip:
+
+```bash
+pip install --upgrade zyx
 ```
 
-</br>
+---
 
-<code>zyx</code> is a **hyper-fast**, **fun**, & **ease-of-use** focused Python library for using LLMs. </br>
-It was created on top of <code>Instructor</code> and <code>LiteLLM</code>, and focuses to provide an abstraction free framework. </br>
-The library uses methods such as lazy-loading to provide a single import for all its features. This library is not meant to be used as a production-ready solution, but rather as a tool to quickly & easily experiment with LLMs. 
+```python hl_lines="16"
+import zyx
 
-Some of the key features of <code>zyx</code> include:
+def my_favorite_food(name : str) -> str:
+    """Returns the user's favorite food."""
+    return "pizza"
 
-- **Universal Completion Client** : A singular function that handles *all LiteLLM compatible models*, *Pydantic structured outputs*, *tool calling & execution*, *prompt optimization*, *streaming* & *vision support*.
-- **A Large Collection of LLM Powered Functions** : This library is inspired by <code>MarvinAI</code>, and it's quick LLM function style framework and has built upon it vastly.
-- **Easy to Use Memory (Rag)** : A <code>Qdrant</code> wrapper, built to support easy *store creation*, *text/document/pydantic model data insertion*, *universal embedding provider support*, *LLM completions for RAG* & more.
-- **Multimodel Generations** : Supports generations for **images**, **audio** & **speech** transcription.
-- **Functional / Easy Access Terminal Client** : A terminal client built using <code>textual</code> to allow for easy access to <code>zyx</code> features.
-- ***New* Experimental Conversational Multi-Agent Framework** : Built from the ground up using <code>Instructor</code>, the agentic framework provides a solution towards conversationally state managed agents, with *task creation*, *custom tool use*, *artifact creation* & more.
+zyx.completion(
+    "What is my favorite food?",
+    model = "gpt-4o-mini", # Any LiteLLM model is compatible
+    tools = [my_favorite_food], # Any function, basemodel or openai tool
+    run_tools = True # Optional: automatically executes tools
+    # response_model = BaseModel # Optional: Pydantic model for structured outputs
+    # mode = "tool_call" # Optional: Instructor completion mode (refer to instructor docs)
+)
 
-## **Getting Started**
-
-### Links
-
-- [Getting Started](examples/getting-started.md)
-
+# "Your favorite food is pizza!"
+```

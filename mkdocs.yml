@@ -1,122 +1,74 @@
-site_name: zyx
-# PyPI URL
-repo_name: zyx
-repo_url: https://github.com/hsaeed3/zyx
+site_name: zyx - an llm framework
+site_url: https://zyx.hammad.fun
 
-plugins:
-  - search
-  - social
-  - tags
-  - mkdocstrings
+repo_url: https://github.com/hsaeed3/zyx
 
 theme:
   name: material
 
+  icon:
+    logo: material/lightning-bolt
+  
+  favicon: fonts/icon.svg
+
   features:
-    # Add-ons
-    # Content
-    - content.tabs
-    - content.tables
-    - content.details
-    - content.diagrams
-    - content.diagrams.mermaid
-    - content.code
-    - content.code.line_numbers
-    - content.code.select
-    - content.code.annotate
-    - content.code.copy
-    - content.code.line_numbers
-    - content.code.line_spans
-    - content.code.line_spans.superfences
-
-    # Badges
-    - badges
-
-    # Icons
-    - icons.font
-
-    # Navigation
     - navigation.instant
     - navigation.instant.prefetch
     - navigation.sections
-    - navigation.sections.smooth_scroll
-    - navigation.sections.sticky
-    - navigation.sections.tabs
-    - navigation.sections.scroll_spy
-    - navigation.sections.tabs.sticky
-    - navigation.sections.tabs.sticky.scroll_spy
-
-    - navigation.header.links
-    - navigation.header.links.icon
-    - navigation.header.links.icon.font
-
-    - navigation.footer.links
-    - navigation.footer
-
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - navigation.path
     - toc.follow
     - toc.integrate
-    - toc.integrate.smooth_scroll
-
-    - search
-    - search.highlight
+    - navigation.top
     - search.suggest
-    - search.indexing
+    - search.highlight
+    - search.share
+    - header.autohide
+    - navigation.footer
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
 
-  icon:
-    logo: material/lightning-bolt
+  palette: 
 
-  font:
-    text: DM Sans
-    code: JetBrains Mono
+  # Palette toggle for light mode
+  - scheme: home-light
+    toggle:
+      icon: material/brightness-7 
+      name: Switch to dark mode
 
-  palette:
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-      primary: ivory
-      accent: slate
+  # Palette toggle for dark mode
+  - scheme: home-dark
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
 
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: light
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-      primary: ivory
-      accent: slate
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/hsaeed3/zyx
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/hsaeed3/
+    - icon: fontawesome/brands/spotify
+      link: https://open.spotify.com/user/hxmmad
+
+plugins:
+  - mkdocstrings
+  - search
+  - tags
 
 markdown_extensions:
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - abbr
-  - attr_list
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences
 
 extra_css:
-  - stylesheets/extra.css
-
-nav:
-  - zyx: index.md
-  - Examples:
-    - Getting Started: examples/getting-started.md
-    - Global LLM Completion Function: examples/completions.md
-    - Memory (Rag): examples/memory.md
-    - Agents: examples/agents.md
-    - Multimodal Generations: examples/multimodal.md
-    - LLM Powered Functions:
-      - Generative Code Functions: examples/llm/code.md
-      - NLP Functions: examples/llm/nlp.md
-      - Create Optimized System Prompts: examples/llm/prompts.md
-      - Reasoning Based Implemenations (From Research Papers): examples/llm/reasoning.md
+  - stylesheets/extras.css
