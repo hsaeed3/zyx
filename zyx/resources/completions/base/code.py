@@ -1,14 +1,7 @@
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 from pydantic import BaseModel, Field
-from typing import (
-    Any,
-    Literal,
-    Optional
-)
+from typing import Any, Literal, Optional
 import traceback
 import tempfile
 import sys
@@ -28,9 +21,8 @@ def code(
     temperature: Optional[float] = None,
     client: Optional[Literal["openai", "litellm"]] = None,
     verbose: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Any:
-    
     """
     Generates, executes and returns results of python code.
     """
@@ -58,20 +50,20 @@ def code(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     try:
         response = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=CodeGenerationModel,
             mode=mode,
             temperature=temperature,
-            **kwargs
+            **kwargs,
         )
 
         if verbose:
@@ -97,10 +89,10 @@ def code(
             exec(response.code, {}, local_namespace)
 
             # Return the result object
-            if 'result' not in local_namespace:
+            if "result" not in local_namespace:
                 raise ValueError("No result object found in the generated code.")
-            return local_namespace['result']
-        
+            return local_namespace["result"]
+
         finally:
             # Clean up: remove the temporary file
             os.unlink(temp_file_path)
@@ -111,9 +103,13 @@ def code(
         print(f"Traceback: {traceback.format_exc()}")
         raise
 
+
 if __name__ == "__main__":
     # Generate a logger object
-    generated_logger = code("create a logger named 'my_logger' that logs to console with INFO level", verbose=True)
+    generated_logger = code(
+        "create a logger named 'my_logger' that logs to console with INFO level",
+        verbose=True,
+    )
 
     # Use the generated logger
     generated_logger.info("This is a test log message")

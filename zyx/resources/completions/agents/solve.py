@@ -1,38 +1,37 @@
 from pydantic import BaseModel
-from typing import (
-    List,
-    Literal,
-    Optional,
-    Union
-)
+from typing import List, Literal, Optional, Union
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 
 logger = get_logger("solve")
+
 
 class Thought(BaseModel):
     content: str
     score: float
 
+
 class Thoughts(BaseModel):
     thoughts: List[Thought]
+
 
 class HighLevelConcept(BaseModel):
     concept: str
 
+
 class FinalAnswer(BaseModel):
     answer: str
+
 
 class TreeNode(BaseModel):
     thought: Thought
     children: List["TreeNode"] = []
 
+
 class TreeOfThoughtResult(BaseModel):
     final_answer: str
     reasoning_tree: TreeNode
+
 
 def solve(
     problem: str,
@@ -91,7 +90,7 @@ def solve(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     if use_high_level_concept:
@@ -108,12 +107,14 @@ def solve(
         - Do not hallucinate or make up a concept.
         """
 
-        user_message = f"Problem: {problem}\nProvide a high-level concept related to this problem:"
+        user_message = (
+            f"Problem: {problem}\nProvide a high-level concept related to this problem:"
+        )
 
         high_level_concept_response = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=HighLevelConcept,
@@ -142,7 +143,7 @@ def solve(
         final_answer_response = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=FinalAnswer,
@@ -154,6 +155,7 @@ def solve(
         return final_answer_response
 
     if use_tree_of_thought:
+
         def generate_thoughts(current_problem: str, depth: int) -> TreeNode:
             if depth >= max_depth:
                 return TreeNode(thought=Thought(content="Reached max depth", score=0))
@@ -172,7 +174,7 @@ def solve(
             response = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 model=model,
                 response_model=Thoughts,
@@ -210,7 +212,7 @@ def solve(
         final_answer_response = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=FinalAnswer,
@@ -219,7 +221,9 @@ def solve(
             temperature=temperature,
         )
 
-        return TreeOfThoughtResult(final_answer=final_answer_response.answer, reasoning_tree=root)
+        return TreeOfThoughtResult(
+            final_answer=final_answer_response.answer, reasoning_tree=root
+        )
 
     # Default to chain-of-thought approach
     system_message = f"""
@@ -232,12 +236,14 @@ def solve(
     - Do not hallucinate or make up information.
     """
 
-    user_message = f"Problem: {problem}\nGenerate a sequence of thoughts to solve the problem:"
+    user_message = (
+        f"Problem: {problem}\nGenerate a sequence of thoughts to solve the problem:"
+    )
 
     response = completion_client.completion(
         messages=[
             {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         model=model,
         response_model=Thoughts,
@@ -246,9 +252,12 @@ def solve(
         temperature=temperature,
     )
 
-    final_answer = response.thoughts[-1].content  # Assuming the last thought is the final answer
+    final_answer = response.thoughts[
+        -1
+    ].content  # Assuming the last thought is the final answer
 
     return FinalAnswer(answer=final_answer)
+
 
 if __name__ == "__main__":
     result = solve(
@@ -256,7 +265,7 @@ if __name__ == "__main__":
         verbose=True,
         use_high_level_concept=True,
         use_tree_of_thought=True,
-        batch_size = 1,
+        batch_size=1,
     )
     print(f"Final answer: {result.answer}")
     if isinstance(result, TreeOfThoughtResult):

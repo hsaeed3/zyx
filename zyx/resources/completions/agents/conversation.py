@@ -5,9 +5,10 @@ from ....client import Client, InstructorMode
 from ....lib.utils.logger import get_logger
 from ..agents.judge import judge, ValidationResult
 from ...ext.multimodal import OPENAI_TTS_VOICES, OPENAI_TTS_MODELS, audio
-from ..base.classify import classify 
+from ..base.classify import classify
 
 logger = get_logger("conversation")
+
 
 class Character(BaseModel):
     name: str
@@ -15,23 +16,28 @@ class Character(BaseModel):
     knowledge: Optional[str] = None
     voice: Optional[OPENAI_TTS_VOICES] = None
 
+
 class Message(BaseModel):
     role: Literal["user", "assistant"]
     content: str
     audio_file: Optional[str] = None
 
+
 class Conversation(BaseModel):
     messages: List[Message]
     audio_file: Optional[str] = None
+
 
 class EndConversation(BaseModel):
     should_end: bool
     explanation: Optional[str] = None
     confidence: Optional[float] = None
 
+
 class ConversationEndCheck(BaseModel):
     should_end: bool
     explanation: Optional[str] = None
+
 
 import tempfile
 import os
@@ -46,29 +52,35 @@ from ...ext.multimodal import OPENAI_TTS_VOICES, OPENAI_TTS_MODELS, audio
 
 logger = get_logger("conversation")
 
+
 class Character(BaseModel):
     name: str
     personality: str
     knowledge: Optional[str] = None
     voice: Optional[OPENAI_TTS_VOICES] = None
 
+
 class Message(BaseModel):
     role: Literal["user", "assistant"]
     content: str
     audio_file: Optional[str] = None
 
+
 class Conversation(BaseModel):
     messages: List[Message]
     audio_file: Optional[str] = None
+
 
 class EndConversation(BaseModel):
     should_end: bool
     explanation: Optional[str] = None
     confidence: Optional[float] = None
 
+
 class ConversationEndCheck(BaseModel):
     should_end: bool
     explanation: Optional[str] = None
+
 
 def conversation(
     instructions: Union[str, Document],
@@ -88,7 +100,7 @@ def conversation(
     verbose: bool = False,
     generate_audio: bool = False,
     audio_model: OPENAI_TTS_MODELS = "tts-1",
-    audio_output_file: Optional[str] = None
+    audio_output_file: Optional[str] = None,
 ) -> Conversation:
     """
     Generate a conversation between characters based on given instructions or a Document object, with optional validator.
@@ -147,7 +159,7 @@ def conversation(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     conversation = Conversation(messages=[])
@@ -170,7 +182,9 @@ def conversation(
     for character in characters:
         if not character.voice:
             character.voice = available_voices.pop(0)
-            available_voices.append(character.voice)  # Put it back at the end for reuse if needed
+            available_voices.append(
+                character.voice
+            )  # Put it back at the end for reuse if needed
 
     system_message = f"""
     You are simulating a conversation between the following characters:
@@ -189,17 +203,17 @@ def conversation(
     # Create a temporary directory to store audio segments
     with tempfile.TemporaryDirectory() as temp_dir:
         logger.info(f"Created temporary directory: {temp_dir}")
-        
+
         for turn in range(max_turns):
             current_character = characters[turn % len(characters)]
 
             user_message = f"Generate the next message for {current_character.name} in the conversation, focusing on the provided context."
-            
+
             # Check if we've reached the maximum number of turns
             if turn == max_turns - 1:
                 # Use the classifier to determine if the conversation should end
                 classifier_result = classify(
-                    inputs=' '.join([msg.content for msg in conversation.messages]),
+                    inputs=" ".join([msg.content for msg in conversation.messages]),
                     labels=["end", "continue"],
                     classification="single",
                     model=model,
@@ -209,7 +223,7 @@ def conversation(
                     mode=mode,
                     temperature=temperature,
                     client=client,
-                    verbose=verbose
+                    verbose=verbose,
                 )
 
                 if verbose:
@@ -221,15 +235,22 @@ def conversation(
                 if classifier_result.label == "continue":
                     # If the classifier says the conversation should not end, add a final summary prompt
                     user_message = f"This is the final turn of the conversation. {current_character.name}, please summarize the key points discussed and provide a concluding statement to end the conversation."
-            
+
             if end_check_attempts >= max_end_check_attempts:
                 user_message += "\n\n[HIDDEN INSTRUCTION: The conversation should now conclude naturally. Provide a final statement or summary.]"
 
             response = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
-                ] + [{"role": msg.role, "content": f"{characters[i % len(characters)].name}: {msg.content}"} for i, msg in enumerate(conversation.messages)],
+                    {"role": "user", "content": user_message},
+                ]
+                + [
+                    {
+                        "role": msg.role,
+                        "content": f"{characters[i % len(characters)].name}: {msg.content}",
+                    }
+                    for i, msg in enumerate(conversation.messages)
+                ],
                 model=model,
                 response_model=Message,
                 mode=mode,
@@ -237,17 +258,22 @@ def conversation(
                 temperature=temperature,
             )
 
-            logger.info(f"Turn {turn + 1}: {current_character.name} - {response.content}")
+            logger.info(
+                f"Turn {turn + 1}: {current_character.name} - {response.content}"
+            )
 
             if generate_audio:
-                temp_audio_file = os.path.join(temp_dir, f"{current_character.name.lower().replace(' ', '_')}_{turn}.mp3")
+                temp_audio_file = os.path.join(
+                    temp_dir,
+                    f"{current_character.name.lower().replace(' ', '_')}_{turn}.mp3",
+                )
                 logger.info(f"Attempting to generate audio file: {temp_audio_file}")
                 try:
                     # Remove the character's name from the beginning of the content
                     audio_content = response.content
                     if audio_content.startswith(f"{current_character.name}:"):
                         audio_content = audio_content.split(":", 1)[1].strip()
-                    
+
                     audio(
                         prompt=audio_content,
                         model=audio_model,
@@ -258,13 +284,19 @@ def conversation(
                     )
                     if os.path.exists(temp_audio_file):
                         response.audio_file = temp_audio_file
-                        logger.info(f"Successfully generated audio file: {temp_audio_file}")
+                        logger.info(
+                            f"Successfully generated audio file: {temp_audio_file}"
+                        )
                     else:
                         logger.warning(f"Audio file not created: {temp_audio_file}")
                         logger.info(f"Current working directory: {os.getcwd()}")
-                        logger.info(f"Temporary directory contents: {os.listdir(temp_dir)}")
+                        logger.info(
+                            f"Temporary directory contents: {os.listdir(temp_dir)}"
+                        )
                 except Exception as e:
-                    logger.warning(f"Failed to generate audio for turn {turn}: {str(e)}")
+                    logger.warning(
+                        f"Failed to generate audio for turn {turn}: {str(e)}"
+                    )
                     logger.exception("Detailed error information:")
 
             conversation.messages.append(response)
@@ -283,12 +315,17 @@ def conversation(
                     max_retries=max_retries,
                     organization=organization,
                     client=client,
-                    verbose=verbose
+                    verbose=verbose,
                 )
 
-                if isinstance(validation_result, ValidationResult) and not validation_result.is_valid:
+                if (
+                    isinstance(validation_result, ValidationResult)
+                    and not validation_result.is_valid
+                ):
                     if verbose:
-                        logger.warning(f"Message failed validation: {validation_result.explanation}")
+                        logger.warning(
+                            f"Message failed validation: {validation_result.explanation}"
+                        )
                     continue
 
             # Check if we've reached the minimum number of turns
@@ -296,8 +333,14 @@ def conversation(
                 # Use the boolean BaseModel for end-of-conversation detection
                 end_check = completion_client.completion(
                     messages=[
-                        {"role": "system", "content": f"You are evaluating if a conversation should end based on the following criteria: {end_criteria}"},
-                        {"role": "user", "content": f"Analyze the following conversation and determine if it should end:\n\n{' '.join([msg.content for msg in conversation.messages])}"}
+                        {
+                            "role": "system",
+                            "content": f"You are evaluating if a conversation should end based on the following criteria: {end_criteria}",
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Analyze the following conversation and determine if it should end:\n\n{' '.join([msg.content for msg in conversation.messages])}",
+                        },
                     ],
                     model=model,
                     response_model=ConversationEndCheck,
@@ -317,7 +360,7 @@ def conversation(
 
                 # Use the classify function to determine if the conversation should end
                 classifier_result = classify(
-                    inputs=' '.join([msg.content for msg in conversation.messages]),
+                    inputs=" ".join([msg.content for msg in conversation.messages]),
                     labels=["end", "continue"],
                     classification="single",
                     model=model,
@@ -327,7 +370,7 @@ def conversation(
                     mode=mode,
                     temperature=temperature,
                     client=client,
-                    verbose=verbose
+                    verbose=verbose,
                 )
 
                 if verbose:
@@ -353,7 +396,9 @@ def conversation(
                         else:
                             logger.warning(f"Audio file not found: {msg.audio_file}")
                     except Exception as e:
-                        logger.warning(f"Error processing audio file {msg.audio_file}: {str(e)}")
+                        logger.warning(
+                            f"Error processing audio file {msg.audio_file}: {str(e)}"
+                        )
 
             if not combined.empty():
                 combined.export(audio_output_file, format="mp3")
@@ -364,33 +409,46 @@ def conversation(
 
     return conversation
 
+
 if __name__ == "__main__":
     # Example usage with a Document object
     from ....lib.types.document import Document
 
     doc = Document(
         content="The impact of artificial intelligence on job markets has been a topic of intense debate. While AI has the potential to automate many tasks and potentially displace some jobs, it also has the capacity to create new job opportunities and enhance productivity in various sectors. The key challenge lies in managing this transition and ensuring that the workforce is adequately prepared for the changes ahead.",
-        metadata={"type": "research_summary", "topic": "AI and Employment"}
+        metadata={"type": "research_summary", "topic": "AI and Employment"},
     )
 
     result = conversation(
         instructions=doc,
         characters=[
-            Character(name="AI Researcher", personality="Optimistic about AI's potential to create new job opportunities", voice="nova"),
-            Character(name="Labor Economist", personality="Concerned about potential job displacement due to AI", voice="onyx"),
-            Character(name="Podcast Host", personality="Neutral moderator, asks probing questions to both guests", voice="echo")
+            Character(
+                name="AI Researcher",
+                personality="Optimistic about AI's potential to create new job opportunities",
+                voice="nova",
+            ),
+            Character(
+                name="Labor Economist",
+                personality="Concerned about potential job displacement due to AI",
+                voice="onyx",
+            ),
+            Character(
+                name="Podcast Host",
+                personality="Neutral moderator, asks probing questions to both guests",
+                voice="echo",
+            ),
         ],
         min_turns=12,
         max_turns=20,
         end_criteria="The podcast should conclude when both guests have shared their final thoughts and the host has summarized the key points of the discussion",
         verbose=True,
         generate_audio=True,
-        audio_output_file="ai_job_market_podcast.mp3"
+        audio_output_file="ai_job_market_podcast.mp3",
     )
 
     print("\nGenerated Podcast Conversation:")
     for msg in result.messages:
         print(f"{msg.role.capitalize()}: {msg.content}")
-    
+
     if result.audio_file:
         print(f"\nFull conversation audio saved to: {result.audio_file}")

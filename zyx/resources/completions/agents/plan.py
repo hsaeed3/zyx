@@ -1,19 +1,19 @@
 from pydantic import BaseModel, create_model, Field
 from typing import Optional, List, Union, Literal, Type, Any
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 
 logger = get_logger("plan")
+
 
 class Task(BaseModel):
     description: str
     details: Optional[str] = None
 
+
 class Plan(BaseModel):
     tasks: List[Task]
+
 
 def plan(
     input: Union[str, Type[BaseModel]],
@@ -77,7 +77,7 @@ def plan(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     if isinstance(input, str):
@@ -89,13 +89,15 @@ def plan(
     else:
         raise ValueError("Input must be either a string or a Pydantic model class.")
 
-    user_message = instructions if instructions else f"Generate a plan with {steps} steps."
+    user_message = (
+        instructions if instructions else f"Generate a plan with {steps} steps."
+    )
 
     if process == "single" or n == 1:
         result = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=response_model,
@@ -105,18 +107,20 @@ def plan(
         )
         return result
     else:  # batch process
-        batch_response_model = create_model("ResponseModel", items=(List[response_model], ...))
+        batch_response_model = create_model(
+            "ResponseModel", items=(List[response_model], ...)
+        )
         results = []
         for i in range(0, n, batch_size):
             batch_n = min(batch_size, n - i)
             batch_message = f"Generate {batch_n} plans, each with {steps} steps."
             if results:
                 batch_message += f"\nPreviously generated plans: {results[-3:]}\nEnsure these new plans are different."
-            
+
             result = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": batch_message}
+                    {"role": "user", "content": batch_message},
                 ],
                 model=model,
                 response_model=batch_response_model,
@@ -124,10 +128,11 @@ def plan(
                 max_retries=max_retries,
                 temperature=temperature,
             )
-            
+
             results.extend(result.items)
-        
+
         return results
+
 
 def _get_string_system_message(input: str, steps: int) -> str:
     return f"""
@@ -139,6 +144,7 @@ def _get_string_system_message(input: str, steps: int) -> str:
     4. Break down the selected approach into {steps} detailed, actionable tasks.
     Return the tasks as a Plan object with a list of Task objects.
     """
+
 
 def _get_model_system_message(input_model: Type[BaseModel], steps: int) -> str:
     return f"""
@@ -155,6 +161,7 @@ def _get_model_system_message(input_model: Type[BaseModel], steps: int) -> str:
 
     Return the tasks as a Plan object with a list of Task objects.
     """
+
 
 if __name__ == "__main__":
     # Example usage with string input
@@ -184,7 +191,9 @@ if __name__ == "__main__":
         print()
 
     # Batch processing example
-    batch_results = plan(ResearchTask, n=2, process="batch", batch_size=2, steps=3, verbose=True)
+    batch_results = plan(
+        ResearchTask, n=2, process="batch", batch_size=2, steps=3, verbose=True
+    )
     print("Batch plans for Pydantic model input:")
     for i, plan in enumerate(batch_results, 1):
         print(f"Plan {i}:")

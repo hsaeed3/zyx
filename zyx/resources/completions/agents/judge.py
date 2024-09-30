@@ -2,10 +2,7 @@ from typing import List, Optional, Literal, Union
 from pydantic import BaseModel, Field
 
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 
 
 logger = get_logger("judge")
@@ -15,17 +12,21 @@ class JudgmentResult(BaseModel):
     explanation: str
     verdict: str
 
+
 class ValidationResult(BaseModel):
     is_valid: bool
     explanation: str
 
+
 class RegeneratedResponse(BaseModel):
     response: str
+
 
 class FactCheckResult(BaseModel):
     is_accurate: bool
     explanation: str
     confidence: float = Field(..., ge=0.0, le=1.0)
+
 
 def judge(
     prompt: str,
@@ -42,7 +43,7 @@ def judge(
     organization: Optional[str] = None,
     client: Optional[Literal["openai", "litellm"]] = None,
     verbose: bool = False,
-    guardrails: Optional[Union[str, List[str]]] = None
+    guardrails: Optional[Union[str, List[str]]] = None,
 ) -> Union[JudgmentResult, ValidationResult, RegeneratedResponse, FactCheckResult]:
     """
     Judge responses based on accuracy, validate against a schema, or fact-check a single response,
@@ -110,7 +111,7 @@ def judge(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     if process == "accuracy":
@@ -122,11 +123,11 @@ def judge(
         user_message = f"Prompt: {prompt}\n\nResponses:\n"
         for idx, response in enumerate(responses, 1):
             user_message += f"{idx}. {response}\n\n"
-        
+
         result = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=JudgmentResult,
@@ -134,9 +135,8 @@ def judge(
             max_retries=max_retries,
             temperature=temperature,
         )
-        
-        if regenerate:
 
+        if regenerate:
             if verbose:
                 logger.warning(f"Response is not accurate. Regenerating response.")
 
@@ -145,11 +145,11 @@ def judge(
                 "that addresses the prompt more effectively than the original responses."
             )
             user_message = f"Original prompt: {prompt}\n\nJudgment: {result.explanation}\n\nGenerate an optimized response:"
-            
+
             regenerated = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 model=model,
                 response_model=RegeneratedResponse,
@@ -158,22 +158,22 @@ def judge(
                 temperature=temperature,
             )
             result = regenerated
-        
+
     elif process == "validate":
         if not schema:
             raise ValueError("Schema is required for validation.")
-        
+
         system_message = (
             "You are a validation expert. Your task is to determine if the given response "
             "matches the provided schema or instructions. Provide a detailed explanation "
             "of your validation process and state whether the response is valid or not."
         )
         user_message = f"Prompt: {prompt}\n\nResponse: {responses[0]}\n\nSchema/Instructions: {schema}"
-        
+
         result = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=ValidationResult,
@@ -181,9 +181,8 @@ def judge(
             max_retries=max_retries,
             temperature=temperature,
         )
-        
-        if regenerate and not result.is_valid:
 
+        if regenerate and not result.is_valid:
             if verbose:
                 logger.warning(f"Response is not valid. Regenerating response.")
 
@@ -192,11 +191,11 @@ def judge(
                 "correctly adheres to the given schema or instructions."
             )
             user_message = f"Original prompt: {prompt}\n\nSchema/Instructions: {schema}\n\nGenerate a valid response:"
-            
+
             regenerated = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 model=model,
                 response_model=RegeneratedResponse,
@@ -205,13 +204,13 @@ def judge(
                 temperature=temperature,
             )
             result = regenerated
-        
+
     elif process == "fact_check":
         if responses is None:
             responses = [prompt]  # Use the prompt as the response for fact-checking
         elif len(responses) != 1:
             raise ValueError("Fact-check requires exactly one response.")
-        
+
         system_message = (
             "You are a fact-checking expert. Your task is to determine if the given response "
             "is accurate based on the prompt and your knowledge. Provide a detailed explanation "
@@ -221,11 +220,11 @@ def judge(
         user_message = f"Prompt: {prompt}\n\nResponse to fact-check: {responses[0]}"
         if schema:
             user_message += f"\n\nAdditional fact-checking guidelines: {schema}"
-        
+
         result = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=FactCheckResult,
@@ -233,9 +232,8 @@ def judge(
             max_retries=max_retries,
             temperature=temperature,
         )
-        
-        if regenerate and not result.is_accurate:
 
+        if regenerate and not result.is_accurate:
             if verbose:
                 logger.warning(f"Response is not accurate. Regenerating response.")
 
@@ -244,11 +242,11 @@ def judge(
                 "is accurate and addresses the original prompt correctly."
             )
             user_message = f"Original prompt: {prompt}\n\nFact-check result: {result.explanation}\n\nGenerate an accurate response:"
-            
+
             regenerated = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 model=model,
                 response_model=RegeneratedResponse,
@@ -257,37 +255,70 @@ def judge(
                 temperature=temperature,
             )
             result = regenerated
-        
+
     else:
-        raise ValueError("Invalid process. Choose 'accuracy', 'validate', or 'fact_check'.")
+        raise ValueError(
+            "Invalid process. Choose 'accuracy', 'validate', or 'fact_check'."
+        )
 
     # Add guardrails check after the main process
     if guardrails:
-        guardrails_result = check_guardrails(prompt, result, guardrails, completion_client, model, mode, max_retries, temperature, verbose)
+        guardrails_result = check_guardrails(
+            prompt,
+            result,
+            guardrails,
+            completion_client,
+            model,
+            mode,
+            max_retries,
+            temperature,
+            verbose,
+        )
         if not guardrails_result.passed:
             if verbose:
                 logger.warning(f"Response violates guardrails. Regenerating response.")
-            result = regenerate_response(prompt, guardrails_result.explanation, completion_client, model, mode, max_retries, temperature)
+            result = regenerate_response(
+                prompt,
+                guardrails_result.explanation,
+                completion_client,
+                model,
+                mode,
+                max_retries,
+                temperature,
+            )
 
     return result
 
-def check_guardrails(prompt, result, guardrails, completion_client, model, mode, max_retries, temperature, verbose):
+
+def check_guardrails(
+    prompt,
+    result,
+    guardrails,
+    completion_client,
+    model,
+    mode,
+    max_retries,
+    temperature,
+    verbose,
+):
     if isinstance(guardrails, str):
         guardrails = [guardrails]
-    
+
     guardrails_prompt = "\n".join(guardrails)
-    
+
     system_message = (
         "You are a content moderator. Your task is to determine if the given response "
         "violates any of the specified guardrails. Provide a detailed explanation "
         "of your evaluation process and state whether the response passes all guardrails or not."
     )
-    user_message = f"Prompt: {prompt}\n\nResponse: {result}\n\nGuardrails:\n{guardrails_prompt}"
-    
+    user_message = (
+        f"Prompt: {prompt}\n\nResponse: {result}\n\nGuardrails:\n{guardrails_prompt}"
+    )
+
     guardrails_result = completion_client.completion(
         messages=[
             {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         model=model,
         response_model=GuardrailsResult,
@@ -295,20 +326,23 @@ def check_guardrails(prompt, result, guardrails, completion_client, model, mode,
         max_retries=max_retries,
         temperature=temperature,
     )
-    
+
     return guardrails_result
 
-def regenerate_response(prompt, explanation, completion_client, model, mode, max_retries, temperature):
+
+def regenerate_response(
+    prompt, explanation, completion_client, model, mode, max_retries, temperature
+):
     system_message = (
         "Based on the guardrails violation, generate a new response that "
         "addresses the original prompt while adhering to all specified guardrails."
     )
     user_message = f"Original prompt: {prompt}\n\nGuardrails violation: {explanation}\n\nGenerate a compliant response:"
-    
+
     regenerated = completion_client.completion(
         messages=[
             {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         model=model,
         response_model=RegeneratedResponse,
@@ -318,32 +352,42 @@ def regenerate_response(prompt, explanation, completion_client, model, mode, max
     )
     return regenerated
 
+
 class GuardrailsResult(BaseModel):
     passed: bool
     explanation: str
+
 
 if __name__ == "__main__":
     # Example usage
     prompt = "Explain the concept of quantum entanglement."
     responses = [
         "Quantum entanglement is a phenomenon where two particles become interconnected and their quantum states cannot be described independently.",
-        "Quantum entanglement is when particles are really close to each other and move in the same way."
+        "Quantum entanglement is when particles are really close to each other and move in the same way.",
     ]
-    
+
     # Accuracy judgment
     result = judge(prompt, responses, process="accuracy", verbose=True)
-    print(f"Accuracy Judgment:\nExplanation: {result.explanation}\nVerdict: {result.verdict}")
-    
+    print(
+        f"Accuracy Judgment:\nExplanation: {result.explanation}\nVerdict: {result.verdict}"
+    )
+
     # Validation
     schema = "The response should include: 1) Definition of quantum entanglement, 2) Its importance in quantum mechanics, 3) An example or application."
-    result = judge(prompt, [responses[0]], process="validate", schema=schema, verbose=True)
-    print(f"\nValidation Result:\nIs Valid: {result.is_valid}\nExplanation: {result.explanation}")
-    
+    result = judge(
+        prompt, [responses[0]], process="validate", schema=schema, verbose=True
+    )
+    print(
+        f"\nValidation Result:\nIs Valid: {result.is_valid}\nExplanation: {result.explanation}"
+    )
+
     # Fact-check
     fact_check_response = "Quantum entanglement occurs when two particles are separated by a large distance but still instantaneously affect each other's quantum states."
     result = judge(prompt, [fact_check_response], process="fact_check", verbose=True)
-    print(f"\nFact-Check Result:\nIs Accurate: {result.is_accurate}\nExplanation: {result.explanation}\nConfidence: {result.confidence}")
-    
+    print(
+        f"\nFact-Check Result:\nIs Accurate: {result.is_accurate}\nExplanation: {result.explanation}\nConfidence: {result.confidence}"
+    )
+
     # Regeneration
     result = judge(prompt, responses, process="accuracy", regenerate=True, verbose=True)
     print(f"\nRegenerated Response:\n{result.response}")

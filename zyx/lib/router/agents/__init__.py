@@ -1,12 +1,4 @@
-__all__ = [
-    "Character",
-    "conversation",
-    "judge",
-    "plan",
-    "query",
-    "scrape",
-    "solve"
-]
+__all__ = ["Character", "conversation", "judge", "plan", "query", "scrape", "solve"]
 
 
 from .._router import router

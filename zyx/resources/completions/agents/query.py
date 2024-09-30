@@ -4,12 +4,10 @@ import uuid
 from typing import List, Optional, Union, Literal, Callable
 
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 
 logger = get_logger("workflow")
+
 
 class EnumAgentRoles(Enum):
     SUPERVISOR = "supervisor"
@@ -20,6 +18,7 @@ class EnumAgentRoles(Enum):
     CHAT = "chat"
     TOOL = "tool"
     RETRIEVER = "retriever"
+
 
 class EnumWorkflowState(Enum):
     IDLE = "idle"
@@ -33,14 +32,17 @@ class EnumWorkflowState(Enum):
     USING_TOOL = "using_tool"
     RETRIEVING = "retrieving"
 
+
 class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     description: str
+
 
 class Plan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     goal: str
     tasks: List[Task] = Field(default_factory=list)
+
 
 class Workflow(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -52,9 +54,11 @@ class Workflow(BaseModel):
     completed_tasks: List[Task] = Field(default_factory=list)
     task_queue: List[Task] = Field(default_factory=list)
 
+
 class UserIntent(BaseModel):
     intent: str
     confidence: float
+
 
 class QueryParams(BaseModel):
     model: str = "gpt-4o-mini"
@@ -76,8 +80,10 @@ class QueryParams(BaseModel):
     stream: Optional[bool] = False
     verbose: Optional[bool] = False
 
+
 class TaskCompletionCheck(BaseModel):
     is_complete: bool
+
 
 def classify_intent(user_input: str, params: QueryParams) -> UserIntent:
     intent_labels = [
@@ -98,7 +104,7 @@ def classify_intent(user_input: str, params: QueryParams) -> UserIntent:
         base_url=params.base_url,
         organization=params.organization,
         provider="openai",
-        verbose=params.verbose
+        verbose=params.verbose,
     )
 
     classification = completion_client.completion(
@@ -114,6 +120,7 @@ def classify_intent(user_input: str, params: QueryParams) -> UserIntent:
     )
     return classification
 
+
 def generate_plan(goal: str, params: QueryParams) -> Plan:
     system_message = f"Generate a plan for the following goal: {goal}"
     user_message = goal
@@ -122,7 +129,7 @@ def generate_plan(goal: str, params: QueryParams) -> Plan:
         api_key=params.api_key,
         base_url=params.base_url,
         organization=params.organization,
-        verbose=params.verbose
+        verbose=params.verbose,
     )
 
     plan_response = completion_client.completion(
@@ -138,6 +145,7 @@ def generate_plan(goal: str, params: QueryParams) -> Plan:
     )
     return plan_response
 
+
 def execute_task(task: Task, params: QueryParams) -> str:
     system_message = f"Execute the following task: {task.description}"
     user_message = task.description
@@ -147,7 +155,7 @@ def execute_task(task: Task, params: QueryParams) -> str:
         base_url=params.base_url,
         organization=params.organization,
         provider="openai",
-        verbose=params.verbose
+        verbose=params.verbose,
     )
 
     execute_response = completion_client.completion(
@@ -162,6 +170,7 @@ def execute_task(task: Task, params: QueryParams) -> str:
     )
     return execute_response.choices[0].message.content
 
+
 def check_task_completion(task: Task, result: str, params: QueryParams) -> bool:
     system_message = f"Check if the following task is complete: {task.description}"
     user_message = result
@@ -171,7 +180,7 @@ def check_task_completion(task: Task, result: str, params: QueryParams) -> bool:
         base_url=params.base_url,
         organization=params.organization,
         provider="openai",
-        verbose=params.verbose
+        verbose=params.verbose,
     )
 
     check_response = completion_client.completion(
@@ -186,6 +195,7 @@ def check_task_completion(task: Task, result: str, params: QueryParams) -> bool:
         temperature=params.temperature,
     )
     return check_response.is_complete
+
 
 def query(
     prompt: str,
@@ -233,7 +243,7 @@ def query(
         api_key=params.api_key,
         base_url=params.base_url,
         organization=params.organization,
-        verbose=params.verbose
+        verbose=params.verbose,
     )
 
     workflow = Workflow()
@@ -280,7 +290,7 @@ def query(
                     temperature=params.temperature,
                 )
                 return reflection_response.choices[0].message.content
-            
+
         workflow.state = EnumWorkflowState.COMPLETING
         final_summary = completion_client.completion(
             messages=[
@@ -316,6 +326,7 @@ def query(
             temperature=params.temperature,
         )
         return response.choices[0].message.content
+
 
 if __name__ == "__main__":
     print(query("I want to learn how to code", verbose=True))

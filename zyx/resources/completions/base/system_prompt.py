@@ -2,14 +2,12 @@ from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, Field, create_model
 
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 
 logger = get_logger("system_prompt")
 
 PROMPT_TYPES = Literal["costar", "tidd-ec"]
+
 
 class Prompts:
     costar = """
@@ -105,7 +103,9 @@ class TiddECSystemPrompt(BaseModel):
         description="Provides concrete examples of desired outcomes or responses. This component is invaluable for guiding the LLM towards the expected format, style, or content of the response. Each item must be minimum 20 tokens.",
     )
 
+
 PROMPT_TYPES_MAPPING = {"costar": CostarSystemPrompt, "tidd-ec": TiddECSystemPrompt}
+
 
 def get_system_prompt(type: PROMPT_TYPES = "costar") -> dict[str, str]:
     prompt_content = getattr(Prompts, type.replace("-", "_"), None)
@@ -113,8 +113,10 @@ def get_system_prompt(type: PROMPT_TYPES = "costar") -> dict[str, str]:
         raise ValueError(f"Invalid prompt type: {type}")
     return {"role": "system", "content": prompt_content}
 
+
 def get_response_model(type: PROMPT_TYPES = "costar") -> BaseModel:
     return PROMPT_TYPES_MAPPING[type]
+
 
 def system_prompt(
     instructions: Union[str, List[str]],
@@ -130,7 +132,7 @@ def system_prompt(
     temperature: Optional[float] = None,
     mode: InstructorMode = "markdown_json_mode",
     max_retries: int = 3,
-    max_tokens : Optional[int] = None,
+    max_tokens: Optional[int] = None,
     client: Optional[Literal["openai", "litellm"]] = None,
     response_format: Union[Literal["pydantic"], Literal["dict"], None] = None,
     verbose: bool = False,
@@ -147,7 +149,7 @@ def system_prompt(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     response_model = get_response_model(type=type)
@@ -157,7 +159,10 @@ def system_prompt(
         instructions = [instructions]
 
     if optimize:
-        instructions = [f"Optimize the following system prompt:\n\n{instr}" for instr in instructions]
+        instructions = [
+            f"Optimize the following system prompt:\n\n{instr}"
+            for instr in instructions
+        ]
 
     results = []
 
@@ -165,10 +170,18 @@ def system_prompt(
         for instr in instructions:
             messages = [
                 system_prompt,
-                {"role": "user", "content": f"Generate a system prompt for the following instructions:\n\nINSTRUCTIONS:\n{instr}"}
+                {
+                    "role": "user",
+                    "content": f"Generate a system prompt for the following instructions:\n\nINSTRUCTIONS:\n{instr}",
+                },
             ]
             if results:
-                messages.append({"role": "assistant", "content": f"Previously generated prompts:\n{results[-1]}"})
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"Previously generated prompts:\n{results[-1]}",
+                    }
+                )
 
             result = completion_client.completion(
                 messages=messages,
@@ -182,18 +195,19 @@ def system_prompt(
             results.append(result)
     else:  # batch process
         for i in range(0, len(instructions), batch_size):
-            batch = instructions[i:i+batch_size]
-            batch_message = "Generate system prompts for the following instructions:\n\n"
+            batch = instructions[i : i + batch_size]
+            batch_message = (
+                "Generate system prompts for the following instructions:\n\n"
+            )
             for idx, instr in enumerate(batch, 1):
                 batch_message += f"{idx}. {instr}\n\n"
 
-            response_model_batch = create_model("ResponseModel", items=(List[response_model], ...))
-            
+            response_model_batch = create_model(
+                "ResponseModel", items=(List[response_model], ...)
+            )
+
             result = completion_client.completion(
-                messages=[
-                    system_prompt,
-                    {"role": "user", "content": batch_message}
-                ],
+                messages=[system_prompt, {"role": "user", "content": batch_message}],
                 model=model,
                 response_model=response_model_batch,
                 mode=mode,
@@ -201,7 +215,7 @@ def system_prompt(
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            
+
             results.extend(result.items)
 
     if response_format == "pydantic":
@@ -219,19 +233,22 @@ def system_prompt(
             response_string.append(f"## {field.capitalize()} ##\n{formatted_value}\n\n")
 
         if response_format == "dict":
-            formatted_results.append({"role": "system", "content": "\n".join(response_string)})
+            formatted_results.append(
+                {"role": "system", "content": "\n".join(response_string)}
+            )
         else:
             formatted_results.append("\n".join(response_string))
 
     return formatted_results if len(formatted_results) > 1 else formatted_results[0]
 
+
 if __name__ == "__main__":
     # Example usage
     instructions = [
         "Create a system prompt for a chatbot that helps users with programming questions.",
-        "Generate a system prompt for an AI assistant that provides travel recommendations."
+        "Generate a system prompt for an AI assistant that provides travel recommendations.",
     ]
-    
+
     result = system_prompt(
         instructions=instructions,
         type="costar",
@@ -239,9 +256,9 @@ if __name__ == "__main__":
         process="sequential",
         n=2,
         batch_size=2,
-        verbose=True
+        verbose=True,
     )
-    
+
     print("Generated System Prompts:")
     for idx, prompt in enumerate(result, 1):
         print(f"\nPrompt {idx}:")

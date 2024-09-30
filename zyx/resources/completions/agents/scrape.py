@@ -4,11 +4,7 @@ from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from ....client import (
-    Client,
-    InstructorMode,
-    ToolType
-)
+from ....client import Client, InstructorMode, ToolType
 from ....lib.types.document import Document
 
 
@@ -42,10 +38,12 @@ class ScrapingStep(Enum):
     EVALUATE = "evaluate"
     REFINE = "refine"
 
+
 class StepResult(BaseModel):
     is_successful: bool
     explanation: str
     content: Optional[str] = None
+
 
 class ScrapeWorkflow(BaseModel):
     query: str
@@ -54,6 +52,7 @@ class ScrapeWorkflow(BaseModel):
     fetched_contents: List[str] = Field(default_factory=list)
     summary: Optional[str] = None
     evaluation: Optional[StepResult] = None
+
 
 def scrape(
     query: str,
@@ -89,7 +88,7 @@ def scrape(
         temperature: The temperature to use for completion.
         run_tools: Whether to run tools for completion.
         tools: The tools to use for completion.
-        
+
 
     Returns:
         A Document object containing the summary and metadata.
@@ -98,10 +97,7 @@ def scrape(
     from bs4 import BeautifulSoup
 
     client = Client(
-        api_key = api_key,
-        base_url = base_url,
-        provider = client,
-        verbose = verbose
+        api_key=api_key, base_url=base_url, provider=client, verbose=verbose
     )
 
     workflow = ScrapeWorkflow(query=query)
@@ -162,7 +158,7 @@ def scrape(
             content = future.result()
             if content:
                 contents.append(content)
-    
+
     workflow.fetched_contents = contents
 
     if verbose:
@@ -214,7 +210,7 @@ def scrape(
         f"Summary:\n{summary}\n\n"
         "Provide an explanation of your evaluation and determine if the summary is successful or needs refinement."
     )
-    
+
     evaluation_response = client.completion(
         messages=[
             {"role": "system", "content": "You are an expert evaluator of summaries."},
@@ -226,7 +222,7 @@ def scrape(
         max_retries=max_retries,
         temperature=temperature,
     )
-    
+
     workflow.evaluation = evaluation_response
 
     # Step 7: Refine if necessary
@@ -238,10 +234,13 @@ def scrape(
             f"Evaluation feedback:\n{evaluation_response.explanation}\n\n"
             "Please provide an improved and refined summary addressing the feedback."
         )
-        
+
         refined_response = client.completion(
             messages=[
-                {"role": "system", "content": "You are an expert at refining and improving summaries."},
+                {
+                    "role": "system",
+                    "content": "You are an expert at refining and improving summaries.",
+                },
                 {"role": "user", "content": refine_prompt},
             ],
             model=model,
@@ -249,7 +248,7 @@ def scrape(
             max_retries=max_retries,
             temperature=temperature,
         )
-        
+
         summary = refined_response.choices[0].message.content
 
     if verbose:

@@ -34,7 +34,7 @@ def chunk(
         max_token_chars: int: The maximum number of characters to use for chunking.
 
     Returns:
-        Union[List[str], List[List[str]]]: The chunked content. 
+        Union[List[str], List[List[str]]]: The chunked content.
     """
     try:
         tokenizer = tiktoken.encoding_for_model(model)

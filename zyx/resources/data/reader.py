@@ -56,7 +56,7 @@ def read(
         paths = [_download_if_url(p) for p in path]
     else:
         paths = [_download_if_url(path)]
-    
+
     paths = [Path(p) for p in paths]
 
     try:

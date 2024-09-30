@@ -1,15 +1,6 @@
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 from pydantic import BaseModel, Field
-from typing import (
-    Callable,
-    Optional,
-    Literal,
-    get_type_hints,
-    Any
-)
+from typing import Callable, Optional, Literal, get_type_hints, Any
 import traceback
 import logging
 import importlib
@@ -18,12 +9,13 @@ import sys
 import os
 import tempfile
 
+
 class FunctionResponse(BaseModel):
     code: str
     output: Any
 
 
-def prompt_user_library_install(libs : str) -> None:
+def prompt_user_library_install(libs: str) -> None:
     """Prompts user to install the required libraries for the function to run,
     installs if user enters y"""
     import subprocess
@@ -32,8 +24,10 @@ def prompt_user_library_install(libs : str) -> None:
     print(f"The function requires the following libraries to run: {libs}")
     install_prompt = input("Do you want to install these libraries? (y/n): ")
 
-    if install_prompt.lower() == 'y':
-        subprocess.check_call([sys.executable, "-m", "pip", "install", *libs.split(',')])
+    if install_prompt.lower() == "y":
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", *libs.split(",")]
+        )
         print("Libraries installed successfully.")
 
 
@@ -91,7 +85,8 @@ def function(
                         ..., description="Complete Python code as a single string"
                     )
                     explanation: Optional[str] = Field(
-                        None, description="An optional explanation for the code. Not required, but any comments should go here."
+                        None,
+                        description="An optional explanation for the code. Not required, but any comments should go here.",
                     )
 
                 error_context = ""
@@ -135,7 +130,7 @@ def function(
                         api_key=api_key,
                         base_url=base_url,
                         provider=client,
-                        verbose=verbose
+                        verbose=verbose,
                     )
 
                     response = completion_client.completion(
@@ -169,26 +164,38 @@ def function(
                         # Execute the generated code in a local namespace
                         local_namespace = {}
                         exec_globals = globals().copy()
-                        
+
                         # Dynamically import required modules
-                        for line in full_code.split('\n'):
-                            if line.startswith('import ') or line.startswith('from '):
+                        for line in full_code.split("\n"):
+                            if line.startswith("import ") or line.startswith("from "):
                                 try:
                                     exec(line, exec_globals)
                                 except ImportError as e:
                                     print(f"Failed to import: {line}. Error: {str(e)}")
-                                    print("Attempting to install the required package...")
-                                    package = line.split()[1].split('.')[0]
-                                    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+                                    print(
+                                        "Attempting to install the required package..."
+                                    )
+                                    package = line.split()[1].split(".")[0]
+                                    subprocess.check_call(
+                                        [
+                                            sys.executable,
+                                            "-m",
+                                            "pip",
+                                            "install",
+                                            package,
+                                        ]
+                                    )
                                     exec(line, exec_globals)
-                        
+
                         exec(full_code, exec_globals, local_namespace)
 
-                        if 'result' not in local_namespace:
-                            raise ValueError("No result object found in the generated code.")
-                        
-                        result = local_namespace['result']
-                        
+                        if "result" not in local_namespace:
+                            raise ValueError(
+                                "No result object found in the generated code."
+                            )
+
+                        result = local_namespace["result"]
+
                         if verbose:
                             print(f"Result type: {type(result)}")
                             if isinstance(result, logging.Logger):
@@ -199,7 +206,7 @@ def function(
                         if return_code:
                             return FunctionResponse(code=full_code, output=result)
                         return result
-                    
+
                     finally:
                         # Clean up: remove the temporary file
                         os.unlink(temp_file_path)
@@ -209,9 +216,7 @@ def function(
                     print(f"Import error: {str(e)}")
                     print(f"Traceback: {traceback.format_exc()}")
                     prompt_user_library_install(e.name)
-                    raise RuntimeError(
-                        f"Import error: {str(e)}"
-                    )
+                    raise RuntimeError(f"Import error: {str(e)}")
 
                 except Exception as e:
                     print(f"Error in code generation or execution: {str(e)}")
@@ -241,10 +246,7 @@ def function(
                 ]
 
                 completion_client = Client(
-                    api_key=api_key,
-                    base_url=base_url,
-                    provider=client,
-                    verbose=verbose
+                    api_key=api_key, base_url=base_url, provider=client, verbose=verbose
                 )
 
                 response = completion_client.completion(

@@ -6,15 +6,13 @@ __all__ = [
     "extract",
     "function",
     "generate",
-    "system_prompt"
+    "system_prompt",
 ]
-
 
 from ....client import (
     Client as Client,
     completion as completion,
 )
-
 
 from ....resources.completions.base.classify import classify as classify
 from ....resources.completions.base.code import code as code

@@ -7,7 +7,7 @@ from ...client import (
 )
 
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 
 class Document(BaseModel):
@@ -19,6 +19,7 @@ class Document(BaseModel):
         metadata (Dict[str, Any]): The metadata of the document.
         messages (Optional[List[Dict[str, Any]]]): The messages of the document.
     """
+
     content: Any
     metadata: Dict[str, Any]
     messages: Optional[List[Dict[str, Any]]] = []
@@ -48,7 +49,6 @@ Document Content: {self.content}
 """,
             },
         ]
-
 
     def generate(
         self,
@@ -118,14 +118,18 @@ Document Content: {self.content}
         Use the document's content as context for generating these instances.
         Ensure that all generated instances comply with the model's schema and constraints.
         """
-        user_message = instructions if instructions else f"Generate {n} instance(s) of the given model using the document's content as context."
+        user_message = (
+            instructions
+            if instructions
+            else f"Generate {n} instance(s) of the given model using the document's content as context."
+        )
 
         completion_client = Client(
             api_key=api_key,
             base_url=base_url,
             organization=organization,
             provider=client,
-            verbose=verbose
+            verbose=verbose,
         )
 
         if process == "batch":
@@ -138,7 +142,9 @@ Document Content: {self.content}
                 max_tokens=max_tokens,
                 max_retries=max_retries,
                 temperature=temperature,
-                mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+                mode="markdown_json_mode"
+                if model.startswith(("ollama/", "ollama_chat/"))
+                else mode,
                 response_model=ResponseModel,
             )
             return [response] if n == 1 else response.items
@@ -165,11 +171,15 @@ Document Content: {self.content}
                     field_user_message = f"Generate a value for the '{field_name}' field using the document's content as context."
                     if instance:
                         field_user_message += f"\nCurrent partial instance: {instance}"
-                    
+
                     if i > 0:
-                        field_user_message += f"\n\nPrevious generations for this field:"
-                        for j, prev_instance in enumerate(results[-min(3, i):], 1):
-                            field_user_message += f"\n{j}. {getattr(prev_instance, field_name)}"
+                        field_user_message += (
+                            f"\n\nPrevious generations for this field:"
+                        )
+                        for j, prev_instance in enumerate(results[-min(3, i) :], 1):
+                            field_user_message += (
+                                f"\n{j}. {getattr(prev_instance, field_name)}"
+                            )
                         field_user_message += "\n\nPlease generate a different value from these previous ones."
 
                     field_response = completion_client.completion(
@@ -181,15 +191,18 @@ Document Content: {self.content}
                         max_tokens=max_tokens,
                         max_retries=max_retries,
                         temperature=temperature,
-                        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
-                        response_model=create_model("FieldResponse", value=(field.annotation, ...)),
+                        mode="markdown_json_mode"
+                        if model.startswith(("ollama/", "ollama_chat/"))
+                        else mode,
+                        response_model=create_model(
+                            "FieldResponse", value=(field.annotation, ...)
+                        ),
                     )
                     instance[field_name] = field_response.value
-                
+
                 results.append(target(**instance))
-            
+
             return results
-        
 
     def completion(
         self,

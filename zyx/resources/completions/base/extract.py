@@ -1,16 +1,7 @@
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 from pydantic import BaseModel, create_model
-from typing import (
-    List,
-    Literal,
-    Optional,
-    Type,
-    Union
-)
+from typing import List, Literal, Optional, Type, Union
 
 
 logger = get_logger("extract")
@@ -41,7 +32,7 @@ def extract(
         class User(BaseModel):
             name: str
             age: int
-            
+
         zyx.extract(User, "John is 20 years old")
         ```
 
@@ -69,7 +60,9 @@ def extract(
         text = [text]
 
     if verbose:
-        logger.info(f"Extracting information from {len(text)} text(s) into {target.__name__} model.")
+        logger.info(
+            f"Extracting information from {len(text)} text(s) into {target.__name__} model."
+        )
         logger.info(f"Using model: {model}")
         logger.info(f"Batch size: {batch_size}")
         logger.info(f"Process: {process}")
@@ -91,24 +84,24 @@ def extract(
         base_url=base_url,
         organization=organization,
         provider=client,
-        verbose=verbose
+        verbose=verbose,
     )
 
     results = []
 
     if process == "single":
         response_model = target
-        
+
         for i in range(0, len(text), batch_size):
-            batch = text[i:i+batch_size]
+            batch = text[i : i + batch_size]
             user_message = "Extract information from the following text(s) and fit it into the given model:\n\n"
             for idx, t in enumerate(batch, 1):
                 user_message += f"{idx}. {t}\n\n"
-            
+
             result = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 model=model,
                 response_model=response_model,
@@ -116,23 +109,23 @@ def extract(
                 max_retries=max_retries,
                 temperature=temperature,
             )
-            
+
             results.append(result)
-        
+
         return results if len(results) > 1 else results[0]
     else:  # batch process
         for i in range(0, len(text), batch_size):
-            batch = text[i:i+batch_size]
+            batch = text[i : i + batch_size]
             batch_message = "Extract information from the following texts and fit it into the given model:\n\n"
             for idx, t in enumerate(batch, 1):
                 batch_message += f"{idx}. {t}\n\n"
-            
+
             response_model = create_model("ResponseModel", items=(List[target], ...))
-            
+
             result = completion_client.completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": batch_message}
+                    {"role": "user", "content": batch_message},
                 ],
                 model=model,
                 response_model=response_model,
@@ -140,21 +133,19 @@ def extract(
                 max_retries=max_retries,
                 temperature=temperature,
             )
-            
+
             results.extend(result.items)
-        
+
         return results
 
+
 if __name__ == "__main__":
+
     class User(BaseModel):
         name: str
         age: int
 
-    text = [
-        "John is 20 years old",
-        "Alice is 30 years old",
-        "Bob is 25 years old"
-    ]
+    text = ["John is 20 years old", "Alice is 30 years old", "Bob is 25 years old"]
 
     results = extract(User, text, process="batch", batch_size=2, verbose=True)
     for result in results:

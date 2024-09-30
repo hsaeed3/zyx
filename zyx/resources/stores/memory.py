@@ -8,10 +8,7 @@ import numpy as np
 
 from ...lib.types.document import Document
 from ...lib.utils.logger import get_logger
-from ...client import (
-    completion,
-    InstructorMode
-)
+from ...client import completion, InstructorMode
 from ..data.chunk import chunk
 from ..completions.base.generate import generate
 
@@ -53,7 +50,6 @@ class CustomEmbeddingFunction(embedding_functions.EmbeddingFunction):
 
 
 class Memory:
-
     """
     Class for storing and retrieving data using Chroma.
     """
@@ -110,14 +106,18 @@ class Memory:
         embedding_fn = CustomEmbeddingFunction(api_key=self.embedding_api_key)
         if self.collection_name in self.client.list_collections():
             logger.info(f"Collection '{self.collection_name}' already exists.")
-            return self.client.get_collection(self.collection_name, embedding_function=embedding_fn)
+            return self.client.get_collection(
+                self.collection_name, embedding_function=embedding_fn
+            )
         else:
             logger.info(f"Creating collection '{self.collection_name}'.")
-            return self.client.create_collection(name=self.collection_name, embedding_function=embedding_fn)
+            return self.client.create_collection(
+                name=self.collection_name, embedding_function=embedding_fn
+            )
 
     def _get_embedding(self, text: str) -> List[float]:
         """Generate embeddings for a given text using the custom embedding function.
-        
+
         Args:
             text (str): The text to generate an embedding for.
 
@@ -133,7 +133,7 @@ class Memory:
         metadata: Optional[dict] = None,
     ):
         """Add documents or data to Chroma.
-        
+
         Args:
             data (Union[str, List[str], Document, List[Document]]): The data to add to Chroma.
             metadata (Optional[dict]): The metadata to add to the data.
@@ -155,14 +155,14 @@ class Memory:
 
                 # Chunk the content
                 chunks = chunk(text, chunk_size=self.chunk_size, model=self.model)
-                
+
                 for chunk_text in chunks:
                     embedding_vector = self._get_embedding(chunk_text)
                     ids.append(str(uuid.uuid4()))
                     embeddings.append(embedding_vector)
                     texts.append(chunk_text)
                     chunk_metadata = metadata.copy() if metadata else {}
-                    chunk_metadata['chunk'] = True
+                    chunk_metadata["chunk"] = True
                     metadatas.append(chunk_metadata)
             except Exception as e:
                 logger.error(f"Error processing item: {item}. Error: {e}")
@@ -174,7 +174,9 @@ class Memory:
                 self.collection.add(
                     ids=ids, embeddings=embeddings, metadatas=metadatas, documents=texts
                 )
-                logger.info(f"Successfully added {len(embeddings)} chunks to the collection.")
+                logger.info(
+                    f"Successfully added {len(embeddings)} chunks to the collection."
+                )
             except Exception as e:
                 logger.error(f"Error adding points to collection: {e}")
         else:
@@ -182,7 +184,7 @@ class Memory:
 
     def search(self, query: str, top_k: int = 5) -> SearchResponse:
         """Search in Chroma collection.
-        
+
         Args:
             query (str): The query to search for.
             top_k (int): The number of results to return.
@@ -192,7 +194,9 @@ class Memory:
         """
         try:
             query_embedding = self._get_embedding(query)
-            search_results = self.collection.query(query_embeddings=[query_embedding], n_results=top_k)
+            search_results = self.collection.query(
+                query_embeddings=[query_embedding], n_results=top_k
+            )
 
             nodes = []
             for i in range(len(search_results["ids"][0])):  # Note the [0] here
@@ -200,7 +204,9 @@ class Memory:
                     id=search_results["ids"][0][i],
                     text=search_results["documents"][0][i],
                     embedding=query_embedding,
-                    metadata=search_results["metadatas"][0][i] if search_results["metadatas"] else {}
+                    metadata=search_results["metadatas"][0][i]
+                    if search_results["metadatas"]
+                    else {},
                 )
                 nodes.append(node)
             return SearchResponse(query=query, results=nodes)
@@ -210,13 +216,14 @@ class Memory:
 
     def _summarize_results(self, results: List[ChromaNode]) -> str:
         """Summarize the search results.
-        
+
         Args:
             results (List[ChromaNode]): The search results.
 
         Returns:
             str: The summary of the search results.
         """
+
         class SummaryModel(BaseModel):
             summary: str
 
@@ -227,7 +234,7 @@ class Memory:
             SummaryModel,
             instructions="Provide a concise summary of the following text, focusing on the most important information:",
             model=self.model,
-            n=1
+            n=1,
         )
 
         return summary.summary
@@ -251,7 +258,7 @@ class Memory:
         verbose: Optional[bool] = False,
     ):
         """Perform completion with context from Chroma.
-        
+
         Args:
             messages (Union[str, List[dict]]): The messages to use for the completion.
             model (Optional[str]): The model to use for the completion.
@@ -274,7 +281,10 @@ class Memory:
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
         elif isinstance(messages, list):
-            messages = [{"role": "user", "content": m} if isinstance(m, str) else m for m in messages]
+            messages = [
+                {"role": "user", "content": m} if isinstance(m, str) else m
+                for m in messages
+            ]
 
         query = messages[-1].get("content", "") if messages else ""
 
@@ -295,7 +305,9 @@ class Memory:
             else:
                 for message in messages:
                     if message.get("role", "") == "system":
-                        message["content"] += f"\nAdditional context: {summarized_results}"
+                        message["content"] += (
+                            f"\nAdditional context: {summarized_results}"
+                        )
 
         try:
             result = completion(
@@ -326,14 +338,22 @@ class Memory:
 if __name__ == "__main__":
     try:
         # Initialize the Store
-        store = Memory(collection_name="test_collection", embedding_api_key="your-api-key")
-        
+        store = Memory(
+            collection_name="test_collection", embedding_api_key="your-api-key"
+        )
+
         # Test adding single string
         store.add("This is a single string test.")
         print("Added single string.")
 
         # Test adding list of strings
-        store.add(["Multiple string test 1", "Multiple string test 2", "Multiple string test 3"])
+        store.add(
+            [
+                "Multiple string test 1",
+                "Multiple string test 2",
+                "Multiple string test 3",
+            ]
+        )
         print("Added multiple strings.")
 
         # Test adding Document
@@ -372,7 +392,7 @@ if __name__ == "__main__":
             messages=[{"role": "user", "content": "Summarize the documents."}],
             model="gpt-3.5-turbo",
             temperature=0.7,
-            max_tokens=150
+            max_tokens=150,
         )
         print("\nCustom completion result:")
         print(custom_completion)

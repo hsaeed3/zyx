@@ -7,7 +7,6 @@ __all__ = [
     "read",
 ]
 
-
 from ....resources.stores.memory import Memory as Memory
 from ...types.document import Document as Document
 from litellm.main import embedding as embeddings

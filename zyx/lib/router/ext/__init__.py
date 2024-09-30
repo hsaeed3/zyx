@@ -1,19 +1,10 @@
-__all__ = [
-    "BaseModel",
-    "Field",
-    "app",
-    "image",
-    "audio",
-    "transcribe"
-]
+__all__ = ["BaseModel", "Field", "app", "image", "audio", "transcribe"]
 
 
 from .._router import router
 
 from ...types.base_model import BaseModel
-from pydantic import (
-    Field
-)
+from pydantic import Field
 
 
 class app(router):
@@ -42,9 +33,3 @@ class transcribe(router):
 
 
 transcribe.init("zyx.resources.ext.multimodal", "transcribe")
-
-
-
-
-
-

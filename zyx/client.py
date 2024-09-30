@@ -21,6 +21,7 @@ from typing import (
 
 ## -- Instructor Configuration -- ##
 
+
 ## -- Instructor Mode -- ##
 ## This was directly ported from instructor
 ## https://github.com/jxnl/instructor/
@@ -142,7 +143,6 @@ CompletionResponse = Union[Type[BaseModel], ChatCompletion, ModelResponse, Gener
 
 
 class Client:
-
     """
     Base class for all LLM completions in the zyx library.
     Runs using either the OpenAI or LiteLLM client libraries.
@@ -197,9 +197,7 @@ class Client:
             return client, model, base_url, api_key
 
     @staticmethod
-    def format_to_openai_tools(
-        tools: List[ToolType]
-    ) -> List[Tool]:
+    def format_to_openai_tools(tools: List[ToolType]) -> List[Tool]:
         """Converts the tools to a list of dictionaries.
 
         Args:
@@ -238,7 +236,6 @@ class Client:
             tool_dict.append(tool.openai_tool)
 
         return tool_dict
-    
 
     @staticmethod
     def format_messages(
@@ -262,7 +259,9 @@ class Client:
                     print(f"Converting string to message format.")
 
                 return [{"role": type, "content": messages}]
-            elif isinstance(messages, list) and all(isinstance(m, dict) for m in messages):
+            elif isinstance(messages, list) and all(
+                isinstance(m, dict) for m in messages
+            ):
                 if verbose:
                     print(f"Messages are in the correct format.")
 
@@ -272,7 +271,6 @@ class Client:
         except Exception as e:
             print(f"Error formatting messages: {e}")
             return []
-
 
     @staticmethod
     def does_system_prompt_exist(messages: list[dict]) -> bool:
@@ -286,7 +284,6 @@ class Client:
         """
 
         return any(message.get("role") == "system" for message in messages)
-
 
     @staticmethod
     def swap_system_prompt(
@@ -321,11 +318,13 @@ class Client:
                 break
 
         # Remove any duplicate system messages
-        while len([message for message in messages if message.get("role") == "system"]) > 1:
+        while (
+            len([message for message in messages if message.get("role") == "system"])
+            > 1
+        ):
             messages.pop()
 
         return messages
-
 
     @staticmethod
     def repair_messages(
@@ -371,7 +370,6 @@ class Client:
 
         return messages
 
-
     @staticmethod
     def add_messages(
         inputs: Union[str, list[dict], dict] = None,
@@ -394,7 +392,9 @@ class Client:
         """
 
         if isinstance(inputs, str):
-            formatted_message = Client.format_messages(messages=inputs, verbose=verbose, type=type)
+            formatted_message = Client.format_messages(
+                messages=inputs, verbose=verbose, type=type
+            )
 
             messages.extend(formatted_message)
 
@@ -410,21 +410,19 @@ class Client:
                         print(f"Skipping invalid message format: {item}")
 
         return Client.repair_messages(messages, verbose)
-        
 
     def __init__(
-            self,
-
-            api_key : Optional[str] = None,
-            base_url : Optional[str] = None,
-            organization : Optional[str] = None,
-            provider : Optional[Literal["openai", "litellm"]] = None,
-            verbose : bool = False
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        organization: Optional[str] = None,
+        provider: Optional[Literal["openai", "litellm"]] = None,
+        verbose: bool = False,
     ):
         """Initializes the completion client with the specified parameters.
-        
+
         Example:
-        
+
             ```python
             client = Client(
                 api_key = "sk-...",
@@ -445,14 +443,14 @@ class Client:
         Returns:
             None
         """
-        
+
         self.clients = ClientProviders()
 
         self.config = ClientConfig(
             api_key=api_key,
             base_url=base_url,
             organization=organization,
-            verbose=verbose
+            verbose=verbose,
         )
 
         self.provider = provider
@@ -460,19 +458,18 @@ class Client:
         if self.provider:
             self.clients.client = self.__init_client__()
 
-
     def __init_client__(self):
         """
         Initializes the specified client library.
         """
-        
+
         if self.provider == "openai":
             from openai import OpenAI
 
             client = OpenAI(
-                api_key = self.config.api_key,
-                base_url = self.config.base_url,
-                organization = self.config.organization
+                api_key=self.config.api_key,
+                base_url=self.config.base_url,
+                organization=self.config.organization,
             )
 
         elif self.provider == "litellm":
@@ -482,16 +479,15 @@ class Client:
             litellm.drop_params = True
 
             client = LiteLLM(
-                api_key = self.config.api_key,
-                base_url = self.config.base_url,
-                organization = self.config.organization
+                api_key=self.config.api_key,
+                base_url=self.config.base_url,
+                organization=self.config.organization,
             )
 
         if self.config.verbose:
             logger.info(f"Initialized {self.provider} client")
 
         return client
-    
 
     def __patch_client__(self):
         """
@@ -506,7 +502,7 @@ class Client:
             from instructor import from_openai
 
             patched_client = from_openai(self.clients.client)
-        
+
         else:
             from instructor import patch
 
@@ -517,10 +513,7 @@ class Client:
 
         return patched_client
 
-
-    def chat_completion(
-            self, args : CompletionArgs
-    ):
+    def chat_completion(self, args: CompletionArgs):
         """
         Runs a standard chat completion.
 
@@ -530,17 +523,19 @@ class Client:
         Returns:
             CompletionResponse: The response to the completion.
         """
-        
+
         exclude_params = {"response_model"}
 
         try:
             if args.tools is None:
                 exclude_params.update({"tools", "parallel_tool_calls", "tool_choice"})
-            
+
             # O1 Specific Handler
             # Will be removed once OpenAI supports all O1 Parameters
             if args.model.startswith("o1-"):
-                logger.warning("OpenAI O1- model detected. Removing all non-supported parameters.")
+                logger.warning(
+                    "OpenAI O1- model detected. Removing all non-supported parameters."
+                )
                 exclude_params.update(
                     {
                         "max_tokens",
@@ -559,15 +554,15 @@ class Client:
                 if self.config.verbose:
                     logger.info(f"Streaming completion... with {args.model} model")
 
-                stream  = self.clients.client.chat.completions.create(
-                    **args.model_dump(exclude = exclude_params)
+                stream = self.clients.client.chat.completions.create(
+                    **args.model_dump(exclude=exclude_params)
                 )
                 return (
                     chunk.choices[0].delta.content
                     for chunk in stream
                     if chunk.choices[0].delta.content
                 )
-            
+
             else:
                 if self.config.verbose:
                     logger.info(f"Generating completion... with {args.model} model")
@@ -575,75 +570,73 @@ class Client:
                 exclude_params.add("stream")
 
                 return self.clients.client.chat.completions.create(
-                    **args.model_dump(exclude = exclude_params)
+                    **args.model_dump(exclude=exclude_params)
                 )
-            
+
         except Exception as e:
             logger.error(f"Error in chat_completion: {e}")
             raise
 
-
-    def instructor_completion(
-        self, args : CompletionArgs
-    ):
+    def instructor_completion(self, args: CompletionArgs):
         """Runs an Instructor completion
-        
+
         Args:
             args: CompletionArgs: The arguments to the completion.
 
         Returns:
             CompletionResponse: The response to the completion.
         """
-        
+
         try:
             if not self.clients.instructor:
                 self.clients.instructor = self.__patch_client__()
 
-
             if args.tools is None:
-                exclude_params = ({"tools", "parallel_tool_calls", "tool_choice"})
+                exclude_params = {"tools", "parallel_tool_calls", "tool_choice"}
 
             if args.model.startswith("o1-"):
-                logger.warning("OpenAI O1- model detected. Removing all non-supported parameters.")
-                exclude_params = (
-                    {
-                        "max_tokens",
-                        "temperature",
-                        "top_p",
-                        "frequency_penalty",
-                        "presence_penalty",
-                        "tools",
-                        "parallel_tool_calls",
-                        "tool_choice",
-                        "stop",
-                    }
+                logger.warning(
+                    "OpenAI O1- model detected. Removing all non-supported parameters."
                 )
+                exclude_params = {
+                    "max_tokens",
+                    "temperature",
+                    "top_p",
+                    "frequency_penalty",
+                    "presence_penalty",
+                    "tools",
+                    "parallel_tool_calls",
+                    "tool_choice",
+                    "stop",
+                }
 
             if args.stream:
                 if self.config.verbose:
-                    logger.info(f"Streaming Instructor completion... with {args.model} model")
+                    logger.info(
+                        f"Streaming Instructor completion... with {args.model} model"
+                    )
 
                 exclude_params.add("stream")
 
                 return self.clients.instructor.chat.completions.create_partial(
-                    **args.model_dump(exclude = exclude_params)
+                    **args.model_dump(exclude=exclude_params)
                 )
-            
-            else:
 
+            else:
                 if self.config.verbose:
-                    logger.info(f"Generating Instructor completion... with {args.model} model")
+                    logger.info(
+                        f"Generating Instructor completion... with {args.model} model"
+                    )
 
                 exclude_params.add("stream")
 
                 return self.clients.instructor.chat.completions.create(
-                    **args.model_dump(exclude = exclude_params)
+                    **args.model_dump(exclude=exclude_params)
                 )
 
         except Exception as e:
             logger.error(f"Error in instructor_completion: {e}")
             raise
-    
 
     def execute_tool_call(
         self,
@@ -706,25 +699,24 @@ class Client:
 
         return response
 
-
     def run_completion(
-            self,
-            messages: Union[str, list[dict]] = None,
-            model: str = "gpt-4o",
-            response_model: Optional[Type[BaseModel]] = None,
-            mode: Optional[InstructorMode] = "tool_call",
-            max_retries: Optional[int] = 3,
-            run_tools: Optional[bool] = True,
-            tools: Optional[List[ToolType]] = None,
-            parallel_tool_calls: Optional[bool] = False,
-            tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
-            max_tokens: Optional[int] = None,
-            temperature: Optional[float] = None,
-            top_p: Optional[float] = None,
-            frequency_penalty: Optional[float] = None,
-            presence_penalty: Optional[float] = None,
-            stop: Optional[List[str]] = None,
-            stream: Optional[bool] = False,
+        self,
+        messages: Union[str, list[dict]] = None,
+        model: str = "gpt-4o",
+        response_model: Optional[Type[BaseModel]] = None,
+        mode: Optional[InstructorMode] = "tool_call",
+        max_retries: Optional[int] = 3,
+        run_tools: Optional[bool] = True,
+        tools: Optional[List[ToolType]] = None,
+        parallel_tool_calls: Optional[bool] = False,
+        tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
+        presence_penalty: Optional[float] = None,
+        stop: Optional[List[str]] = None,
+        stream: Optional[bool] = False,
     ):
         """
         Runs a completion with the specified arguments.
@@ -735,7 +727,7 @@ class Client:
                 messages = "Hello!",
                 model = "gpt-4o-mini
             )
-            ```                
+            ```
 
         Args:
             messages: Union[str, list[dict]]: The messages to complete.
@@ -758,34 +750,32 @@ class Client:
         Returns:
             CompletionResponse: The completion response.
         """
-        
-        
+
         formatted_tools = None
         if tools:
             formatted_tools = self.format_to_openai_tools(tools)
 
         args = CompletionArgs(
-            messages = self.format_messages(messages),
-            model = model,
-            response_model = response_model,
-            tools = self.get_tool_dict(formatted_tools) if formatted_tools else None,
-            parallel_tool_calls = parallel_tool_calls,
-            tool_choice = tool_choice,
-            max_tokens = max_tokens,
-            temperature = temperature,
-            top_p = top_p,
-            frequency_penalty = frequency_penalty,
-            presence_penalty = presence_penalty,
-            stop = stop,
-            stream = stream
+            messages=self.format_messages(messages),
+            model=model,
+            response_model=response_model,
+            tools=self.get_tool_dict(formatted_tools) if formatted_tools else None,
+            parallel_tool_calls=parallel_tool_calls,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=stop,
+            stream=stream,
         )
 
         if not response_model:
             if not run_tools or not formatted_tools:
                 return self.chat_completion(args)
-            
-            else:
 
+            else:
                 args.stream = False
                 base_response = self.chat_completion(args)
 
@@ -800,9 +790,8 @@ class Client:
                     return self.chat_completion(args)
                 else:
                     return base_response
-                
-        else:
 
+        else:
             if formatted_tools:
                 original_args = args
 
@@ -818,10 +807,9 @@ class Client:
                     return self.instructor_completion(args)
                 else:
                     return self.instructor_completion(original_args)
-                
+
             else:
                 return self.instructor_completion(args)
-            
 
     def completion(
         self,
@@ -845,7 +833,7 @@ class Client:
         stop: Optional[List[str]] = None,
         stream: Optional[bool] = False,
         provider: Optional[Literal["openai", "litellm"]] = None,
-        verbose: bool = False
+        verbose: bool = False,
     ):
         """
         Runs a completion with the specified arguments.
@@ -884,7 +872,12 @@ class Client:
         Returns:
             CompletionResponse: The completion response.
         """
-        recommended_provider, recommended_model, recommended_base_url, recommended_api_key = self.recommend_client_by_model(model, base_url, api_key)
+        (
+            recommended_provider,
+            recommended_model,
+            recommended_base_url,
+            recommended_api_key,
+        ) = self.recommend_client_by_model(model, base_url, api_key)
 
         # Reinitialize client only if the recommended provider is different
         if recommended_provider != self.provider:
@@ -893,7 +886,7 @@ class Client:
                 base_url=recommended_base_url or base_url or self.config.base_url,
                 organization=organization or self.config.organization,
                 provider=recommended_provider,
-                verbose=verbose or self.config.verbose
+                verbose=verbose or self.config.verbose,
             )
 
         # Update model if it was changed by recommend_client_by_model
@@ -906,7 +899,9 @@ class Client:
             mode = get_mode(mode)
 
             if model.startswith("o1-"):
-                logger.warning("OpenAI O1- model detected. Using JSON_O1 Instructor Mode.")
+                logger.warning(
+                    "OpenAI O1- model detected. Using JSON_O1 Instructor Mode."
+                )
                 mode = Mode.JSON_O1
 
             self.clients.instructor.mode = mode
@@ -927,33 +922,32 @@ class Client:
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty,
             stop=stop,
-            stream=stream
+            stream=stream,
         )
-        
 
     @staticmethod
     def _completion(
-            messages: Union[str, list[dict]] = None,
-            model: str = "gpt-4o",
-            api_key : Optional[str] = None,
-            base_url : Optional[str] = None,
-            organization : Optional[str] = None,
-            response_model: Optional[Type[BaseModel]] = None,
-            mode: Optional[InstructorMode] = "tool_call",
-            max_retries: Optional[int] = 3,
-            run_tools: Optional[bool] = True,
-            tools: Optional[List[ToolType]] = None,
-            parallel_tool_calls: Optional[bool] = False,
-            tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
-            max_tokens: Optional[int] = None,
-            temperature: Optional[float] = None,
-            top_p: Optional[float] = None,
-            frequency_penalty: Optional[float] = None,
-            presence_penalty: Optional[float] = None,
-            stop: Optional[List[str]] = None,
-            stream: Optional[bool] = False,
-            provider : Optional[Literal["openai", "litellm"]] = None,
-            verbose : bool = False
+        messages: Union[str, list[dict]] = None,
+        model: str = "gpt-4o",
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        organization: Optional[str] = None,
+        response_model: Optional[Type[BaseModel]] = None,
+        mode: Optional[InstructorMode] = "tool_call",
+        max_retries: Optional[int] = 3,
+        run_tools: Optional[bool] = True,
+        tools: Optional[List[ToolType]] = None,
+        parallel_tool_calls: Optional[bool] = False,
+        tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
+        presence_penalty: Optional[float] = None,
+        stop: Optional[List[str]] = None,
+        stream: Optional[bool] = False,
+        provider: Optional[Literal["openai", "litellm"]] = None,
+        verbose: bool = False,
     ):
         """
         Runs a completion with the specified arguments.
@@ -964,8 +958,8 @@ class Client:
                 messages = "Hello!",
                 model = "gpt-4o-mini
             )
-            ```                
-        
+            ```
+
         Args:
             messages: Union[str, list[dict]]: The messages to complete.
             model: str: The model to use.
@@ -992,27 +986,26 @@ class Client:
         Returns:
             CompletionResponse: The completion response.
         """
-        
+
         if provider:
             client = Client(
-                api_key = api_key,
-                base_url = base_url,
-                organization = organization,
-                provider = provider,
-                verbose = verbose
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
+                provider=provider,
+                verbose=verbose,
             )
 
         else:
             provider, model, base_url, api_key = Client.recommend_client_by_model(model)
 
             client = Client(
-                api_key = api_key,
-                base_url = base_url,
-                organization = organization,
-                provider = provider,
-                verbose = verbose
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
+                provider=provider,
+                verbose=verbose,
             )
-
 
         if response_model:
             if not client.clients.instructor:
@@ -1021,58 +1014,58 @@ class Client:
             mode = get_mode(mode)
 
             if model.startswith("o1-"):
-                logger.warning("OpenAI O1- model detected. Using JSON_O1 Instructor Mode.")
+                logger.warning(
+                    "OpenAI O1- model detected. Using JSON_O1 Instructor Mode."
+                )
                 mode = Mode.JSON_O1
 
             client.clients.instructor.mode = mode
 
-
         return client.run_completion(
-            messages = messages,
-            model = model,
-            response_model = response_model,
-            mode = mode,
-            max_retries = max_retries,
-            run_tools = run_tools,
-            tools = tools,
-            parallel_tool_calls = parallel_tool_calls,
-            tool_choice = tool_choice,
-            max_tokens = max_tokens,
-            temperature = temperature,
-            top_p = top_p,
-            frequency_penalty = frequency_penalty,
-            presence_penalty = presence_penalty,
-            stop = stop,
-            stream = stream
+            messages=messages,
+            model=model,
+            response_model=response_model,
+            mode=mode,
+            max_retries=max_retries,
+            run_tools=run_tools,
+            tools=tools,
+            parallel_tool_calls=parallel_tool_calls,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=stop,
+            stream=stream,
         )
-    
+
 
 def completion(
-        messages: Union[str, list[dict]] = None,
-        model: str = "gpt-4o",
-        api_key : Optional[str] = None,
-        base_url : Optional[str] = None,
-        organization : Optional[str] = None,
-        response_model: Optional[Type[BaseModel]] = None,
-        mode: Optional[InstructorMode] = "tool_call",
-        max_retries: Optional[int] = 3,
-        run_tools: Optional[bool] = True,
-        tools: Optional[List[ToolType]] = None,
-        parallel_tool_calls: Optional[bool] = False,
-        tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        top_p: Optional[float] = None,
-        frequency_penalty: Optional[float] = None,
-        presence_penalty: Optional[float] = None,
-        stop: Optional[List[str]] = None,
-        stream: Optional[bool] = False,
-        client : Optional[Literal["openai", "litellm"]] = None,
-        verbose : bool = False
+    messages: Union[str, list[dict]] = None,
+    model: str = "gpt-4o",
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    organization: Optional[str] = None,
+    response_model: Optional[Type[BaseModel]] = None,
+    mode: Optional[InstructorMode] = "tool_call",
+    max_retries: Optional[int] = 3,
+    run_tools: Optional[bool] = True,
+    tools: Optional[List[ToolType]] = None,
+    parallel_tool_calls: Optional[bool] = False,
+    tool_choice: Optional[Literal["none", "auto", "required"]] = "auto",
+    max_tokens: Optional[int] = None,
+    temperature: Optional[float] = None,
+    top_p: Optional[float] = None,
+    frequency_penalty: Optional[float] = None,
+    presence_penalty: Optional[float] = None,
+    stop: Optional[List[str]] = None,
+    stream: Optional[bool] = False,
+    client: Optional[Literal["openai", "litellm"]] = None,
+    verbose: bool = False,
 ) -> CompletionResponse:
-    
     """Runs an LLM completion, with tools, streaming or Pydantic structured outputs.
-    
+
     Example:
 
         ```python
@@ -1115,50 +1108,46 @@ def completion(
     provider = client
 
     return Client._completion(
-        messages = messages,
-        model = model,
-        api_key = api_key,
-        base_url = base_url,
-        organization = organization,
-        response_model = response_model,
-        mode = mode,
-        max_retries = max_retries,
-        run_tools = run_tools,
-        tools = tools,
-        parallel_tool_calls = parallel_tool_calls,
-        tool_choice = tool_choice,
-        max_tokens = max_tokens,
-        temperature = temperature,
-        top_p = top_p,
-        frequency_penalty = frequency_penalty,
-        presence_penalty = presence_penalty,
-        stop = stop,
-        stream = stream,
-        provider = provider,
-        verbose = verbose
+        messages=messages,
+        model=model,
+        api_key=api_key,
+        base_url=base_url,
+        organization=organization,
+        response_model=response_model,
+        mode=mode,
+        max_retries=max_retries,
+        run_tools=run_tools,
+        tools=tools,
+        parallel_tool_calls=parallel_tool_calls,
+        tool_choice=tool_choice,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        top_p=top_p,
+        frequency_penalty=frequency_penalty,
+        presence_penalty=presence_penalty,
+        stop=stop,
+        stream=stream,
+        provider=provider,
+        verbose=verbose,
     )
 
 
 if __name__ == "__main__":
 
     class PersonModel(BaseModel):
-        secret_identity : str
-        name : str
-        age : int
+        secret_identity: str
+        name: str
+        age: int
 
-    def get_secret_identity(name : str):
+    def get_secret_identity(name: str):
         return "Batman"
 
-    print(
-        completion(
-            "Who is SpiderMan", verbose = True, response_model = PersonModel
-        )
-    )
+    print(completion("Who is SpiderMan", verbose=True, response_model=PersonModel))
 
     print(
         completion(
-            messages = "Who is SpiderMan",
-            tools = [get_secret_identity],
-            verbose = True,
+            messages="Who is SpiderMan",
+            tools=[get_secret_identity],
+            verbose=True,
         )
     )

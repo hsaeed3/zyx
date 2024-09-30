@@ -1,13 +1,16 @@
 from pydantic import create_model, BaseModel as PydanticBaseModel
 from typing import Optional, Literal, List, Type, TypeVar, Union, overload
 from ...client import InstructorMode, Client
+from ..utils.logger import get_logger
 
 
-T = TypeVar('T', bound='BaseModel')
+logger = get_logger("base_model")
+
+
+T = TypeVar("T", bound="BaseModel")
 
 
 class BaseModel(PydanticBaseModel):
-
     @overload
     @classmethod
     def generate(
@@ -25,8 +28,7 @@ class BaseModel(PydanticBaseModel):
         temperature: float = 0,
         mode: InstructorMode = "markdown_json_mode",
         verbose: bool = False,
-    ) -> List[T]:
-        ...
+    ) -> List[T]: ...
 
     @overload
     def generate(
@@ -44,8 +46,7 @@ class BaseModel(PydanticBaseModel):
         temperature: float = 0,
         mode: InstructorMode = "markdown_json_mode",
         verbose: bool = False,
-    ) -> List[T]:
-        ...
+    ) -> List[T]: ...
 
     @classmethod
     def generate(
@@ -119,14 +120,26 @@ class BaseModel(PydanticBaseModel):
         if isinstance(cls_or_self, BaseModel):
             system_message += f"\n\nUse the following instance as a reference or starting point:\n{cls_or_self.model_dump_json()}"
 
-        user_message = instructions if instructions else f"Generate {n} instance(s) of the given model."
+        system_message += (
+            f"\nALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES."
+        )
+
+        user_message = (
+            instructions
+            if instructions
+            else f"Generate {n} instance(s) of the given model."
+        )
+
+        if verbose:
+            logger.info(f"Template: {system_message}")
+            logger.info(f"Instructions: {user_message}")
 
         completion_client = Client(
             api_key=api_key,
             base_url=base_url,
             organization=organization,
             provider=client,
-            verbose=verbose
+            verbose=verbose,
         )
 
         if process == "batch":
@@ -140,7 +153,9 @@ class BaseModel(PydanticBaseModel):
                 max_tokens=max_tokens,
                 max_retries=max_retries,
                 temperature=temperature,
-                mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
+                mode="markdown_json_mode"
+                if model.startswith(("ollama/", "ollama_chat/"))
+                else mode,
                 response_model=ResponseModel,
             )
             return [response] if n == 1 else response.items
@@ -157,17 +172,34 @@ class BaseModel(PydanticBaseModel):
                     Field constraints: {field.json_schema_extra}
 
                     Ensure that the generated value complies with the field's type and constraints.
+
+                    \nALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES.
                     """
-                    field_user_message = f"Generate a value for the '{field_name}' field."
+                    field_user_message = (
+                        f"Generate a value for the '{field_name}' field."
+                    )
+
                     if instance:
                         field_user_message += f"\nCurrent partial instance: {instance}"
 
                     # Add information about previous generations
                     if i > 0:
-                        field_user_message += f"\n\nPrevious generations for this field:"
-                        for j, prev_instance in enumerate(results[-min(3, i):], 1):
-                            field_user_message += f"\n{j}. {getattr(prev_instance, field_name)}"
+                        field_user_message += (
+                            f"\n\nPrevious generations for this field:"
+                        )
+                        for j, prev_instance in enumerate(results[-min(3, i) :], 1):
+                            field_user_message += (
+                                f"\n{j}. {getattr(prev_instance, field_name)}"
+                            )
                         field_user_message += "\n\nPlease generate a different value from these previous ones."
+
+                    field_user_message += f"""\n\n
+                    USER INSTRUCTIONS DEFINED BELOW FOR CONTENT & GUIDELINES
+
+                    <instructions>
+                    {instructions if instructions else "No additional instructions provided."}
+                    </instructions> \n\n
+                    """
 
                     field_response = completion_client.completion(
                         messages=[
@@ -178,8 +210,12 @@ class BaseModel(PydanticBaseModel):
                         max_tokens=max_tokens,
                         max_retries=max_retries,
                         temperature=temperature,
-                        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
-                        response_model=create_model("FieldResponse", value=(field.annotation, ...)),
+                        mode="markdown_json_mode"
+                        if model.startswith(("ollama/", "ollama_chat/"))
+                        else mode,
+                        response_model=create_model(
+                            "FieldResponse", value=(field.annotation, ...)
+                        ),
                     )
                     instance[field_name] = field_response.value
 
@@ -191,9 +227,10 @@ class BaseModel(PydanticBaseModel):
 if __name__ == "__main__":
 
     class TestData(BaseModel):
-        compounds : List[str]
+        compounds: List[str]
 
-
-    compounds = TestData.generate("make me some data", n=5, process = "sequential", verbose = True)
+    compounds = TestData.generate(
+        "make me some data", n=5, process="sequential", verbose=True
+    )
 
     print(compounds)

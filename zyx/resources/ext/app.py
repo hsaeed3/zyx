@@ -6,11 +6,7 @@ from pydantic import BaseModel
 
 
 from ...lib.utils.logger import get_logger
-from ...client import (
-    Client,
-    completion,
-    InstructorMode
-)
+from ...client import Client, completion, InstructorMode
 
 
 logger = get_logger("app")
@@ -139,6 +135,7 @@ ColorName = Literal[
     "vermilion",
     "ivory",
 ]
+
 
 class ZyxApp(App):
     CSS = """
@@ -333,8 +330,12 @@ class ZyxApp(App):
 
     def save_params(self):
         self.params["model"] = self.query_one("#model_input").value or self.model
-        self.params["max_tokens"] = int(self.query_one("#max_tokens_input").value or 0) or None
-        self.params["temperature"] = float(self.query_one("#temperature_input").value or 0) or None
+        self.params["max_tokens"] = (
+            int(self.query_one("#max_tokens_input").value or 0) or None
+        )
+        self.params["temperature"] = (
+            float(self.query_one("#temperature_input").value or 0) or None
+        )
         self.params["instruction"] = self.query_one("#instruction_input").value
 
         # Update the class attributes
@@ -413,6 +414,7 @@ class ZyxApp(App):
         self.query_one("#temperature_input").value = str(self.params["temperature"])
         self.query_one("#instruction_input").value = self.params["instruction"]
 
+
 def terminal(
     messages: Union[str, list[dict]] = None,
     model: Optional[str] = "gpt-4o-mini",
@@ -462,6 +464,7 @@ def terminal(
         ).run()
     except Exception as e:
         print(f"Error running ZyxApp: {e}")
+
 
 if __name__ == "__main__":
     terminal()

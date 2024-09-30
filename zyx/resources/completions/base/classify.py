@@ -1,36 +1,27 @@
 from ....lib.utils.logger import get_logger
-from ....client import (
-    Client,
-    InstructorMode
-)
+from ....client import Client, InstructorMode
 from pydantic import BaseModel, create_model
-from typing import (
-    List,
-    Literal,
-    Optional,
-    Union
-)
+from typing import List, Literal, Optional, Union
 
 
 logger = get_logger("classify")
 
 
 def classify(
-        inputs : Union[str, List[str]],
-        labels : List[str],
-        classification : Literal["single", "multi"] = "single",
-        n : int = 1,
-        batch_size : int = 3,
-        model : str = "gpt-4o-mini",
-        api_key : Optional[str] = None,
-        base_url : Optional[str] = None,
-        organization : Optional[str] = None,
-        mode : InstructorMode = "tool_call",
-        temperature : Optional[float] = None,
-        client : Optional[Literal["openai", "litellm"]] = None,
-        verbose : bool = False
+    inputs: Union[str, List[str]],
+    labels: List[str],
+    classification: Literal["single", "multi"] = "single",
+    n: int = 1,
+    batch_size: int = 3,
+    model: str = "gpt-4o-mini",
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    organization: Optional[str] = None,
+    mode: InstructorMode = "tool_call",
+    temperature: Optional[float] = None,
+    client: Optional[Literal["openai", "litellm"]] = None,
+    verbose: bool = False,
 ) -> List:
-    
     """
     Classifies given input(s) into one or more of the provided labels.
 
@@ -67,12 +58,12 @@ def classify(
         logger.info(f"Classification Mode: {classification}")
 
     class ClassificationResult(BaseModel):
-        text : str
-        label : str
+        text: str
+        label: str
 
     class MultiClassificationResult(BaseModel):
-        text : str
-        labels : List[str]
+        text: str
+        labels: List[str]
 
     if classification == "single":
         system_message = f"""
@@ -86,8 +77,7 @@ both the text and the label you have classified it under.
             response_model = ClassificationResult
         elif batch_size > 1:
             response_model = create_model(
-            "ClassificationResult",
-                items = (List[ClassificationResult], ...)
+                "ClassificationResult", items=(List[ClassificationResult], ...)
             )
         else:
             raise ValueError("Batch size must be a positive integer.")
@@ -103,28 +93,27 @@ both the text and the label you have classified it under.
             response_model = MultiClassificationResult
         elif batch_size > 1:
             response_model = create_model(
-            "ClassificationResult",
-                items = (List[MultiClassificationResult], ...)
+                "ClassificationResult", items=(List[MultiClassificationResult], ...)
             )
         else:
             raise ValueError("Batch size must be a positive integer.")
-    
+
     if isinstance(inputs, str):
         inputs = [inputs]
 
     results = []
 
     completion_client = Client(
-        api_key = api_key,
-        base_url = base_url,
-        organization = organization,
-        provider = client,
-        verbose = verbose
+        api_key=api_key,
+        base_url=base_url,
+        organization=organization,
+        provider=client,
+        verbose=verbose,
     )
 
     for i in range(0, len(inputs), batch_size):
-        batch = inputs[i:i+batch_size]
-        
+        batch = inputs[i : i + batch_size]
+
         user_message = "Classify the following text(s):\n\n"
         for idx, text in enumerate(batch, 1):
             user_message += f"{idx}. {text}\n\n"
@@ -132,7 +121,7 @@ both the text and the label you have classified it under.
         result = completion_client.completion(
             messages=[
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             model=model,
             response_model=response_model,
@@ -147,19 +136,14 @@ both the text and the label you have classified it under.
 
     return results if len(results) > 1 else results[0]
 
-    
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     items = [
         "I love programming in Python",
         "I like french fries",
-        "I love programming in Julia"
+        "I love programming in Julia",
     ]
 
     labels = ["code", "food"]
 
-    print(classify(items, labels, classification = "single", batch_size = 2, verbose = True))
-    
-    
-
-
+    print(classify(items, labels, classification="single", batch_size=2, verbose=True))

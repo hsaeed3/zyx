@@ -6,7 +6,7 @@ __all__ = [
     "extract",
     "function",
     "generate",
-    "system_prompt"
+    "system_prompt",
 ]
 
 
