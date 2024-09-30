@@ -8,6 +8,9 @@
 
 ---
 
+> This current implementation is only built for single documents.
+> Multi-document indexing and vectorization is wip. 
+
 ### Quick Example - Podcast about the Large Language Monkeys Paper
 
 ```python
