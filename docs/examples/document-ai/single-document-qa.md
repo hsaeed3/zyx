@@ -89,3 +89,7 @@ result = document.query("What is this paper about?", model = "gpt-4o-mini")
   )
   ```
 </details>
+
+
+
+

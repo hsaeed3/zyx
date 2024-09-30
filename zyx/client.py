@@ -421,6 +421,30 @@ class Client:
             provider : Optional[Literal["openai", "litellm"]] = None,
             verbose : bool = False
     ):
+        """Initializes the completion client with the specified parameters.
+        
+        Example:
+        
+            ```python
+            client = Client(
+                api_key = "sk-...",
+                base_url = "https://api.openai.com/v1",
+                organization = "org-...",
+                provider = "openai",
+                verbose = True
+            )
+            ```
+
+        Args:
+            api_key: Optional[str]: The API key to use for the client.
+            base_url: Optional[str]: The base URL to use for the client.
+            organization: Optional[str]: The organization to use for the client.
+            provider: Optional[Literal["openai", "litellm"]]: The provider to use for the client.
+            verbose: bool: Whether to log the client initialization process.
+
+        Returns:
+            None
+        """
         
         self.clients = ClientProviders()
 
@@ -497,6 +521,15 @@ class Client:
     def chat_completion(
             self, args : CompletionArgs
     ):
+        """
+        Runs a standard chat completion.
+
+        Args:
+            args: CompletionArgs: The arguments to the completion.
+
+        Returns:
+            CompletionResponse: The response to the completion.
+        """
         
         exclude_params = {"response_model"}
 
@@ -553,6 +586,14 @@ class Client:
     def instructor_completion(
         self, args : CompletionArgs
     ):
+        """Runs an Instructor completion
+        
+        Args:
+            args: CompletionArgs: The arguments to the completion.
+
+        Returns:
+            CompletionResponse: The response to the completion.
+        """
         
         try:
             if not self.clients.instructor:
@@ -685,6 +726,39 @@ class Client:
             stop: Optional[List[str]] = None,
             stream: Optional[bool] = False,
     ):
+        """
+        Runs a completion with the specified arguments.
+
+        Example:
+            ```python
+            completion(
+                messages = "Hello!",
+                model = "gpt-4o-mini
+            )
+            ```                
+
+        Args:
+            messages: Union[str, list[dict]]: The messages to complete.
+            model: str: The model to use.
+            response_model: Optional[Type[BaseModel]]: The Pydantic model to use.
+            mode: Optional[InstructorMode]: The Instructor mode to use.
+            max_retries: Optional[int]: The maximum number of retries to use.
+            run_tools: Optional[bool]: Whether to run tools.
+            tools: Optional[List[ToolType]]: The tools to use.
+            parallel_tool_calls: Optional[bool]: Whether to run tool calls in parallel.
+            tool_choice: Optional[Literal["none", "auto", "required"]]: Whether to run tool calls in parallel.
+            max_tokens: Optional[int]: The maximum number of tokens to use.
+            temperature: Optional[float]: The temperature to use.
+            top_p: Optional[float]: The top p to use.
+            frequency_penalty: Optional[float]: The frequency penalty to use.
+            presence_penalty: Optional[float]: The presence penalty to use.
+            stop: Optional[List[str]]: The stop to use.
+            stream: Optional[bool]: Whether to stream the completion.
+
+        Returns:
+            CompletionResponse: The completion response.
+        """
+        
         
         formatted_tools = None
         if tools:
@@ -773,6 +847,43 @@ class Client:
         provider: Optional[Literal["openai", "litellm"]] = None,
         verbose: bool = False
     ):
+        """
+        Runs a completion with the specified arguments.
+
+        Example:
+            ```python
+            completion(
+                messages = "Hello!",
+                model = "gpt-4o-mini
+            )
+            ```
+
+        Args:
+            messages: Union[str, list[dict]]: The messages to complete.
+            model: str: The model to use.
+            api_key : Optional[str]: The API key to use.
+            base_url : Optional[str]: The base URL to use.
+            organization : Optional[str]: The organization to use.
+            response_model: Optional[Type[BaseModel]]: The Pydantic model to use.
+            mode: Optional[InstructorMode]: The Instructor mode to use.
+            max_retries: Optional[int]: The maximum number of retries to use.
+            run_tools: Optional[bool]: Whether to run tools.
+            tools: Optional[List[ToolType]]: The tools to use.
+            parallel_tool_calls: Optional[bool]: Whether to run tool calls in parallel.
+            tool_choice: Optional[Literal["none", "auto", "required"]]: Whether to run tool calls in parallel.
+            max_tokens: Optional[int]: The maximum number of tokens to use.
+            temperature: Optional[float]: The temperature to use.
+            top_p: Optional[float]: The top p to use.
+            frequency_penalty: Optional[float]: The frequency penalty to use.
+            presence_penalty: Optional[float]: The presence penalty to use.
+            stop: Optional[List[str]]: The stop to use.
+            stream: Optional[bool]: Whether to stream the completion.
+            provider : Optional[Literal["openai", "litellm"]]: The provider to use.
+            verbose : bool: Whether to print verbose output.
+
+        Returns:
+            CompletionResponse: The completion response.
+        """
         recommended_provider, recommended_model, recommended_base_url, recommended_api_key = self.recommend_client_by_model(model, base_url, api_key)
 
         # Reinitialize client only if the recommended provider is different
@@ -844,6 +955,43 @@ class Client:
             provider : Optional[Literal["openai", "litellm"]] = None,
             verbose : bool = False
     ):
+        """
+        Runs a completion with the specified arguments.
+
+        Example:
+            ```python
+            completion(
+                messages = "Hello!",
+                model = "gpt-4o-mini
+            )
+            ```                
+        
+        Args:
+            messages: Union[str, list[dict]]: The messages to complete.
+            model: str: The model to use.
+            api_key : Optional[str]: The API key to use.
+            base_url : Optional[str]: The base URL to use.
+            organization : Optional[str]: The organization to use.
+            response_model: Optional[Type[BaseModel]]: The Pydantic model to use.
+            mode: Optional[InstructorMode]: The Instructor mode to use.
+            max_retries: Optional[int]: The maximum number of retries to use.
+            run_tools: Optional[bool]: Whether to run tools.
+            tools: Optional[List[ToolType]]: The tools to use.
+            parallel_tool_calls: Optional[bool]: Whether to run tool calls in parallel.
+            tool_choice: Optional[Literal["none", "auto", "required"]]: Whether to run tool calls in parallel.
+            max_tokens: Optional[int]: The maximum number of tokens to use.
+            temperature: Optional[float]: The temperature to use.
+            top_p: Optional[float]: The top p to use.
+            frequency_penalty: Optional[float]: The frequency penalty to use.
+            presence_penalty: Optional[float]: The presence penalty to use.
+            stop: Optional[List[str]]: The stop to use.
+            stream: Optional[bool]: Whether to stream the completion.
+            provider : Optional[Literal["openai", "litellm"]]: The provider to use.
+            verbose : bool: Whether to print verbose output.
+
+        Returns:
+            CompletionResponse: The completion response.
+        """
         
         if provider:
             client = Client(

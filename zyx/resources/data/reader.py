@@ -35,6 +35,22 @@ def read(
 ) -> Union[Document, List[Document], str]:
     """
     Reads either a file, a directory, or a list of files and returns the content.
+
+    Example:
+        ```python
+        read("path/to/file.pdf")
+        # Document(content="...", metadata={"file_name": "file.pdf", "file_type": "application/pdf", "file_size": 123456})
+        ```
+
+    Args:
+        path: Union[str, Path, List[Union[str, Path]]]: The path to read.
+        output: Union[Type[str], OutputFormat]: The output format.
+        target: OutputType: The output type.
+        verbose: bool: Whether to print verbose output.
+        workers: Optional[int]: The number of workers to use for reading.
+
+    Returns:
+        Union[Document, List[Document], str]: The content.
     """
     if isinstance(path, list):
         paths = [_download_if_url(p) for p in path]

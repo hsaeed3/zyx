@@ -49,3 +49,7 @@ zyx.completion(
     ]
 )
 ```
+
+## API Reference - `completion()`
+
+::: zyx.client.completion

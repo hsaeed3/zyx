@@ -53,6 +53,11 @@ class CustomEmbeddingFunction(embedding_functions.EmbeddingFunction):
 
 
 class Memory:
+
+    """
+    Class for storing and retrieving data using Chroma.
+    """
+
     def __init__(
         self,
         collection_name: str = "my_collection",
@@ -111,7 +116,14 @@ class Memory:
             return self.client.create_collection(name=self.collection_name, embedding_function=embedding_fn)
 
     def _get_embedding(self, text: str) -> List[float]:
-        """Generate embeddings for a given text using the custom embedding function."""
+        """Generate embeddings for a given text using the custom embedding function.
+        
+        Args:
+            text (str): The text to generate an embedding for.
+
+        Returns:
+            List[float]: The embedding for the text.
+        """
         embedding_fn = CustomEmbeddingFunction(api_key=self.embedding_api_key)
         return embedding_fn([text])[0]  # Return the first (and only) embedding
 
@@ -120,7 +132,12 @@ class Memory:
         data: Union[str, List[str], Document, List[Document]],
         metadata: Optional[dict] = None,
     ):
-        """Add documents or data to Chroma."""
+        """Add documents or data to Chroma.
+        
+        Args:
+            data (Union[str, List[str], Document, List[Document]]): The data to add to Chroma.
+            metadata (Optional[dict]): The metadata to add to the data.
+        """
         if isinstance(data, str):
             data = [data]
         elif isinstance(data, Document):
@@ -164,7 +181,15 @@ class Memory:
             logger.warning("No valid embeddings to add to the collection.")
 
     def search(self, query: str, top_k: int = 5) -> SearchResponse:
-        """Search in Chroma collection."""
+        """Search in Chroma collection.
+        
+        Args:
+            query (str): The query to search for.
+            top_k (int): The number of results to return.
+
+        Returns:
+            SearchResponse: The search results.
+        """
         try:
             query_embedding = self._get_embedding(query)
             search_results = self.collection.query(query_embeddings=[query_embedding], n_results=top_k)
@@ -184,6 +209,14 @@ class Memory:
             return SearchResponse(query=query)  # Return empty results on error
 
     def _summarize_results(self, results: List[ChromaNode]) -> str:
+        """Summarize the search results.
+        
+        Args:
+            results (List[ChromaNode]): The search results.
+
+        Returns:
+            str: The summary of the search results.
+        """
         class SummaryModel(BaseModel):
             summary: str
 
@@ -217,7 +250,25 @@ class Memory:
         max_retries: Optional[int] = 3,
         verbose: Optional[bool] = False,
     ):
-        """Perform completion with context from Chroma."""
+        """Perform completion with context from Chroma.
+        
+        Args:
+            messages (Union[str, List[dict]]): The messages to use for the completion.
+            model (Optional[str]): The model to use for the completion.
+            top_k (Optional[int]): The number of results to return from the search.
+            tools (Optional[List[Union[Callable, dict, BaseModel]]]): The tools to use for the completion.
+            run_tools (Optional[bool]): Whether to run the tools for the completion.
+            response_model (Optional[BaseModel]): The response model to use for the completion.
+            mode (Optional[InstructorMode]): The mode to use for the completion.
+            base_url (Optional[str]): The base URL to use for the completion.
+            api_key (Optional[str]): The API key to use for the completion.
+            organization (Optional[str]): The organization to use for the completion.
+            top_p (Optional[float]): The top p to use for the completion.
+            temperature (Optional[float]): The temperature to use for the completion.
+            max_tokens (Optional[int]): The maximum number of tokens to generate.
+            max_retries (Optional[int]): The maximum number of retries to use for the completion.
+            verbose (Optional[bool]): Whether to print the messages to the console.
+        """
         logger.info(f"Initial messages: {messages}")
 
         if isinstance(messages, str):

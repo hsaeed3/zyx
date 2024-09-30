@@ -124,3 +124,10 @@ editing and development.',
     usage=CompletionUsage(completion_tokens=126, prompt_tokens=46, total_tokens=172, completion_tokens_details=CompletionTokensDetails(reasoning_tokens=0))
 )
 ```
+</details>
+
+---
+
+## API Reference
+
+::: zyx.resources.stores.memory.Memory

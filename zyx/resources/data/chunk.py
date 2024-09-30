@@ -17,6 +17,24 @@ def chunk(
 ) -> Union[List[str], List[List[str]]]:
     """
     Takes a string, Document, or a list of strings/Document models and returns the chunked content.
+
+    Example:
+        ```python
+        chunk("Hello, world!")
+        # ["Hello, world!"]
+        ```
+
+    Args:
+        inputs: Union[str, Document, List[Union[str, Document]]]: The input to chunk.
+        chunk_size: int: The size of the chunks to return.
+        model: str: The model to use for chunking.
+        processes: int: The number of processes to use for chunking.
+        memoize: bool: Whether to memoize the chunking process.
+        progress: bool: Whether to show a progress bar.
+        max_token_chars: int: The maximum number of characters to use for chunking.
+
+    Returns:
+        Union[List[str], List[List[str]]]: The chunked content. 
     """
     try:
         tokenizer = tiktoken.encoding_for_model(model)

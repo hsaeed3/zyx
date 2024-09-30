@@ -7,13 +7,15 @@ have also been built in as LLM compatible tools as well, to provide multimodal t
 
 ## Image Generation
 
-The image function is a direct routeof the `litellm.image_generation()` function.
+Generate images through either the `OpenAI` or `FALAI` APIs.
 
 ```python
 from zyx import image
 
 image("An astronaut riding a rainbow unicorn")
 ```
+
+::: zyx.resources.ext.multimodal.image
 
 ---
 

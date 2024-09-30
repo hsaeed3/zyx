@@ -72,3 +72,24 @@ markdown_extensions:
 
 extra_css:
   - stylesheets/extras.css
+
+
+nav:
+  - Welcome to zyx: index.md
+  - Examples:
+    - LLM Completions: examples/llm-completions/llm-completions.md
+    - Working With Pydantic Models: examples/llm-completions/pydantic-outputs.md
+    - LLM Functions: 
+      - Code Generators: examples/llm-functions/code-generators.md
+      - Entity Extraction: examples/llm-functions/entity-extraction.md
+      - Label Classification: examples/llm-functions/label-classification.md
+    - Agents:
+      - LLM as a Judge: examples/agents/llm-as-a-judge.md
+      - Planning: examples/agents/planning.md
+      - Web Scraping: examples/agents/web-scraping.md
+    - Data / Document AI:
+      - Single Document QA: examples/document-ai/single-document-qa.md
+      - Multi-Document RAG: examples/document-ai/multi-document-rag.md
+      - Utilities: examples/document-ai/utils.md
+    - Multi-Modal Generations: examples/multimodal/multimodal-generations.md
+    
