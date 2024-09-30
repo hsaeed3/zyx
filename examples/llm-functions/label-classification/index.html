@@ -14,7 +14,7 @@
         <link rel="prev" href="../entity-extraction/">
       
       
-        <link rel="next" href="../../multimodal/multimodal-generations/">
+        <link rel="next" href="../../agents/llm-as-a-judge/">
       
       
       <link rel="icon" href="../../../fonts/icon.svg">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Label Based Classification - zyx - an llm framework</title>
+        <title>Label Classification - zyx - an llm framework</title>
       
     
     
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Label Based Classification
+              Label Classification
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
     
   
-  zyx
+  Welcome to zyx
 
       </a>
     </li>
@@ -243,7 +243,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../example/" class="md-tabs__link">
+        <a href="../../llm-completions/llm-completions/" class="md-tabs__link">
           
   
   Examples
@@ -318,7 +318,7 @@
         
   
   <span class="md-ellipsis">
-    zyx
+    Welcome to zyx
   </span>
   
 
@@ -379,11 +379,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../example/" class="md-nav__link">
+      <a href="../../llm-completions/llm-completions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Examples
+    LLM Completions
   </span>
   
 
@@ -399,6 +399,29 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../llm-completions/pydantic-outputs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Working With Pydantic Models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     
     
     
@@ -411,30 +434,28 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
             
   
   <span class="md-ellipsis">
-    Document QA
+    LLM Functions
   </span>
   
 
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_2">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
             <span class="md-nav__icon md-icon"></span>
-            Document QA
+            LLM Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -445,11 +466,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Document-QA/multi-document-rag/" class="md-nav__link">
+      <a href="../code-generators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Multi Document RAG
+    Code Generators
   </span>
   
 
@@ -466,15 +487,112 @@
   
   
     <li class="md-nav__item">
-      <a href="../../Document-QA/single-document-qa/" class="md-nav__link">
+      <a href="../entity-extraction/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Single Document QA
+    Entity Extraction
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Label Classification
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Label Classification
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#single-label-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single Label Classification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-label-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi Label Classification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Reference
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zyx.resources.completions.base.classify.classify" class="md-nav__link">
+    <span class="md-ellipsis">
+      classify
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -512,10 +630,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -526,8 +644,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
             Agents
           </label>
@@ -628,119 +746,24 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
-            
-  
-  <span class="md-ellipsis">
-    Llm completions
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            Llm completions
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../llm-completions/llm-completions/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    LLM Completions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../llm-completions/pydantic-outputs/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Pydantic Outputs
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
         
           
           <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
             
   
   <span class="md-ellipsis">
-    Llm functions
+    Data / Document AI
   </span>
   
 
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_5">
             <span class="md-nav__icon md-icon"></span>
-            Llm functions
+            Data / Document AI
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -751,11 +774,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../code-generators/" class="md-nav__link">
+      <a href="../../document-ai/single-document-qa/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Code Generators
+    Single Document QA
   </span>
   
 
@@ -772,11 +795,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../entity-extraction/" class="md-nav__link">
+      <a href="../../document-ai/multi-document-rag/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Entity Extraction
+    Multi-Document RAG
   </span>
   
 
@@ -790,94 +813,18 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Label Based Classification
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../document-ai/utils/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Label Based Classification
+    Utilities
   </span>
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#single-label-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      Single Label Classification
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multi-label-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      Multi Label Classification
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Reference
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#zyx.resources.completions.base.classify.classify" class="md-nav__link">
-    <span class="md-ellipsis">
-      classify
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -890,51 +837,6 @@
   
 
               
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
-            
-  
-  <span class="md-ellipsis">
-    Multimodal
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_6">
-            <span class="md-nav__icon md-icon"></span>
-            Multimodal
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -947,19 +849,11 @@
         
   
   <span class="md-ellipsis">
-    Multimodal Generations
+    Multi-Modal Generations
   </span>
   
 
       </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -1603,13 +1497,13 @@
         
         
           
-          <a href="../../multimodal/multimodal-generations/" class="md-footer__link md-footer__link--next" aria-label="Next: Multimodal Generations">
+          <a href="../../agents/llm-as-a-judge/" class="md-footer__link md-footer__link--next" aria-label="Next: LLM as a Judge">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Multimodal Generations
+                LLM as a Judge
               </div>
             </div>
             <div class="md-footer__button md-icon">
