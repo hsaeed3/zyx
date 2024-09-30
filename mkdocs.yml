@@ -87,6 +87,7 @@ nav:
       - LLM as a Judge: examples/agents/llm-as-a-judge.md
       - Planning: examples/agents/planning.md
       - Web Scraping: examples/agents/web-scraping.md
+      - Generating Podcasts: examples/agents/generating-podcasts.md
     - Data / Document AI:
       - Single Document QA: examples/document-ai/single-document-qa.md
       - Multi-Document RAG: examples/document-ai/multi-document-rag.md

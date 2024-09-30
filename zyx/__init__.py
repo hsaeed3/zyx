@@ -34,6 +34,8 @@ __all__ = [
     "system_prompt",
 
     # llm - agentic reasoning
+    "Character",
+    "conversation",
     "judge",
     "plan",
     "query",
@@ -75,6 +77,7 @@ from .lib.router.llm import (
 
 # llm - agents
 from .lib.router.agents import (
+    Character, conversation,
     judge, plan, query, scrape, solve
 )
 

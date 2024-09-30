@@ -119,7 +119,7 @@ def image(
             try:
                 from IPython.display import display, Image
             except ImportError:
-                from .. import logger
+                from ... import logger
 
                 logger.critical(
                     "The display function requires IPython, which is not included in the base 'zyx' package. Please install it with `pip install ipython`."
@@ -134,7 +134,7 @@ def image(
         try:
             import fal_client
         except ImportError:
-            from .. import logger
+            from ... import logger
 
             logger.critical(
                 "The FAL_AI API requires the 'fal-client' package. Please install it with `pip install fal-client`."
@@ -197,7 +197,7 @@ def image(
                 try:
                     from IPython.display import display, Image
                 except ImportError:
-                    from .. import logger
+                    from ... import logger
 
                     logger.critical(
                         "The display function requires IPython, which is not included in the base 'zyx' package. Please install it with `pip install ipython`."
@@ -245,7 +245,7 @@ def audio(
         import sounddevice as sd
         import soundfile as sf
     except ImportError:
-        from .. import logger
+        from ... import logger
 
         logger.critical(
             "The [italic]speak[/italic] function requires sounddevice and soundfile, which are not included in the base 'zyx' package. Please install them with [bold]`pip install sounddevice soundfile`[/bold]."
@@ -254,11 +254,14 @@ def audio(
 
     client = OpenAI(api_key=api_key, base_url=base_url)
     try:
-        response = client.audio.audio.create(input=prompt, model=model, voice=voice)
+        response = client.audio.speech.create(input=prompt, model=model, voice=voice)
         audio_data = response.read()
 
-        with io.BytesIO(audio_data) as audio_buffer:
-            audio_array, sample_rate = sf.read(audio_buffer)
+        try:
+            with io.BytesIO(audio_data) as audio_buffer:
+                audio_array, sample_rate = sf.read(audio_buffer)
+        except Exception as e:
+            return e
 
         if filename:
             file_endings = [".wav", ".mp3", ".m4a"]
@@ -273,7 +276,7 @@ def audio(
             try:
                 from IPython.display import Audio
             except ImportError:
-                from .. import logger
+                from ... import logger
 
                 logger.critical(
                     "The [italic]play[/italic] function requires IPython, which is not included in the base 'zyx' package. Please install it with [bold]`pip install ipython`[/bold]."
@@ -321,7 +324,7 @@ def transcribe(
         import sounddevice as sd
         import soundfile as sf
     except ImportError:
-        from .. import logger
+        from ... import logger
 
         logger.critical(
             "The [italic]speak[/italic] function requires sounddevice and soundfile, which are not included in the base 'zyx' package. Please install them with [bold]`pip install sounddevice soundfile`[/bold]."

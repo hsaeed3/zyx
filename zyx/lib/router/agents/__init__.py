@@ -1,4 +1,6 @@
 __all__ = [
+    "Character",
+    "conversation",
     "judge",
     "plan",
     "query",
@@ -8,6 +10,16 @@ __all__ = [
 
 
 from .._router import router
+
+
+from ....resources.completions.agents.conversation import Character
+
+
+class conversation(router):
+    pass
+
+
+conversation.init("zyx.resources.completions.agents.conversation", "conversation")
 
 
 class judge(router):

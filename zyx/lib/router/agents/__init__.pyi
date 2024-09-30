@@ -1,4 +1,6 @@
 __all__ = [
+    "Character",
+    "conversation",
     "judge",
     "plan",
     "query",
@@ -6,6 +8,9 @@ __all__ = [
     "solve"
 ]
 
+
+from ....resources.completions.agents.conversation import conversation as conversation
+from ....resources.completions.agents.conversation import Character as Character
 
 from ....resources.completions.agents.judge import judge as judge
 from ....resources.completions.agents.plan import plan as plan
