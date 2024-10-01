@@ -463,6 +463,8 @@ class Client:
         Initializes the specified client library.
         """
 
+        print(self.provider)
+
         if self.provider == "openai":
             from openai import OpenAI
 
