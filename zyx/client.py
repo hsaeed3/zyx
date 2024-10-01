@@ -105,10 +105,6 @@ class ClientProviders(BaseModel):
     instructor: Optional[Any] = None
 
 
-class Client(BaseModel):
-    config: ClientConfig
-
-
 ## -- Completion Helpers -- ##
 
 
@@ -589,28 +585,32 @@ class Client:
             CompletionResponse: The response to the completion.
         """
 
+        exclude_params = set()
+
         try:
             if not self.clients.instructor:
                 self.clients.instructor = self.__patch_client__()
 
             if args.tools is None:
-                exclude_params = {"tools", "parallel_tool_calls", "tool_choice"}
+                exclude_params.update({"tools", "parallel_tool_calls", "tool_choice"})
 
             if args.model.startswith("o1-"):
                 logger.warning(
                     "OpenAI O1- model detected. Removing all non-supported parameters."
                 )
-                exclude_params = {
+                exclude_params.update(
+                    {
                     "max_tokens",
                     "temperature",
                     "top_p",
                     "frequency_penalty",
                     "presence_penalty",
-                    "tools",
-                    "parallel_tool_calls",
-                    "tool_choice",
-                    "stop",
-                }
+                        "tools",
+                        "parallel_tool_calls",
+                        "tool_choice",
+                        "stop",
+                    }
+                )
 
             if args.stream:
                 if self.config.verbose:
@@ -804,9 +804,10 @@ class Client:
                 args = self.execute_tool_call(formatted_tools, args, base_response)
 
                 if args:
-                    args.response_model = response_model
-                    args.stream = stream
-                    return self.instructor_completion(args)
+                    original_args.messages.extend(args.messages[len(original_args.messages):])
+                    original_args.response_model = response_model
+                    original_args.stream = stream
+                    return self.instructor_completion(original_args)
                 else:
                     return self.instructor_completion(original_args)
 

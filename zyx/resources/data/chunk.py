@@ -1,7 +1,17 @@
-import semchunk
-import tiktoken
-from typing import Union, List
-from pydantic import BaseModel
+try:
+    import semchunk
+    import tiktoken
+    from typing import Union, List
+    from pydantic import BaseModel
+except ImportError:
+    import os
+
+    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    if input("Install? (y/n)") == "y":
+        os.system("pip install 'zyx[data]'")
+    else:
+        print("Exiting...")
+        exit(1)
 
 from ...lib.types.document import Document
 

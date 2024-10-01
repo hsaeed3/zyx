@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zyx"
-version = "1.0.5"
+version = "1.0.10"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
@@ -33,6 +33,10 @@ textual = "^0.79.1"
 pydub = "^0.25.1"
 sounddevice = "^0.5.0"
 soundfile = "^0.12.1"
+
+
+[tool.poetry.extras]
+data = ["python-docx", "pypdf2", "openpyxl", "chromadb", "semchunk", "bs4", "duckduckgo-search"]
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,13 +1,24 @@
-import requests
-from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Dict, Any, Literal
-from pydantic import BaseModel, Field
-from enum import Enum
+try:
+    import requests
+    from concurrent.futures import ThreadPoolExecutor
+    from typing import List, Optional, Dict, Any, Literal
+    from pydantic import BaseModel, Field
+    from enum import Enum
 
-from ....client import Client, InstructorMode, ToolType
-from ....resources.completions.base.generate import generate
-from ....lib.types.document import Document
-from ....lib.utils.logger import get_logger
+    from ....client import Client, InstructorMode, ToolType
+    from ....resources.completions.base.generate import generate
+    from ....lib.types.document import Document
+    from ....lib.utils.logger import get_logger
+except ImportError:
+    import os
+
+    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    if input("Install? (y/n)") == "y":
+        os.system("pip install 'zyx[data]'")
+    else:
+        print("Exiting...")
+        exit(1)
+
 
 logger = get_logger("scrape")
 

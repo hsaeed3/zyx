@@ -1,16 +1,28 @@
-from chromadb import Client
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-from pydantic import BaseModel, Field
-from typing import Callable, List, Union, Optional, Literal, Type
-import uuid
-import numpy as np
+try:
+    from chromadb import Client
+    from chromadb.config import Settings
+    from chromadb.utils import embedding_functions
+    from pydantic import BaseModel, Field
+    from typing import Callable, List, Union, Optional, Literal, Type
+    import uuid
+    import numpy as np
 
-from ...lib.types.document import Document
-from ...lib.utils.logger import get_logger
-from ...client import completion, InstructorMode
-from ..data.chunk import chunk
-from ..completions.base.generate import generate
+    from ...lib.types.document import Document
+    from ...lib.utils.logger import get_logger
+    from ...client import completion, InstructorMode
+    from ..data.chunk import chunk
+    from ..completions.base.generate import generate
+except ImportError:
+    import os
+
+    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    if input("Install? (y/n)") == "y":
+        os.system("pip install 'zyx[data]'")
+        exit(1)
+    else:
+        print("Exiting...")
+        exit(1)
+
 
 
 logger = get_logger("memory")

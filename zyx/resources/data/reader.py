@@ -1,21 +1,31 @@
-from concurrent.futures import ThreadPoolExecutor
-import multiprocessing as mp
-from pathlib import Path
-import mimetypes
-import json
-from typing import Dict, List, Optional, Literal, Union, Type
-import xml.etree.ElementTree as ET
-import PyPDF2
-import docx
-import openpyxl
-import csv
-import requests
-from urllib.parse import urlparse
-import uuid
-import os
+try:
+    from concurrent.futures import ThreadPoolExecutor
+    import multiprocessing as mp
+    from pathlib import Path
+    import mimetypes
+    import json
+    from typing import Dict, List, Optional, Literal, Union, Type
+    import xml.etree.ElementTree as ET
+    import PyPDF2
+    import docx
+    import openpyxl
+    import csv
+    import requests
+    from urllib.parse import urlparse
+    import uuid
+    import os
 
-from ...lib.types.document import Document
-from ...lib.utils.logger import get_logger
+    from ...lib.types.document import Document
+    from ...lib.utils.logger import get_logger
+except ImportError:
+    import os
+
+    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    if input("Install? (y/n)") == "y":
+        os.system("pip install 'zyx[data]'")
+    else:
+        print("Exiting...")
+        exit(1)
 
 logger = get_logger("reader")
 
