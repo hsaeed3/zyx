@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from ....client import Client, InstructorMode, ToolType
-from ....resources.data.chunk import chunk
 from ....resources.completions.base.generate import generate
 from ....lib.types.document import Document
 from ....lib.utils.logger import get_logger

@@ -221,6 +221,9 @@ class BaseModel(PydanticBaseModel):
 
                 results.append(cls(**instance))
 
+            if n == 1:
+                return results[0]
+
             return results
 
 

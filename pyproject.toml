@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zyx"
-version = "1.0.4"
+version = "1.0.5"
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
 authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
