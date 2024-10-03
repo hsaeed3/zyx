@@ -1,5 +1,6 @@
 from .lib.utils.logger import get_logger
 from .lib.utils.convert_to_openai_tool import convert_to_openai_tool
+from instructor import Mode
 
 logger = get_logger(__name__)
 
@@ -20,31 +21,6 @@ from typing import (
 
 
 ## -- Instructor Configuration -- ##
-
-
-## -- Instructor Mode -- ##
-## This was directly ported from instructor
-## https://github.com/jxnl/instructor/
-class Mode(enum.Enum):
-    """The mode to use for patching the client"""
-
-    FUNCTIONS = "function_call"
-    PARALLEL_TOOLS = "parallel_tool_call"
-    TOOLS = "tool_call"
-    MISTRAL_TOOLS = "mistral_tools"
-    JSON = "json_mode"
-    JSON_O1 = "json_o1"
-    MD_JSON = "markdown_json_mode"
-    JSON_SCHEMA = "json_schema_mode"
-    ANTHROPIC_TOOLS = "anthropic_tools"
-    ANTHROPIC_JSON = "anthropic_json"
-    COHERE_TOOLS = "cohere_tools"
-    VERTEXAI_TOOLS = "vertexai_tools"
-    VERTEXAI_JSON = "vertexai_json"
-    GEMINI_JSON = "gemini_json"
-    GEMINI_TOOLS = "gemini_tools"
-    COHERE_JSON_SCHEMA = "json_object"
-    TOOLS_STRICT = "tools_strict"
 
 
 InstructorMode = Literal[
@@ -487,7 +463,7 @@ class Client:
 
         return client
 
-    def __patch_client__(self):
+    def __patch_client__(self, mode: Optional[InstructorMode] = "tool_call"):
         """
         Patches the client with Instructor.
         """
@@ -499,12 +475,16 @@ class Client:
         if self.provider == "openai":
             from instructor import from_openai
 
-            patched_client = from_openai(self.clients.client)
+            patched_client = from_openai(
+                self.clients.client, mode=get_mode(mode) if mode else None
+            )
 
         else:
             from instructor import patch
 
-            patched_client = patch(self.clients.client)
+            patched_client = patch(
+                self.clients.client, mode=get_mode(mode) if mode else None
+            )
 
         if self.config.verbose:
             logger.info(f"Patched {self.provider} client with Instructor")
@@ -594,17 +574,21 @@ class Client:
             if args.tools is None:
                 exclude_params.update({"tools", "parallel_tool_calls", "tool_choice"})
 
+            if self.config.verbose:
+                logger.info(f"Excluding the following parameters: {exclude_params}")
+                logger.info(f"Args: {args.model_dump(exclude=exclude_params)}")
+
             if args.model.startswith("o1-"):
                 logger.warning(
                     "OpenAI O1- model detected. Removing all non-supported parameters."
                 )
                 exclude_params.update(
                     {
-                    "max_tokens",
-                    "temperature",
-                    "top_p",
-                    "frequency_penalty",
-                    "presence_penalty",
+                        "max_tokens",
+                        "temperature",
+                        "top_p",
+                        "frequency_penalty",
+                        "presence_penalty",
                         "tools",
                         "parallel_tool_calls",
                         "tool_choice",
@@ -804,7 +788,9 @@ class Client:
                 args = self.execute_tool_call(formatted_tools, args, base_response)
 
                 if args:
-                    original_args.messages.extend(args.messages[len(original_args.messages):])
+                    original_args.messages.extend(
+                        args.messages[len(original_args.messages) :]
+                    )
                     original_args.response_model = response_model
                     original_args.stream = stream
                     return self.instructor_completion(original_args)
@@ -896,9 +882,6 @@ class Client:
         model = recommended_model
 
         if response_model:
-            if not self.clients.instructor:
-                self.clients.instructor = self.__patch_client__()
-
             mode = get_mode(mode)
 
             if model.startswith("o1-"):
@@ -907,7 +890,14 @@ class Client:
                 )
                 mode = Mode.JSON_O1
 
-            self.clients.instructor.mode = mode
+            if not self.clients.instructor:
+                self.clients.instructor = self.__patch_client__(mode)
+
+            else:
+                self.clients.instructor.mode = mode
+
+            if verbose:
+                logger.info(f"Instructor Mode: {self.clients.instructor.mode}")
 
         return self.run_completion(
             messages=messages,
@@ -1023,6 +1013,9 @@ class Client:
                 mode = Mode.JSON_O1
 
             client.clients.instructor.mode = mode
+
+            if verbose:
+                logger.info(f"Instructor Mode: {mode}")
 
         return client.run_completion(
             messages=messages,

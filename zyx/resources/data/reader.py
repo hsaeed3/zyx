@@ -20,7 +20,9 @@ try:
 except ImportError:
     import os
 
-    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    print(
+        "The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?"
+    )
     if input("Install? (y/n)") == "y":
         os.system("pip install 'zyx[data]'")
     else:
@@ -30,7 +32,7 @@ except ImportError:
 logger = get_logger("reader")
 
 OutputType = Literal["markdown", "text", "json"]
-OutputFormat = Literal["document"]
+OutputFormat = Literal["document", "json"]
 
 import requests
 from urllib.parse import urlparse
@@ -42,7 +44,7 @@ def read(
     target: OutputType = "text",
     verbose: bool = False,
     workers: Optional[int] = None,
-) -> Union[Document, List[Document], str]:
+) -> Union[Document, List[Document], str, Dict, List[Dict]]:
     """
     Reads either a file, a directory, or a list of files and returns the content.
 
@@ -60,7 +62,7 @@ def read(
         workers: Optional[int]: The number of workers to use for reading.
 
     Returns:
-        Union[Document, List[Document], str]: The content.
+        Union[Document, List[Document], str, Dict, List[Dict]]: The content.
     """
     if isinstance(path, list):
         paths = [_download_if_url(p) for p in path]
@@ -71,9 +73,12 @@ def read(
 
     try:
         if len(paths) == 1 and paths[0].is_file():
-            return _read_single_file(
+            result = _read_single_file(
                 path=paths[0], output=output, target=target, verbose=verbose
             )
+            if output == "json":
+                return result  # Directly return the result if it's JSON
+            return result
         else:
             with ThreadPoolExecutor(max_workers=workers or mp.cpu_count()) as executor:
                 futures = [
@@ -83,6 +88,8 @@ def read(
                     if file.is_file()
                 ]
                 results = [future.result() for future in futures]
+            if output == "json":
+                return results  # Directly return the list of results if it's JSON
             return [result for result in results if result is not None]
     finally:
         # Cleanup temporary files
@@ -130,7 +137,7 @@ def _read_single_file(
     target: OutputType = "text",
     output: Union[Type[str], OutputFormat] = "document",
     verbose: bool = False,
-) -> Optional[Document]:
+) -> Union[Document, Dict, str, None]:
     """
     Reads a single file and returns its content based on the target format.
     """
@@ -160,8 +167,14 @@ def _read_single_file(
                 # Possible text file with BOM
                 mime_type = "text/plain"
             else:
-                # Default to binary if no match
-                mime_type = "application/octet-stream"
+                # Check for JSON files
+                try:
+                    with open(path, "r", encoding="utf-8") as json_file:
+                        json.load(json_file)
+                    mime_type = "application/json"
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    # Default to binary if no match
+                    mime_type = "application/octet-stream"
 
     try:
         content = None
@@ -174,6 +187,10 @@ def _read_single_file(
                 content = _read_xlsx(path)
             case "text/csv":
                 content = _read_csv(path)
+            case "application/json":
+                content = _read_json_content(
+                    path
+                )  # Use a function to read JSON content
             case _ if mime_type and mime_type.startswith("text/"):
                 content = _read_text(path)
             case "application/xml":
@@ -181,13 +198,8 @@ def _read_single_file(
             case _:
                 content = _read_binary(path)
 
-        if verbose:
-            logger.info(f"Read {path.name} as {mime_type or 'BINARY'}")
-
-        if target == "markdown":
-            content = _to_markdown(content)
-        elif target == "json":
-            content = json.dumps(content)
+        if output == "json" and mime_type == "application/json":
+            return content  # Return the JSON content directly
 
         metadata = {
             "file_name": path.name,
@@ -206,6 +218,18 @@ def _read_single_file(
         if verbose:
             logger.error(f"Error reading file {path}: {str(e)}")
         return None
+
+
+def _read_json_content(path: Path) -> Dict:
+    """
+    Reads JSON files and returns their content as a dictionary.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except Exception as e:
+        logger.error(f"Error reading JSON {path}: {str(e)}")
+        return {}
 
 
 def _read_pdf(path: Path) -> str:
@@ -231,20 +255,59 @@ def _read_pdf(path: Path) -> str:
 def _format_pdf_text(extracted_text: str) -> str:
     """
     Post-process PDF extracted text to ensure proper formatting for tables, paragraphs, etc.
+    This function attempts to identify and format tables, preserve paragraph structure,
+    and handle common PDF extraction issues.
     """
-    # Insert custom logic to handle common cases like columns and tables, for example:
-    # - Replace multiple spaces with a ' | ' for column-separated data in tables
-    # - Handle paragraph breaks or other structures
-
-    # This is a placeholder and can be adjusted based on the specifics of the PDF content
     lines = extracted_text.split("\n")
     formatted_lines = []
+    in_table = False
+    table_column_widths = []
+
     for line in lines:
-        if "  " in line:  # Simple heuristic for columns in tables
-            formatted_lines.append(" | ".join(line.split()))
+        stripped_line = line.strip()
+
+        # Detect table start/end
+        if "  " in line and not in_table:
+            in_table = True
+            table_column_widths = [len(col) for col in line.split()]
+        elif in_table and not any(
+            len(word) > width for word, width in zip(line.split(), table_column_widths)
+        ):
+            in_table = False
+
+        if in_table:
+            # Format table rows
+            columns = line.split()
+            formatted_line = " | ".join(
+                col.ljust(width) for col, width in zip(columns, table_column_widths)
+            )
+            formatted_lines.append(formatted_line)
+        elif stripped_line:
+            # Handle regular text, attempting to preserve paragraph structure
+            if formatted_lines and not formatted_lines[-1].endswith(
+                (".", "!", "?", ":", ";")
+            ):
+                formatted_lines[-1] += " " + stripped_line
+            else:
+                formatted_lines.append(stripped_line)
         else:
-            formatted_lines.append(line)
-    return "\n".join(formatted_lines)
+            # Preserve empty lines between paragraphs
+            if formatted_lines and formatted_lines[-1].strip():
+                formatted_lines.append("")
+
+    # Post-processing: remove redundant empty lines and fix common OCR issues
+    cleaned_lines = []
+    for line in formatted_lines:
+        cleaned_line = line.replace(" |", "|").replace(
+            "| ", "|"
+        )  # Clean up table formatting
+        cleaned_line = cleaned_line.replace("l", "I").replace(
+            "0", "O"
+        )  # Common OCR fixes
+        if cleaned_line or (cleaned_lines and cleaned_lines[-1]):
+            cleaned_lines.append(cleaned_line)
+
+    return "\n".join(cleaned_lines)
 
 
 def _read_docx(path: Path) -> str:

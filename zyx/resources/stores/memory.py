@@ -15,14 +15,15 @@ try:
 except ImportError:
     import os
 
-    print("The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?")
+    print(
+        "The [bold]`zyx(data)`[/bold] data extension is required to use this module. Install it?"
+    )
     if input("Install? (y/n)") == "y":
         os.system("pip install 'zyx[data]'")
         exit(1)
     else:
         print("Exiting...")
         exit(1)
-
 
 
 logger = get_logger("memory")
