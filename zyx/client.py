@@ -137,6 +137,10 @@ class Client:
         Returns:
             tuple[Literal["openai", "litellm"], Optional[str], Optional[str], Optional[str]]: The recommended client, model, base URL, and API key.
         """
+        if base_url is not None:
+            client = "openai"
+
+            return client, model, base_url, api_key
 
         if model.startswith(("gpt-", "o1", "openai/")):
             if model.startswith("openai/"):
@@ -155,11 +159,6 @@ class Client:
 
             if not api_key:
                 api_key = "ollama"
-
-            return client, model, base_url, api_key
-
-        elif base_url is not None:
-            client = "openai"
 
             return client, model, base_url, api_key
 
@@ -868,6 +867,11 @@ class Client:
             recommended_api_key,
         ) = self.recommend_client_by_model(model, base_url, api_key)
 
+        if self.config.verbose:
+            logger.info(f"Recommended Provider: {recommended_provider}")
+            logger.info(f"Recommended Model: {recommended_model}")
+            logger.info(f"Recommended Base URL: {recommended_base_url}")
+
         # Reinitialize client only if the recommended provider is different
         if recommended_provider != self.provider:
             self.__init__(
@@ -879,7 +883,8 @@ class Client:
             )
 
         # Update model if it was changed by recommend_client_by_model
-        model = recommended_model
+        if model != recommended_model:
+            model = recommended_model
 
         if response_model:
             mode = get_mode(mode)
@@ -1143,7 +1148,8 @@ if __name__ == "__main__":
     print(
         completion(
             messages="Who is SpiderMan",
-            tools=[get_secret_identity],
             verbose=True,
+            base_url="http://localhost:11434",
+            model = "ollama/bespoke-minicheck"
         )
     )

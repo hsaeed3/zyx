@@ -52,6 +52,7 @@ def generate_textbook(
         """,
         model="gpt-4o-mini",
         process="sequential",  # This generates each field in the model one by one
+        verbose=True,
     )
 
     # Lets write our textbook to a markdown file

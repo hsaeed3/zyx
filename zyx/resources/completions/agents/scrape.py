@@ -9,6 +9,8 @@ try:
     from ....resources.completions.base.generate import generate
     from ....lib.types.document import Document
     from ....lib.utils.logger import get_logger
+
+    import warnings
 except ImportError:
     import os
 
@@ -116,6 +118,13 @@ def scrape(
     Returns:
         A Document object containing the summary and metadata.
     """
+
+    warnings.warn(
+        "The scrape function will no longer be updated."
+        "Go to https://github.com/unclecode/crawl4ai for an incredibly robust & feature-rich web-scraping tool.",
+        DeprecationWarning,
+    )
+
     import threading
     from bs4 import BeautifulSoup
 
