@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../fonts/icon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -965,9 +965,11 @@ to retrieve the paper from arXiv.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>instructions</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[str, <span title="zyx.lib.types.document.Document">Document</span>]</code>
+                <code>instructions</code>
+            </td>
+            <td>
+                  <code>Union[str, Document]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -979,9 +981,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>characters</code></td>
             <td>
-                  <code><span title="typing.List">List</span>[<span title="zyx.resources.completions.agents.conversation.Character">Character</span>]</code>
+                <code>characters</code>
+            </td>
+            <td>
+                  <code>List[Character]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -993,9 +997,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>validator</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[str, dict]]</code>
+                <code>validator</code>
+            </td>
+            <td>
+                  <code>Optional[Union[str, dict]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1007,7 +1013,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>min_turns</code></td>
+            <td>
+                <code>min_turns</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1021,7 +1029,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_turns</code></td>
+            <td>
+                <code>max_turns</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1035,9 +1045,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>end_criteria</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>end_criteria</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1049,7 +1061,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>model</code></td>
+            <td>
+                <code>model</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1063,9 +1077,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>api_key</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>api_key</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1077,9 +1093,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>base_url</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>base_url</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1091,7 +1109,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>temperature</code></td>
+            <td>
+                <code>temperature</code>
+            </td>
             <td>
                   <code>float</code>
             </td>
@@ -1105,9 +1125,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>mode</code></td>
             <td>
-                  <code><span title="zyx.client.InstructorMode">InstructorMode</span></code>
+                <code>mode</code>
+            </td>
+            <td>
+                  <code>InstructorMode</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1119,7 +1141,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_retries</code></td>
+            <td>
+                <code>max_retries</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1133,9 +1157,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>organization</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>organization</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1147,9 +1173,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>client</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Literal">Literal</span>[&#39;openai&#39;, &#39;litellm&#39;]]</code>
+                <code>client</code>
+            </td>
+            <td>
+                  <code>Optional[Literal[&#39;openai&#39;, &#39;litellm&#39;]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1161,7 +1189,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>verbose</code></td>
+            <td>
+                <code>verbose</code>
+            </td>
             <td>
                   <code>bool</code>
             </td>
@@ -1175,7 +1205,9 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>generate_audio</code></td>
+            <td>
+                <code>generate_audio</code>
+            </td>
             <td>
                   <code>bool</code>
             </td>
@@ -1189,9 +1221,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>audio_model</code></td>
             <td>
-                  <code><span title="zyx.resources.ext.multimodal.OPENAI_TTS_MODELS">OPENAI_TTS_MODELS</span></code>
+                <code>audio_model</code>
+            </td>
+            <td>
+                  <code>OPENAI_TTS_MODELS</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1203,9 +1237,11 @@ to retrieve the paper from arXiv.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>audio_output_file</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>audio_output_file</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1231,7 +1267,7 @@ to retrieve the paper from arXiv.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>Conversation</code></td>            <td>
-                  <code><span title="zyx.resources.completions.agents.conversation.Conversation">Conversation</span></code>
+                  <code>Conversation</code>
             </td>
             <td>
               <div class="doc-md-description">

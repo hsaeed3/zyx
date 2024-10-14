@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../fonts/icon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1075,6 +1075,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
 
         <p>Class for storing and retrieving data using Chroma.</p>
 
+
+
+
+
+
               <details class="quote">
                 <summary>Source code in <code>zyx/resources/stores/memory.py</code></summary>
                 <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-65"> 65</a></span>
@@ -1685,7 +1690,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>collection_name</code></td>
+            <td>
+                <code>collection_name</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1699,9 +1706,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>model_class</code></td>
             <td>
-                  <code><span title="typing.Type">Type</span>[<span title="pydantic.BaseModel">BaseModel</span>]</code>
+                <code>model_class</code>
+            </td>
+            <td>
+                  <code>Type[BaseModel]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1713,7 +1722,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>embedding_api_key</code></td>
+            <td>
+                <code>embedding_api_key</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1727,7 +1738,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>location</code></td>
+            <td>
+                <code>location</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1741,7 +1754,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>persist_directory</code></td>
+            <td>
+                <code>persist_directory</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1755,7 +1770,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>chunk_size</code></td>
+            <td>
+                <code>chunk_size</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1769,7 +1786,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>model</code></td>
+            <td>
+                <code>model</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1884,9 +1903,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>data</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[str, <span title="typing.List">List</span>[str], <span title="zyx.lib.types.document.Document">Document</span>, <span title="typing.List">List</span>[<span title="zyx.lib.types.document.Document">Document</span>]]</code>
+                <code>data</code>
+            </td>
+            <td>
+                  <code>Union[str, List[str], Document, List[Document]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1898,9 +1919,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[dict]</code>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code>Optional[dict]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2055,9 +2078,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>messages</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[str, <span title="typing.List">List</span>[dict]]</code>
+                <code>messages</code>
+            </td>
+            <td>
+                  <code>Union[str, List[dict]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2069,9 +2094,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>model</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>model</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2083,9 +2110,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>top_k</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[int]</code>
+                <code>top_k</code>
+            </td>
+            <td>
+                  <code>Optional[int]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2097,9 +2126,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>tools</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="typing.Union">Union</span>[<span title="typing.Callable">Callable</span>, dict, <span title="pydantic.BaseModel">BaseModel</span>]]]</code>
+                <code>tools</code>
+            </td>
+            <td>
+                  <code>Optional[List[Union[Callable, dict, BaseModel]]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2111,9 +2142,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>run_tools</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[bool]</code>
+                <code>run_tools</code>
+            </td>
+            <td>
+                  <code>Optional[bool]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2125,9 +2158,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>response_model</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="pydantic.BaseModel">BaseModel</span>]</code>
+                <code>response_model</code>
+            </td>
+            <td>
+                  <code>Optional[BaseModel]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2139,9 +2174,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>mode</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="zyx.client.InstructorMode">InstructorMode</span>]</code>
+                <code>mode</code>
+            </td>
+            <td>
+                  <code>Optional[InstructorMode]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2153,9 +2190,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>base_url</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>base_url</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2167,9 +2206,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>api_key</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>api_key</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2181,9 +2222,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>organization</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[str]</code>
+                <code>organization</code>
+            </td>
+            <td>
+                  <code>Optional[str]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2195,9 +2238,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>top_p</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[float]</code>
+                <code>top_p</code>
+            </td>
+            <td>
+                  <code>Optional[float]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2209,9 +2254,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>temperature</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[float]</code>
+                <code>temperature</code>
+            </td>
+            <td>
+                  <code>Optional[float]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2223,9 +2270,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_tokens</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[int]</code>
+                <code>max_tokens</code>
+            </td>
+            <td>
+                  <code>Optional[int]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2237,9 +2286,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_retries</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[int]</code>
+                <code>max_retries</code>
+            </td>
+            <td>
+                  <code>Optional[int]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2251,9 +2302,11 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>verbose</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[bool]</code>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code>Optional[bool]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2488,7 +2541,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>query</code></td>
+            <td>
+                <code>query</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -2502,7 +2557,9 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>top_k</code></td>
+            <td>
+                <code>top_k</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -2530,7 +2587,7 @@ for working with <code>Document</code> objects using the <strong><code>chromadb<
       <tbody>
           <tr class="doc-section-item">
 <td><code>SearchResponse</code></td>            <td>
-                  <code><span title="zyx.resources.stores.memory.SearchResponse">SearchResponse</span></code>
+                  <code>SearchResponse</code>
             </td>
             <td>
               <div class="doc-md-description">

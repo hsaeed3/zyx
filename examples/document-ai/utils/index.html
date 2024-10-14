@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../fonts/icon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -977,9 +977,11 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>inputs</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[str, <span title="zyx.lib.types.document.Document">Document</span>, <span title="typing.List">List</span>[<span title="typing.Union">Union</span>[str, <span title="zyx.lib.types.document.Document">Document</span>]]]</code>
+                <code>inputs</code>
+            </td>
+            <td>
+                  <code>Union[str, Document, List[Union[str, Document]]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -991,7 +993,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>chunk_size</code></td>
+            <td>
+                <code>chunk_size</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1005,7 +1009,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>model</code></td>
+            <td>
+                <code>model</code>
+            </td>
             <td>
                   <code>str</code>
             </td>
@@ -1019,7 +1025,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>processes</code></td>
+            <td>
+                <code>processes</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1033,7 +1041,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>memoize</code></td>
+            <td>
+                <code>memoize</code>
+            </td>
             <td>
                   <code>bool</code>
             </td>
@@ -1047,7 +1057,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>progress</code></td>
+            <td>
+                <code>progress</code>
+            </td>
             <td>
                   <code>bool</code>
             </td>
@@ -1061,7 +1073,9 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_token_chars</code></td>
+            <td>
+                <code>max_token_chars</code>
+            </td>
             <td>
                   <code>int</code>
             </td>
@@ -1089,7 +1103,7 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="typing.Union">Union</span>[<span title="typing.List">List</span>[str], <span title="typing.List">List</span>[<span title="typing.List">List</span>[str]]]</code>
+                  <code>Union[List[str], List[List[str]]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1304,9 +1318,11 @@ Able to injest many documents at once, and return a list of <code>Document</code
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>path</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[str, <span title="pathlib.Path">Path</span>, <span title="typing.List">List</span>[<span title="typing.Union">Union</span>[str, <span title="pathlib.Path">Path</span>]]]</code>
+                <code>path</code>
+            </td>
+            <td>
+                  <code>Union[str, Path, List[Union[str, Path]]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1318,9 +1334,11 @@ Able to injest many documents at once, and return a list of <code>Document</code
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>output</code></td>
             <td>
-                  <code><span title="typing.Union">Union</span>[<span title="typing.Type">Type</span>[str], <span title="zyx.resources.data.reader.OutputFormat">OutputFormat</span>]</code>
+                <code>output</code>
+            </td>
+            <td>
+                  <code>Union[Type[str], OutputFormat]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1332,9 +1350,11 @@ Able to injest many documents at once, and return a list of <code>Document</code
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>target</code></td>
             <td>
-                  <code><span title="zyx.resources.data.reader.OutputType">OutputType</span></code>
+                <code>target</code>
+            </td>
+            <td>
+                  <code>OutputType</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1346,7 +1366,9 @@ Able to injest many documents at once, and return a list of <code>Document</code
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>verbose</code></td>
+            <td>
+                <code>verbose</code>
+            </td>
             <td>
                   <code>bool</code>
             </td>
@@ -1360,9 +1382,11 @@ Able to injest many documents at once, and return a list of <code>Document</code
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>workers</code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[int]</code>
+                <code>workers</code>
+            </td>
+            <td>
+                  <code>Optional[int]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1388,7 +1412,7 @@ Able to injest many documents at once, and return a list of <code>Document</code
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="typing.Union">Union</span>[<span title="zyx.lib.types.document.Document">Document</span>, <span title="typing.List">List</span>[<span title="zyx.lib.types.document.Document">Document</span>], str, <span title="typing.Dict">Dict</span>, <span title="typing.List">List</span>[<span title="typing.Dict">Dict</span>]]</code>
+                  <code>Union[Document, List[Document], str, Dict, List[Dict]]</code>
             </td>
             <td>
               <div class="doc-md-description">
