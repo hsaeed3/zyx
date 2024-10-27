@@ -175,6 +175,12 @@ class LLMFieldAccessor:
 
     def __rpow__(self, other):
         return other ** self._value
+    
+    def __getattribute__(self, name: str) -> Any:
+        if name == "_instance":
+            raise AttributeError(f"'_instance' is an invalid attribute for {self._field_name}")
+        return super().__getattribute__(name)
+    
 
     def completion(
         self,
@@ -349,7 +355,7 @@ class BaseModel(PydanticBaseModel):
 
     @overload
     @classmethod
-    def completion(
+    def model_completion(
         cls: Type[T],
         messages: Union[str, List[params.Message]],
         model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
@@ -380,7 +386,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @overload
-    def completion(
+    def model_completion(
         self: T,
         messages: Union[str, List[params.Message]],
         model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
@@ -411,7 +417,7 @@ class BaseModel(PydanticBaseModel):
 
     @overload
     @classmethod
-    def generate(
+    def model_generate(
         cls: Type[T],
         instructions: Optional[str] = None,
         n: int = 1,
@@ -430,7 +436,7 @@ class BaseModel(PydanticBaseModel):
     ) -> Union[T, List[T]]: ...
 
     @overload
-    def generate(
+    def model_generate(
         self: T,
         instructions: Optional[str] = None,
         n: int = 1,
@@ -449,7 +455,7 @@ class BaseModel(PydanticBaseModel):
     ) -> Union[T, List[T]]: ...
 
     @classmethod
-    def generate(
+    def model_generate(
         cls_or_self: Union[Type[T], T],
         instructions: Optional[str] = None,
         n: int = 1,
@@ -581,14 +587,58 @@ class BaseModel(PydanticBaseModel):
                     for i in range(n):
                         instance: Dict[str, Any] = {}
                         for field_name, field in cls.model_fields.items():
-                            field_system_message = (
-                                f"You are a data generator. Your task is to generate a valid value for the following field:\n\n"
-                                f"Field name: {field_name}\n"
-                                f"Field type: {field.annotation}\n"
-                                f"Field constraints: {field.json_schema_extra}\n\n"
-                                f"Ensure that the generated value complies with the field's type and constraints.\n\n"
-                                f"ALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES."
-                            )
+                            field_system_message = """
+You are a data generator tasked with creating valid instances of a Pydantic model based on a provided JSON schema. Your goal is to generate data that strictly adheres to the model's structure and constraints.
+
+Here are the key components for your task:
+
+1. Number of instances to generate:
+<instance_count>
+{{n}}
+</instance_count>
+
+2. Pydantic model JSON schema:
+<model_schema>
+{{target.model_json_schema()}}
+</model_schema>
+
+Instructions:
+1. Carefully analyze the provided JSON schema to understand the model's structure, field types, and any constraints.
+2. Generate the specified number of instances that comply with the schema.
+3. Ensure that all generated instances are valid according to the schema's rules and constraints.
+4. Present the generated instances as a collection of JSON objects.
+
+Before generating the data, please use <schema_analysis> tags to break down your approach:
+1. Identify and list all required fields and their types
+2. Note any optional fields
+3. List any constraints or special rules for each field
+4. Consider and note any potential challenges in data generation
+5. Plan out your approach for generating diverse and valid data
+
+Output Format:
+Provide your output as a collection of JSON objects, each representing a valid instance of the model. For example:
+
+```json
+[
+{
+    "field1": "value1",
+    "field2": 42,
+    "field3": {
+    "nested_field": "nested_value"
+    }
+},
+{
+    "field1": "another_value",
+    "field2": 100,
+    "field3": {
+    "nested_field": "different_nested_value"
+    }
+}
+]
+```
+
+Please proceed with your analysis and data generation.
+"""
                             field_user_message = f"Generate a value for the '{field_name}' field."
 
                             if instance:
@@ -625,14 +675,58 @@ class BaseModel(PydanticBaseModel):
                 for i in range(n):
                     instance: Dict[str, Any] = {}
                     for field_name, field in cls.model_fields.items():
-                        field_system_message = (
-                            f"You are a data generator. Your task is to generate a valid value for the following field:\n\n"
-                            f"Field name: {field_name}\n"
-                            f"Field type: {field.annotation}\n"
-                            f"Field constraints: {field.json_schema_extra}\n\n"
-                            f"Ensure that the generated value complies with the field's type and constraints.\n\n"
-                            f"ALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES."
-                        )
+                        field_system_message = f"""
+You are a data generator tasked with creating valid instances of a Pydantic model based on a provided JSON schema. Your goal is to generate data that strictly adheres to the model's structure and constraints.
+
+Here are the key components for your task:
+
+1. Number of instances to generate:
+<instance_count>
+{{n}}
+</instance_count>
+
+2. Pydantic model JSON schema:
+<model_schema>
+{{target.model_json_schema()}}
+</model_schema>
+
+Instructions:
+1. Carefully analyze the provided JSON schema to understand the model's structure, field types, and any constraints.
+2. Generate the specified number of instances that comply with the schema.
+3. Ensure that all generated instances are valid according to the schema's rules and constraints.
+4. Present the generated instances as a collection of JSON objects.
+
+Before generating the data, please use <schema_analysis> tags to break down your approach:
+1. Identify and list all required fields and their types
+2. Note any optional fields
+3. List any constraints or special rules for each field
+4. Consider and note any potential challenges in data generation
+5. Plan out your approach for generating diverse and valid data
+
+Output Format:
+Provide your output as a collection of JSON objects, each representing a valid instance of the model. For example:
+
+```json
+[
+{
+    "field1": "value1",
+    "field2": 42,
+    "field3": {
+    "nested_field": "nested_value"
+    }
+},
+{
+    "field1": "another_value",
+    "field2": 100,
+    "field3": {
+    "nested_field": "different_nested_value"
+    }
+}
+]
+```
+
+Please proceed with your analysis and data generation.
+"""
                         field_user_message = f"Generate a value for the '{field_name}' field."
 
                         if instance:
@@ -667,7 +761,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @classmethod
-    def select(
+    def model_select(
         cls: Type[T],
         field_name: str,
         instructions: Optional[str] = None,
@@ -811,7 +905,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @classmethod
-    def completion(
+    def model_completion(
         cls: Type[T],
         messages: Union[str, List[Dict[str, str]]],
         model: Union[str,  params.ChatModel] = params.ZYX_DEFAULT_MODEL,
@@ -914,7 +1008,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @classmethod
-    def patch(
+    def model_patch(
         cls: Type[T],
         instance: T,
         fields: Optional[List[str]] = None,
@@ -1058,7 +1152,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @classmethod
-    def regenerate(
+    def model_regenerate(
         cls: Type[T],
         instance: T,
         fields: Optional[List[str]] = None,
@@ -1190,7 +1284,7 @@ class BaseModel(PydanticBaseModel):
 
 
     @classmethod
-    def patch(
+    def model_patch(
         cls: Type[T],
         instance: T,
         fields: Optional[List[str]] = None,
@@ -1300,6 +1394,136 @@ class BaseModel(PydanticBaseModel):
 
         # Create and return the updated instance
         return cls(**updated_data)
+    
+
+    @classmethod
+    def model_rag(
+        cls,
+        prompt: str,
+        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        client: Literal["openai", "litellm"] = "openai",
+        mode: Optional[params.InstructorMode] = "tool_call",
+        max_retries: Optional[int] = 3,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        organization: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
+        presence_penalty: Optional[float] = None,
+        stop: Optional[List[str]] = None,
+        stream: Optional[bool] = False,
+        verbose: Optional[bool] = False,
+    ):
+        """
+        Generates a completion for the document.
+
+        Example:
+        ```python
+        from zyx import Document
+
+        doc = Document(content="Hello, world!", metadata={"file_name": "file.txt"}, messages=[])
+        doc.completion(prompt="Tell me a joke.")
+        ```
+
+        Args:
+            prompt (str): The prompt to use for the completion.
+            model (str): The model to use for the completion.
+            client (Literal["openai", "litellm"]): The client to use for the completion.
+            response_model (Optional[Type[BaseModel]]): The response model to use for the completion.
+            mode (Optional[InstructorMode]): The mode to use for the completion.
+            max_retries (Optional[int]): The maximum number of retries to use for the completion.
+            api_key (Optional[str]): The API key to use for the completion.
+            base_url (Optional[str]): The base URL to use for the completion.
+            organization (Optional[str]): The organization to use for the completion.
+            run_tools (Optional[bool]): Whether to run the tools for the completion.
+            tools (Optional[List[ToolType]]): The tools to use for the completion.
+            parallel_tool_calls (Optional[bool]): Whether to run the tools in parallel.
+            tool_choice (Optional[Literal["none", "auto", "required"]]): The tool choice to use for the completion.
+            max_tokens (Optional[int]): The maximum number of tokens to generate.
+            temperature (Optional[float]): The temperature to use for the completion.
+            top_p (Optional[float]): The top p to use for the completion.
+            frequency_penalty (Optional[float]): The frequency penalty to use for the completion.
+            presence_penalty (Optional[float]): The presence penalty to use for the completion.
+            stop (Optional[List[str]]): The stop to use for the completion.
+            stream (Optional[bool]): Whether to stream the completion.
+            verbose (Optional[bool]): Whether to print the messages to the console.
+
+        """
+
+        model_client = cls.model_client or Client(
+            api_key=api_key,
+            base_url=base_url,
+            organization=organization,
+            provider="openai",
+            verbose=verbose,
+        )
+
+        if not cls.messages:
+            cls.messages = [
+                {
+                    "role": "system",
+                "content": f"""
+You are an advanced document & data understanding assistant designed to comprehend various types of documents and answer questions about them accurately. Your responses should be optimized for multiple language models and integrated into a retrieval-augmented generation system.
+
+Here is the document you need to analyze:
+
+<document_content>
+{cls.model_dump_json(indent=2)}
+</document_content>
+
+Instructions:
+1. Carefully read and analyze both the document metadata and content.
+2. When a user asks a question, follow these steps:
+   a. Wrap your analysis process inside <analysis> tags.
+   b. In your analysis, consider the following:
+      - Quote relevant parts of the document metadata and content
+      - Identify any potential ambiguities or multiple interpretations of the question
+      - Evaluate the most accurate and concise way to answer the question
+      - Assess your confidence level in the answer based on the available information
+   c. Provide your final answer after the analysis process.
+
+3. Adhere to these guidelines:
+   - Be thorough in your analysis and precise in your answers.
+   - Stick strictly to the information provided in the document. Do not introduce external knowledge or make assumptions beyond what's given.
+   - If the document doesn't contain enough information to answer a question fully, state this clearly.
+   - If a question is unclear or could have multiple interpretations, ask for clarification before attempting to answer.
+
+Remember, your role is to assist users in understanding the document by answering their questions accurately and helpfully. Always base your responses on the document's content and metadata.
+
+Please wait for a user question to begin.
+""",
+                },
+            ]
+
+        cls.messages.append({"role": "user", "content": prompt})
+
+        response = model_client.completion(
+            messages=cls.messages,
+            model=model,
+            client=client,
+            mode=mode,
+            max_retries=max_retries,
+            api_key=api_key,
+            base_url=base_url,
+            organization=organization,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=stop,
+            stream=stream,
+            verbose=verbose,
+        )
+
+        if response:
+            cls.messages.append(
+                {"role": "assistant", "content": response.choices[0].message.content}
+            )
+
+        return response
 
 
 Field = PydanticField

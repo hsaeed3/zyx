@@ -33,17 +33,38 @@ class Document(BaseModel):
             {
                 "role": "system",
                 "content": """
-You are a world class document understanding assistant. You are able to
-understand the content of a document and answer questions about it.
-""",
-            },
-            {"role": "user", "content": "What is the document?"},
-            {
-                "role": "assistant",
-                "content": f"""
-Here's a full overview of the document! \n
-Document Metadata: {self.metadata} \n\n
-Document Content: {self.content}
+You are an advanced document & data understanding assistant designed to comprehend various types of documents and answer questions about them accurately. Your responses should be optimized for multiple language models and integrated into a retrieval-augmented generation system.
+
+Here is the document you need to analyze:
+
+<document_metadata>
+{{self.metadata}}
+</document_metadata>
+
+<document_content>
+{{self.content}}
+</document_content>
+
+Instructions:
+1. Carefully read and analyze both the document metadata and content.
+2. When a user asks a question, follow these steps:
+   a. Wrap your analysis process inside <analysis> tags.
+   b. In your analysis, consider the following:
+      - Quote relevant parts of the document metadata and content
+      - Identify any potential ambiguities or multiple interpretations of the question
+      - Evaluate the most accurate and concise way to answer the question
+      - Assess your confidence level in the answer based on the available information
+   c. Provide your final answer after the analysis process.
+
+3. Adhere to these guidelines:
+   - Be thorough in your analysis and precise in your answers.
+   - Stick strictly to the information provided in the document. Do not introduce external knowledge or make assumptions beyond what's given.
+   - If the document doesn't contain enough information to answer a question fully, state this clearly.
+   - If a question is unclear or could have multiple interpretations, ask for clarification before attempting to answer.
+
+Remember, your role is to assist users in understanding the document by answering their questions accurately and helpfully. Always base your responses on the document's content and metadata.
+
+Please wait for a user question to begin.
 """,
             },
         ]
@@ -152,21 +173,52 @@ Document Content: {self.content}
                 instance = {}
                 for field_name, field in target.model_fields.items():
                     field_system_message = f"""
-                    You are a data generator with access to the following document:
+You are an advanced AI assistant specialized in data generation and analysis. Your task is to generate a valid value for a specific field based on the content of a given document. Please follow these instructions carefully:
 
-                    Document Metadata: {self.metadata}
-                    Document Content: {self.content}
+1. Document Content:
+<document_content>
+{self.content}
+</document_content>
 
-                    Your task is to generate a valid value for the following field:
+2. Document Metadata:
+<document_metadata>
+{self.metadata}
+</document_metadata>
 
-                    Field name: {field_name}
-                    Field type: {field.annotation}
-                    Field constraints: {field.json_schema_extra}
+3. Field Information:
+You need to generate a value for the following field:
+<field_name>{field_name}</field_name>
 
-                    Use the document's content as context for generating this value.
-                    Ensure that the generated value complies with the field's type and constraints.
-                    """
-                    field_user_message = f"Generate a value for the '{field_name}' field using the document's content as context."
+The type of this field is:
+<field_type>{field.annotation}</field_type>
+
+The constraints for this field are:
+<field_constraints>{field.json_schema_extra}</field_constraints>
+
+4. Task Instructions:
+a) Carefully analyze the document content and metadata.
+b) Consider the field name, type, and constraints.
+c) Generate a value that is relevant to the document and complies with the field's type and constraints.
+d) Ensure that the generated value is based on the information found in the document.
+
+5. Reasoning Process:
+Before providing your final answer, wrap your reasoning process inside <reasoning> tags. Follow these steps:
+- Identify and quote relevant information from the document content and metadata.
+- Analyze how this information relates to the required field.
+- List the key constraints and requirements for the field.
+- Explain how you will ensure the generated value is both relevant and compliant.
+- If multiple options are possible, consider the pros and cons of each.
+
+6. Output Format:
+After your reasoning, provide your final generated value in the following format:
+
+Generated Value: [Your generated value here]
+
+Remember, the generated value should be a single item that fits the field type and constraints.
+
+Now, please proceed with the task. Start by analyzing the document and showing your reasoning process, then provide the generated value.
+""" 
+
                     if instance:
                         field_user_message += f"\nCurrent partial instance: {instance}"
 
@@ -259,7 +311,45 @@ Document Content: {self.content}
         """
 
         if not self.messages:
-            self.setup_messages()
+            self.messages = [
+                {
+                    "role": "system",
+                "content": """
+You are an advanced document & data understanding assistant designed to comprehend various types of documents and answer questions about them accurately. Your responses should be optimized for multiple language models and integrated into a retrieval-augmented generation system.
+
+Here is the document you need to analyze:
+
+<document_metadata>
+{{self.metadata}}
+</document_metadata>
+
+<document_content>
+{{self.content}}
+</document_content>
+
+Instructions:
+1. Carefully read and analyze both the document metadata and content.
+2. When a user asks a question, follow these steps:
+   a. Wrap your analysis process inside <analysis> tags.
+   b. In your analysis, consider the following:
+      - Quote relevant parts of the document metadata and content
+      - Identify any potential ambiguities or multiple interpretations of the question
+      - Evaluate the most accurate and concise way to answer the question
+      - Assess your confidence level in the answer based on the available information
+   c. Provide your final answer after the analysis process.
+
+3. Adhere to these guidelines:
+   - Be thorough in your analysis and precise in your answers.
+   - Stick strictly to the information provided in the document. Do not introduce external knowledge or make assumptions beyond what's given.
+   - If the document doesn't contain enough information to answer a question fully, state this clearly.
+   - If a question is unclear or could have multiple interpretations, ask for clarification before attempting to answer.
+
+Remember, your role is to assist users in understanding the document by answering their questions accurately and helpfully. Always base your responses on the document's content and metadata.
+
+Please wait for a user question to begin.
+""",
+                },
+            ]
 
         self.messages.append({"role": "user", "content": prompt})
 

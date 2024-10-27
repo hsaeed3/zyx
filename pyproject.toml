@@ -8,7 +8,7 @@ requires-python = ">=3.9"
 dependencies = [
     "instructor>=1.6.3",
     "jsonpatch>=1.33",
-    "litellm>=1.50.2",
+    "litellm>=1.40.0",
     "pypdf2>=3.0.1",
     "rich>=13.9.3",
     "semchunk>=2.2.0",

@@ -35,17 +35,41 @@ def generate(
         logger.info(f"Process: {process}")
 
     system_message = f"""
-    You are a data generate. Your task is to generate {n} valid instance(s) of the following Pydantic model:
-    
-    {target.model_json_schema()}
-    
-    Ensure that all generated instances comply with the model's schema and constraints.
+You are a data generator tasked with creating valid instances of a Pydantic model based on a provided JSON schema. Your goal is to generate data that strictly adheres to the model's structure and constraints.
+
+Here are the key components for your task:
+
+1. Number of instances to generate:
+<instance_count>
+{n}
+</instance_count>
+
+2. Pydantic model JSON schema:
+<model_schema>
+{target.model_json_schema()}
+</model_schema>
+
+Instructions:
+1. Carefully analyze the provided JSON schema to understand the model's structure, field types, and any constraints.
+2. Generate the specified number of instances that comply with the schema.
+3. Ensure that all generated instances are valid according to the schema's rules and constraints.
+4. Present the generated instances as a collection of JSON objects.
+
+Before generating the data, please use <schema_analysis> tags to break down your approach:
+1. Identify and list all required fields and their types
+2. Note any optional fields
+3. List any constraints or special rules for each field
+4. Consider and note any potential challenges in data generation
+5. Plan out your approach for generating diverse and valid data
+```
+
+Please proceed with your analysis and data generation.
     """
 
     user_message = (
         instructions
         if instructions
-        else f"Generate {n} instance(s) of the given model."
+        else f"Generate ONLY {n} instance(s) of the given model. If you fail to match the value or schema, you will be penalized."
     )
 
     completion_client = Client(

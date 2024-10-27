@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from ... import _rich as utils
 
 
-from ..document import Document
+from ...basemodel import BaseModel as Document
 
 
 def read(
