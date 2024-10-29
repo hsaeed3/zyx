@@ -13,7 +13,7 @@ __all__ = [
 # Environment handling
 
 from ..resources.types import completion_create_params as params
-from . import _rich as utils
+from .utils import console
 from enum import Enum
 from pathlib import Path
 import os
@@ -26,6 +26,7 @@ from rich.prompt import Prompt
 
 # defaults enum model
 class ZyxDefaults(Enum):
+    """Default environment values."""
 
     # Library Default LLM
     ZYX_DEFAULT_MODEL = "gpt-4o-mini"
@@ -36,6 +37,7 @@ ZyxDefaultsKeys = Literal["ZYX_DEFAULT_MODEL"]
 
 # Environment util
 class Environment:
+    """Environment utility class for managing Zyx configuration."""
 
     # Environments
     defaults = ZyxDefaults
@@ -43,9 +45,19 @@ class Environment:
     # ensure zyx config dir exists
     @staticmethod
     def ensure_zyx_config_dir(verbose : bool = False, clear : bool = False) -> None:
-        """Ensure zyx config dir exists; builds default if not"""
+        """Ensure Zyx config directory exists and initialize with defaults if needed.
 
-        console = utils.console
+        Example:
+            >>> Environment.ensure_zyx_config_dir(verbose=True)
+            >>> Environment.ensure_zyx_config_dir(clear=True)
+
+        Parameters:
+            verbose: Whether to print status messages
+            clear: Whether to clear existing config directory
+
+        Returns:
+            None
+        """
 
         # get config dir from user's home directory
         config_dir = Path.home() / ".zyx"
@@ -93,7 +105,17 @@ class Environment:
     # get Environment value
     @staticmethod
     def get_Environment(key: ZyxDefaultsKeys) -> str:
-        """Get Environment value by key"""
+        """Get environment value for a given key.
+
+        Example:
+            >>> model = Environment.get_Environment("ZYX_DEFAULT_MODEL")
+
+        Parameters:
+            key: Environment variable key to retrieve
+
+        Returns:
+            str: Value of the environment variable
+        """
 
         # ensure Environment file exists
         Environment.ensure_zyx_config_dir()
@@ -114,7 +136,18 @@ class Environment:
     # set / update Environment value
     @staticmethod
     def set_Environment(key: ZyxDefaultsKeys, value: str) -> str:
-        """Set / update Environment value by key"""
+        """Set or update environment value for a given key.
+
+        Example:
+            >>> Environment.set_Environment("ZYX_DEFAULT_MODEL", "gpt-4")
+
+        Parameters:
+            key: Environment variable key to set
+            value: Value to set for the key
+
+        Returns:
+            str: The value that was set
+        """
 
         # ensure Environment file exists
         Environment.ensure_zyx_config_dir()
@@ -146,13 +179,34 @@ class Environment:
 
     @staticmethod
     def change_default_model(model : Union[str, params.ChatModel]) -> None:
+        """Change the default model used by Zyx.
+
+        Example:
+            >>> Environment.change_default_model("gpt-4")
+
+        Parameters:
+            model: New default model name or ChatModel instance
+
+        Returns:
+            None
+        """
 
         Environment.set_Environment("ZYX_DEFAULT_MODEL", model)
 
 
     @staticmethod
     def reset_config(verbose: bool = False) -> None:
-        """Reset all Environments to defaults"""
+        """Reset all environment variables to defaults.
+
+        Example:
+            >>> Environment.reset_config(verbose=True)
+
+        Parameters:
+            verbose: Whether to print status messages
+
+        Returns:
+            None
+        """
 
         # Ensure the Environment file is updated with all defaults
         Environment.ensure_zyx_config_dir(clear=True, verbose=verbose)
