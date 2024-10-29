@@ -1,4 +1,4 @@
-site_name: zyx
+site_name: zyx - an llm framework
 site_url: https://zyx.hammad.fun
 
 repo_url: https://github.com/hsaeed3/zyx
@@ -8,7 +8,7 @@ theme:
 
   icon:
     logo: material/lightning-bolt
-
+  
   favicon: fonts/icon.svg
 
   features:
@@ -33,26 +33,19 @@ theme:
     - content.code.select
     - content.code.annotate
 
-  palette:
-    # Palette toggle for automatic mode
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
+  palette: 
 
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: home-light
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+  # Palette toggle for light mode
+  - scheme: home-light
+    toggle:
+      icon: material/brightness-7 
+      name: Switch to dark mode
 
-    # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: home-dark
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+  # Palette toggle for dark mode
+  - scheme: home-dark
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
 
 extra:
   social:
@@ -67,9 +60,6 @@ plugins:
   - mkdocstrings
   - search
   - tags
-  - mkdocs-jupyter:
-      ignore_h1_titles: true
-      highlight_extra_classes: "CodeMirror"
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -79,28 +69,28 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - attr_list
-  - md_in_html
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_css:
   - stylesheets/extras.css
 
-extra_javascript:
-  - stylesheets/extras.js
 
 nav:
   - Welcome to zyx: index.md
-  - Quickstarts:
-    - Getting Started: quickstarts/index.md
-    - Chat Completions:
-      - Generating Completions: quickstarts/chat-completions/generating-completions.ipynb
-      - Structured Outputs: quickstarts/chat-completions/structured-outputs.ipynb
-      - Tool Use: quickstarts/chat-completions/tool-use.ipynb
-  - Agents:
-    - Agents in zyx: agents/index.md
   - Examples:
-    - Examples: examples/index.md
-    - Perplexity: examples/perplexity.ipynb
+    - LLM Completions: examples/llm-completions/llm-completions.md
+    - Working With Pydantic Models: examples/llm-completions/pydantic-outputs.md
+    - LLM Functions: 
+      - Code Generators: examples/llm-functions/code-generators.md
+      - Entity Extraction: examples/llm-functions/entity-extraction.md
+      - Label Classification: examples/llm-functions/label-classification.md
+    - Agents:
+      - LLM as a Judge: examples/agents/llm-as-a-judge.md
+      - Planning: examples/agents/planning.md
+      - Web Scraping: examples/agents/web-scraping.md
+      - Generating Podcasts: examples/agents/generating-podcasts.md
+    - Data / Document AI:
+      - Single Document QA: examples/document-ai/single-document-qa.md
+      - Multi-Document RAG: examples/document-ai/multi-document-rag.md
+      - Utilities: examples/document-ai/utils.md
+    - Multi-Modal Generations: examples/multimodal/multimodal-generations.md
+    

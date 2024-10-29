@@ -1,38 +1,54 @@
-[project]
+[tool.poetry]
 name = "zyx"
-version = "1.1.0"
-description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & ChromaDB"
+version = "1.0.13"
+description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
+authors = ["Hammad Saeed <hvmmad@gmail.com>"]
 readme = "readme.md"
-authors = [{ name = "Hammad Saeed", email = "hvmmad@gmail.com" }]
-requires-python = ">=3.9"
-dependencies = [
-    "instructor>=1.6.3",
-    "jsonpatch>=1.33",
-    "litellm>=1.40.0",
-    "pypdf2>=3.0.1",
-    "rich>=13.9.3",
-    "semchunk>=2.2.0",
-]
 
-[project.scripts]
-zyx = "zyx._cli:app"
 
-[project.optional-dependencies]
-all = ["chromadb>=0.5.15"]
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+# LLMs
+instructor = "^1.4.2"
+litellm = "^1.46.5"
+# Scraping
+bs4 = "^0.0.2"
+duckduckgo-search = "^6.2.13"
+# Data / Processing
+python-docx = "^1.1.2"
+pypdf2 = "^3.0.1"
+openpyxl = "^3.1.5"
+# Data / Vector Store
+chromadb = "^0.5.11"
+semchunk = "^2.2.0"
+# Utilities
+rich = "^13.8.1"
+# Terminal App
+textual = "^0.79.1"
+pydub = "^0.25.1"
+sounddevice = "^0.5.0"
+soundfile = "^0.12.1"
+
+
+[tool.poetry.extras]
+data = ["python-docx", "pypdf2", "openpyxl", "chromadb", "semchunk", "bs4", "duckduckgo-search"]
+
+
+[tool.poetry.group.dev.dependencies]
+poetry = "^1.8.3"
+ruff = "^0.6.5"
+uv = "^0.4.12"
+
+
+[tool.poetry.scripts]
+zyx = "zyx.resources.ext.app:terminal"
+
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-dev-dependencies = [
-    "ipykernel>=6.29.5",
-    "ipywidgets>=8.1.5",
-    "mkdocs-material>=9.5.42",
-    "mkdocs-material-extensions>=1.3.1",
-    "mkdocstrings[python]>=0.26.2",
-    "ruff>=0.7.1",
-    "uv>=0.4.26",
-    "mkdocs-jupyter>=0.25.1",
-    "pdoc>=15.0.0",
-]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

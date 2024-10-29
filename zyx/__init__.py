@@ -1,98 +1,80 @@
-from __future__ import annotations as __annotations__
-
 __all__ = [
-    "_Client",
-    "Completions",
+    # utils
+    "logger",
+    # modules
+    "llm",
+    "agents",
+    "data",
+    "tools",
+    # Core (Types)
+    "BaseModel",
+    "Field",
+    "Document",
+    # data - core
+    "Memory",
+    # data - tools
+    "embeddings",
+    "chunk",
+    "read",
+    # llm - core
+    "Client",
     "completion",
-
-    "BaseModel", "Field",
-
-    "chunk", "read", "embeddings",
-
-    "image", "audio", "transcribe",
-
-    "change_default_model", "reset_config",
-
+    # llm - base functions
     "classify",
-    "coder",
+    "code",
     "extract",
     "function",
     "generate",
-    "patch",
-    "prompter",
-    "planner",
+    "system_prompt",
+    # llm - agentic reasoning
+    "Character",
+    "conversation",
+    "judge",
+    "plan",
     "query",
-    "qa",
-    "select",
+    "scrape",
     "solve",
-    "validate",
-
-    "console",
-    "logger",
-
-    "Store", "Document",
-
-    "ZYX_DEFAULT_MODEL",
+    # ext - multimodal
+    "image",
+    "audio",
+    "transcribe",
+    # ext - app
+    "app",
 ]
 
-from .base_client import Client as _Client
 
-# -- util --
+# utils
+from .lib.utils.logger import logger
 
-from ._rich import console, logger
+# modules
+from .lib.router import llm, agents, data
+from .resources import tools
 
-# -- env --
+# data
+from .lib.router.data import Memory, Document, embeddings, chunk, read
 
-from ._environ import Environment as __environ, ZYX_DEFAULT_MODEL
-
-change_default_model = __environ.change_default_model
-reset_config = __environ.reset_config
-
-# -- basemodel --
-
-from .basemodel import BaseModel, Field
-
-
-# -- multimodal --
-
-from .multimodal import image, audio, transcribe
-
-# -- data --
-
-from .data.resources import chunker as __chunker, reader as __reader, embedder as __embedder
-
-
-# -- completions client --
-
-from .completions import (
-    Completions,
-    classifier as __classifier, coder as __coder, extractor as __extractor, function_constructor as __function_constructor, generator as __generator,
-    patcher as __patcher, planner as __planner, prompts as __prompts, queries as __queries, question_answer as __question_answer, selector as __selector,
-    solver as __solver, validator as __validator,
-    completion
+# llm - base & core
+from .lib.router.llm import (
+    Client,
+    completion,
+    classify,
+    code,
+    extract,
+    function,
+    generate,
+    system_prompt,
 )
 
-# -- vector store --
-# only compatible with zyx[all]
+# llm - agents
+from .lib.router.agents import (
+    Character,
+    conversation,
+    judge,
+    plan,
+    query,
+    scrape,
+    solve,
+)
 
-from .data import Store, Document
-
-# -- functions --
-
-classify = __classifier.classify
-coder = __coder.coder
-extract = __extractor.extract
-function = __function_constructor.function
-generate = __generator.generate
-patch = __patcher.patch
-planner = __planner.planner
-prompter = __prompts.prompter
-query = __queries.query
-qa = __question_answer.qa
-select = __selector.select
-solve = __solver.solve
-validate = __validator.validate
-
-chunk = __chunker.chunk
-read = __reader.read
-embeddings = __embedder.embeddings
+# ext
+from .lib.router.ext import BaseModel, Field, app, image, audio, transcribe
