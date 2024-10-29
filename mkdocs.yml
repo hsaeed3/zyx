@@ -99,3 +99,8 @@ nav:
       - Generating Completions: quickstarts/chat-completions/generating-completions.ipynb
       - Structured Outputs: quickstarts/chat-completions/structured-outputs.ipynb
       - Tool Use: quickstarts/chat-completions/tool-use.ipynb
+  - Agents:
+    - Agents in zyx: agents/index.md
+  - Examples:
+    - Examples: examples/index.md
+    - Perplexity: examples/perplexity.ipynb
