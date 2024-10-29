@@ -17,9 +17,6 @@ dependencies = [
 [project.scripts]
 zyx = "zyx._cli:app"
 
-[project.optional-dependencies]
-all = ["chromadb>=0.5.15"]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
