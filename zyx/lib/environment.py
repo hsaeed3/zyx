@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __all__ = [
-    "Environmentironment",
+    "Environment",
 
     # pre-init exports
     "ZYX_DEFAULT_MODEL"
