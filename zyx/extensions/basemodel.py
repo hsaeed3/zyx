@@ -10,6 +10,7 @@ __all__ = [
 from ..lib.utils import logger
 from ..resources.types import completion_create_params as params
 from ..completions.base_client import Client
+from ..lib.environment import ZYX_DEFAULT_MODEL
 
 import enum
 import time
@@ -185,7 +186,7 @@ class LLMFieldAccessor:
     def completion(
         self,
         messages: Union[str, List[Dict[str, str]]],
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         **kwargs
     ) -> Any:
         """Run completion for this field"""
@@ -224,7 +225,7 @@ class LLMFieldAccessor:
     def patch(
         self,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         **kwargs
     ) -> Any:
         """Update this field's value"""
@@ -264,7 +265,7 @@ class LLMFieldAccessor:
     def generate(
         self,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         **kwargs
     ) -> Any:
         """Generate a new value for this field"""
@@ -358,7 +359,7 @@ class BaseModel(PydanticBaseModel):
     def model_completion(
         cls: Type[T],
         messages: Union[str, List[params.Message]],
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -389,7 +390,7 @@ class BaseModel(PydanticBaseModel):
     def model_completion(
         self: T,
         messages: Union[str, List[params.Message]],
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -423,7 +424,7 @@ class BaseModel(PydanticBaseModel):
         n: int = 1,
         process: Literal["batch", "sequential"] = "batch",
         client: Optional[Literal["litellm", "openai"]] = None,
-        model : Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -442,7 +443,7 @@ class BaseModel(PydanticBaseModel):
         n: int = 1,
         process: Literal["batch", "sequential"] = "batch",
         client: Optional[Literal["litellm", "openai"]] = None,
-        model : Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -461,7 +462,7 @@ class BaseModel(PydanticBaseModel):
         n: int = 1,
         process: Literal["batch", "sequential"] = "batch",
         client: Optional[Literal["litellm", "openai"]] = "openai",
-        model : Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -766,7 +767,7 @@ Please proceed with your analysis and data generation.
         field_name: str,
         instructions: Optional[str] = None,
         n: int = 1,
-        model : Union[str,  params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Union[str,  params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -908,7 +909,7 @@ Please proceed with your analysis and data generation.
     def model_completion(
         cls: Type[T],
         messages: Union[str, List[Dict[str, str]]],
-        model: Union[str,  params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str,  params.ChatModel] = ZYX_DEFAULT_MODEL,
         response_model: Union[Optional[Type[PydanticBaseModel]], List[Optional[Type[PydanticBaseModel]]]] = None,
         mode: params.InstructorMode = "tool_call",
         max_retries: Optional[int] = None,
@@ -1013,7 +1014,7 @@ Please proceed with your analysis and data generation.
         instance: T,
         fields: Optional[List[str]] = None,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -1157,7 +1158,7 @@ Please proceed with your analysis and data generation.
         instance: T,
         fields: Optional[List[str]] = None,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -1289,7 +1290,7 @@ Please proceed with your analysis and data generation.
         instance: T,
         fields: Optional[List[str]] = None,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -1400,7 +1401,7 @@ Please proceed with your analysis and data generation.
     def model_rag(
         cls,
         prompt: str,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         client: Literal["openai", "litellm"] = "openai",
         mode: Optional[params.InstructorMode] = "tool_call",
         max_retries: Optional[int] = 3,

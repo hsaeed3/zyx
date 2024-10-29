@@ -17,6 +17,8 @@ from ..resources.types import completion_create_params as params
 # model outputs
 from ..resources.types import model_outputs as outputs
 
+from ..lib.environment import ZYX_DEFAULT_MODEL
+
 # ext
 import enum
 import random
@@ -110,7 +112,7 @@ class AgentCompletionParams(BaseModel):
     system_prompt : Optional[str] = None
 
     # llm
-    model : params.ChatModel = params.ZYX_DEFAULT_MODEL
+    model : params.ChatModel = ZYX_DEFAULT_MODEL
 
     # params
     base_url : Optional[str] = None
@@ -283,7 +285,7 @@ class Agents:
                 agent : Optional[Union[str, Agent]] = None,
                 tools : Optional[Union[List[params.ToolType], str]] = None,
                 message : str = "",
-                model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL
+                model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL
         ):
             
             try:
@@ -363,7 +365,7 @@ class Agents:
         def delegate(
             self,
             message: str,
-            model: Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+            model: Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
             tools: Optional[List[params.ToolType]] = None
         ) -> List[Dict[str, str]]:
             """Delegate tasks to agents based on their roles and capabilities.
@@ -515,7 +517,7 @@ class Agents:
         def completion(
                 self,
                 message : str,
-                model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+                model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
                 agent : Optional[Union[str, Agent]] = None,
                 tools : Optional[Union[List[params.ToolType], str]] = None,
                 response_model : Optional[BaseModel] = None,
@@ -547,7 +549,7 @@ class Agents:
                 self,
                 message : str = "",
                 agent : Optional[Union[str, Agent]] = None,
-                model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL
+                model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL
         ):
             
             try:
@@ -579,7 +581,7 @@ class Agents:
                 self,
                 message : str,
                 agent : Optional[Union[str, Agent]] = None,
-                model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+                model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
                 process : Literal["accuracy", "validate", "fact_check", "guardrails"] = "accuracy",
         ) -> Union[outputs.JudgmentResult, outputs.ValidationResult, outputs.FactCheckResult, outputs.GuardrailsResult]:
             
@@ -790,7 +792,7 @@ class Agents:
 
             system_prompt : Optional[str] = None,
 
-            model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+            model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
             temperature : Optional[float] = None,
             base_url : Optional[str] = None,
             api_key : Optional[str] = None,
@@ -884,7 +886,7 @@ class Agents:
     def chat(
         self,
         agent : Optional[Union[str, Agent]] = None,
-        model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
         tools : Optional[Union[List[params.ToolType], str]] = None,
         response_model : Optional[BaseModel] = None
     ):
@@ -910,7 +912,7 @@ class Agents:
         self,
         message : str,
         agent : Optional[Union[str, Agent]] = None,
-        model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
         tools : Optional[Union[List[params.ToolType], str]] = None,
         response_model : Optional[BaseModel] = None,
         stream : bool = False
@@ -986,7 +988,7 @@ class Agents:
             agent : Optional[Union[str, Agent]] = None,
             tools : Optional[Union[List[params.ToolType], str]] = None,
             message : str = "",
-            model : Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+            model : Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
             process : Literal["batch", "sequential"] = "batch"
     ):
         
@@ -1068,7 +1070,7 @@ class Agents:
     def delegate(
             self,
             message: str,
-            model: Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+            model: Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
             tools: Optional[List[params.ToolType]] = None
         ) -> List[Dict[str, str]]:
             """Delegate tasks to agents based on their roles and capabilities.
@@ -1218,7 +1220,7 @@ class Agents:
     def run(
         self,
         message: str,
-        model: Optional[params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Optional[params.ChatModel] = ZYX_DEFAULT_MODEL,
         object: Optional[BaseModel] = None,
         tools: Optional[List[params.ToolType]] = None
     ) -> BaseModel:

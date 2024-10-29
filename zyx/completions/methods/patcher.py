@@ -11,7 +11,7 @@ def patch(
     target: BaseModel,
     fields: Optional[List[str]] = None,
     instructions: Optional[str] = None,
-    model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+    model: Union[str, params.ChatModel] = "gpt-4o-mini",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
     organization: Optional[str] = None,

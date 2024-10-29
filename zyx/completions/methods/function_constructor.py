@@ -1,12 +1,13 @@
 from ...resources.types import completion_create_params as params
-from ..base_client import Client
 
 from pydantic import BaseModel, Field
-from typing import Callable, Optional, Literal, get_type_hints, Any, Union
+from typing import Callable, Optional, Literal, get_type_hints, Any, Union, Type
 import traceback
-import logging
-import subprocess
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from ...resources.utils import repl
+import re
+
+Client = Type["Client"]
 
 class FunctionResponse(BaseModel):
     code: str
@@ -56,13 +57,12 @@ def function(
         The function response or the generated code response (Any).
     """
 
+    from ..base_client import Client
+
     def decorator(f: Callable) -> Callable:
         from pydantic import create_model
         from functools import wraps
         import tenacity
-        import tempfile
-        import sys
-        import os
 
         @wraps(f)
         @tenacity.retry(
@@ -96,34 +96,27 @@ def function(
                         f"typing.Any" if return_type == Any else str(return_type)
                     )
 
-                    messages = [
-                        {
-                            "role": "system",
-                            "content": f"""
-                            ## CONTEXT ##
-                            
-                            You are a Python code generator. Your goal is to generate a Python function that matches this specification:
-                            Function: {f.__name__}
-                            Arguments and their types: {function_args}
-                            Return type: {return_type_str}
-                            Description: {f.__doc__} \n
-                            
-                            ## OBJECTIVE ##
-                            
-                            Generate the complete Python code as a single string, including all necessary import statements.
-                            The code should define the function and include a call to the function with the provided inputs.
-                            The last line should assign the result of the function call to a variable named 'result'.
-                            Do not include any JSON encoding, printing, or explanations in your response.
-                            Ensure all required modules are imported.
-                            If your function returns an object, ensure it is properly configured and ready to be used.
-                            {error_context}
-                            """,
-                        },
-                        {
-                            "role": "user",
-                            "content": f"Generate code for the function with these inputs: {input_dict}",
-                        },
-                    ]
+                    # First, generate the function definition
+                    base_instructions = """
+                    You are a Python code generator. Your goal is to generate Python code based on the given description.
+
+                    # Instructions
+                    - Generate the complete Python code as a single string.
+                    - The code should define a single function with all necessary imports inside it.
+                    - All arguments in the code should be typed.
+                    - The function must include a clear docstring.
+                    - All imports must be nested inside the function body.
+                    - The function should return the final result directly.
+                    - Do not include any calls to the function.
+                    """
+
+                    system_message = base_instructions
+                    user_message = f"""Generate a Python function that matches this signature:
+                    Function: {f.__name__}
+                    Arguments: {function_args}
+                    Return type: {return_type_str}
+                    Description: {f.__doc__}
+                    """
 
                     completion_client = Client(
                         api_key=api_key,
@@ -141,100 +134,70 @@ def function(
                             task_id = progress.add_task("Constructing...", total=None)
 
                             response = completion_client.completion(
-                                messages=messages,
+                                messages=[
+                                    {"role": "system", "content": system_message},
+                                    {"role": "user", "content": user_message},
+                                ],
                                 model=model,
                                 response_model=CodeGenerationModel,
                                 mode=mode,
-                                progress_bar=progress_bar,
+                                progress_bar=False,
                                 **kwargs,
                             )
 
                             progress.update(task_id, completed=1)
                     else:
                         response = completion_client.completion(
-                            messages=messages,
+                            messages=[
+                                {"role": "system", "content": system_message},
+                                {"role": "user", "content": user_message},
+                            ],
                             model=model,
                             response_model=CodeGenerationModel,
                             mode=mode,
-                            progress_bar=progress_bar,
+                            progress_bar=False,
                             **kwargs,
                         )
 
                     if verbose:
-                        print(f"Code generation response: {response}")
+                        print(f"Generated function:\n{response.code}")
 
-                    # Prepend the import statement to the generated code
-                    full_code = import_statement + response.code
+                    # Get the function definition
+                    function_code = response.code
 
-                    if verbose:
-                        print(f"Full generated code:\n{full_code}")
+                    # Now create the execution code by adding the function call
+                    args_str = ", ".join([f"{k}={repr(v)}" for k, v in input_dict.items()])
+                    execution_code = f"""
+{function_code}
 
-                    # Create a temporary Python file
-                    with tempfile.NamedTemporaryFile(
-                        mode="w", suffix=".py", delete=False
-                    ) as temp_file:
-                        temp_file.write(full_code)
-                        temp_file_path = temp_file.name
+result = {f.__name__}({args_str})
+"""
 
-                    # Add the current directory to sys.path to allow importing the temporary module
-                    sys.path.insert(0, os.path.dirname(temp_file_path))
+                    if return_code:
+                        return FunctionResponse(code=function_code, output=None)
 
                     try:
-                        # Execute the generated code in a local namespace
-                        local_namespace = {}
-                        exec_globals = globals().copy()
-
-                        # Dynamically import required modules
-                        for line in full_code.split("\n"):
-                            if line.startswith("import ") or line.startswith("from "):
-                                try:
-                                    exec(line, exec_globals)
-                                except ImportError as e:
-                                    print(f"Failed to import: {line}. Error: {str(e)}")
-                                    print(
-                                        "Attempting to install the required package..."
-                                    )
-                                    package = line.split()[1].split(".")[0]
-                                    subprocess.check_call(
-                                        [
-                                            sys.executable,
-                                            "-m",
-                                            "pip",
-                                            "install",
-                                            package,
-                                        ]
-                                    )
-                                    exec(line, exec_globals)
-
-                        exec(full_code, exec_globals, local_namespace)
-
-                        if "result" not in local_namespace:
-                            raise ValueError(
-                                "No result object found in the generated code."
-                            )
-
-                        result = local_namespace["result"]
+                        # Execute the complete code
+                        output = repl.execute_in_sandbox(
+                            execution_code,
+                            verbose=verbose,
+                            return_result=True
+                        )
 
                         if verbose:
-                            print(f"Result type: {type(result)}")
-                            if isinstance(result, logging.Logger):
-                                print(f"Logger name: {result.name}")
-                                print(f"Logger level: {result.level}")
-                                print(f"Logger handlers: {result.handlers}")
+                            print(f"Execution successful, result type: {type(output)}")
 
-                        if return_code:
-                            return FunctionResponse(code=full_code, output=result)
-                        return result
+                        return output if not return_code else FunctionResponse(code=function_code, output=output)
 
-                    finally:
-                        # Clean up: remove the temporary file
-                        os.unlink(temp_file_path)
-                        sys.path.pop(0)
+                    except Exception as e:
+                        last_error = str(e)
+                        last_code = execution_code
+                        raise RuntimeError(f"Error in code execution: {str(e)}")
 
                 except ImportError as e:
                     print(f"Import error: {str(e)}")
                     print(f"Traceback: {traceback.format_exc()}")
-                    prompt_user_library_install(e.name)
+                    prompt_user_library_install(str(e).split("'")[1])
                     raise RuntimeError(f"Import error: {str(e)}")
 
                 except Exception as e:
@@ -283,7 +246,7 @@ def function(
                             mode="markdown_json_mode"
                             if model.startswith(("ollama/", "ollama_chat/"))
                             else mode,
-                            progress_bar=progress_bar,
+                            progress_bar=False,
                             **kwargs,
                         )
 
@@ -296,7 +259,7 @@ def function(
                         mode="markdown_json_mode"
                         if model.startswith(("ollama/", "ollama_chat/"))
                         else mode,
-                        progress_bar=progress_bar,
+                        progress_bar=False,
                         **kwargs,
                     )
 

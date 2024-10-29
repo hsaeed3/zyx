@@ -12,6 +12,7 @@ import sys
 import os
 from rich.progress import Progress, SpinnerColumn, TextColumn
 import re
+from ...resources.utils import repl
 
 
 def coder(
@@ -90,10 +91,10 @@ def coder(
             if progress_bar:
                 with Progress(
                     SpinnerColumn(),
-                    TextColumn("[progress.instructions]{task.instructions}"),
+                    TextColumn("[progress.description]{task.description}"),
                     transient=True
                 ) as progress:
-                    task_id = progress.add_task("Constructing...", total=None)
+                    task_id = progress.add_task(description="Constructing...", total=None)
 
                     response = completion_client.completion(
                         messages=[
@@ -130,35 +131,25 @@ def coder(
             if "result =" not in response.code:
                 response.code += "\nresult = " + instructions.split()[-1]
 
-            # Create a temporary Python file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as temp_file:
-                temp_file.write(response.code)
-                temp_file_path = temp_file.name
+            if return_code:
+                # Clean up any result assignment at the end if return_code=True
+                cleaned_code = re.sub(r'\nresult\s*=\s*.+$', '', response.code)
+                return cleaned_code
 
-            # Add the current directory to sys.path to allow importing the temporary module
-            sys.path.insert(0, os.path.dirname(temp_file_path))
+            # Execute code in sandbox and capture result
             try:
-                if return_code:
-                    # Clean up any result assignment at the end if return_code=True
-                    cleaned_code = re.sub(r'\nresult\s*=\s*.+$', '', response.code)
-                    return cleaned_code
-                    
-                # Execute the generated code in a local namespace
-                local_namespace = {}
-                exec(response.code, {}, local_namespace)
+                # Execute the code directly without JSON handling
+                output = repl.execute_in_sandbox(
+                    response.code,
+                    verbose=verbose,
+                    return_result=True  # Add this if your repl.py supports it
+                )
+                return output
 
-                # Return the result object
-                if "result" not in local_namespace:
-                    raise ValueError("No result object found in the generated code.")
-
-                return local_namespace["result"]
-
-            finally:
-                # Clean up: remove the temporary file
-                os.unlink(temp_file_path)
-                sys.path.pop(0)
+            except Exception as e:
+                last_error = str(e)
+                last_code = response.code
+                raise RuntimeError(f"Error in code execution: {str(e)}")
 
         except Exception as e:
             last_error = str(e)

@@ -8,25 +8,19 @@ from typing import Any, List, Literal, Generator, Optional, Union, Mapping, Type
 
 from .base_client import Client, completion
 
+from ..resources.types import completion_create_params as params
+from ..resources.types.config import client as clientconfig
+
+from ..lib.environment import ZYX_DEFAULT_MODEL
+
 # agents
 from ..agents import Agents
-
-# FUNCTIONS (lazy loaded (very speedy indeed))
-from .methods import (
-    coder, classifier, extractor, function_constructor, generator,
-    patcher, planner, prompts, queries, question_answer, selector,
-    solver, validator
-)
 
 # exceptions
 from ..lib import exceptions
 
 # function outputs
 from ..resources.types import model_outputs as outputs
-
-# base client types
-from ..resources.types.config import client as clientconfig
-from ..resources.types import completion_create_params as params
 
 import httpx
 from pydantic import BaseModel, Field
@@ -116,7 +110,7 @@ class Completions(Client):
             classification: Literal["single", "multi"] = "single",
             n: int = 1,
             batch_size: int = 3,
-            model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+            model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
             api_key: Optional[str] = None,
             base_url: Optional[str] = None,
             organization: Optional[str] = None,
@@ -155,9 +149,10 @@ class Completions(Client):
         Returns:
             List of ClassificationResults
         """
+        from .methods.classifier import classify
 
         try:
-            return classifier.classify(
+            return classify(
                 inputs = inputs,
                 labels = labels,
                 classification = classification,
@@ -178,10 +173,10 @@ class Completions(Client):
             raise exceptions.ClassifierError(e) from e
 
 
-    def code(
+    def coder(
         self,
         description: str,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -216,9 +211,10 @@ class Completions(Client):
         Returns:
             Result of the code execution or code if return_code is True
         """
+        from .methods.code_constructor import coder
 
         try:
-            return coder.coder(
+            return coder(
                 description = description,
                 model = model,
                 api_key = api_key,
@@ -242,7 +238,7 @@ class Completions(Client):
         target: Type[BaseModel],
         text: Union[str, List[str]],
         provider: Literal["litellm", "openai"] = "openai",
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -284,9 +280,10 @@ class Completions(Client):
         Returns:
             Extracted model or list of extracted models
         """
+        from .methods.extractor import extract
 
         try:
-            return extractor.extract(
+            return extract(
                 target = target,
                 text = text,
                 provider = provider,
@@ -311,7 +308,7 @@ class Completions(Client):
 
     def function(
         self,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         provider: Literal["litellm", "openai"] = "openai",
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
@@ -340,9 +337,10 @@ class Completions(Client):
         Returns:
             Mock or generated function
         """
+        from .methods.function_constructor import function
 
         try:
-            return function_constructor.function(
+            return function(
                 model = model,
                 provider = provider,
                 api_key = api_key,
@@ -366,7 +364,7 @@ class Completions(Client):
         process: Literal["single", "batch"] = "single",
         n: int = 1,
         batch_size: int = 3,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -404,9 +402,10 @@ class Completions(Client):
         Returns:
             Generated model or list of generated models
         """
+        from .methods.generator import generate
 
         try:
-            return generator.generate(
+            return generate(
                 target = target,
                 instructions = instructions,
                 process = process,
@@ -433,7 +432,7 @@ class Completions(Client):
         target: BaseModel,
         fields: Optional[List[str]] = None,
         instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,  # Updated default
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,  # Updated default
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -468,9 +467,10 @@ class Completions(Client):
         Returns:
             Patched model
         """
+        from .methods.patcher import patch
 
         try:
-            return patcher.patch(
+            return patch(
                 target = target,
                 fields = fields,
                 instructions = instructions,
@@ -498,7 +498,7 @@ class Completions(Client):
         n: int = 1,
         batch_size: int = 3,
         steps: int = 5,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -537,9 +537,10 @@ class Completions(Client):
         Returns:
             Plan or list of plans
         """
+        from .methods.planning import planner
 
         try:
-            return planner.planner(
+            return planner(
                 input = input,
                 instructions = instructions,
                 process = process,
@@ -570,7 +571,7 @@ class Completions(Client):
         process: Literal["sequential", "batch"] = "sequential",
         n: int = 1,
         batch_size: int = 3,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -610,9 +611,10 @@ class Completions(Client):
         Returns:
             Generated or optimized prompt
         """
+        from .methods.prompts import prompter
 
         try:
-            return prompts.prompter(
+            return prompter(
             instructions = instructions,
             type = type,
             optimize = optimize,
@@ -641,7 +643,7 @@ class Completions(Client):
     def query(
         self,
         prompt: str,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         temperature: float = 0.7,
@@ -695,9 +697,10 @@ class Completions(Client):
         Returns:
             Response from the model
         """
+        from .methods.queries import query
 
         try:
-            return queries.query(
+            return query(
                 prompt = prompt,
                 model = model,
                 api_key = api_key,
@@ -730,7 +733,7 @@ class Completions(Client):
         input_text: str,
         num_questions: int = 5,
         chunk_size: Optional[int] = 512,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -746,9 +749,10 @@ class Completions(Client):
         
         """Generate a dataset of questions and answers based on the input text.
         """
+        from .methods.question_answer import qa
 
         try:
-            return question_answer.qa(
+            return qa(
                 input_text = input_text,
                 num_questions = num_questions,
                 chunk_size = chunk_size,
@@ -837,9 +841,10 @@ class Completions(Client):
             Union[SelectionResult, MultiSelectionResult, List[Union[SelectionResult, MultiSelectionResult]]]:
                 The selected content with confidence scores
         """
+        from .methods.selector import select
 
         try:
-            return selector.select(
+            return select(
                 text = text,
                 criteria = criteria,
                 selection_type = selection_type,
@@ -872,7 +877,7 @@ class Completions(Client):
         tree_of_thought: bool = False,
         max_depth: int = 3,
         branching_factor: int = 3,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
@@ -913,9 +918,10 @@ class Completions(Client):
             verbose: Whether to show verbose output
             provider: Provider to use for solving the problem
         """
+        from .methods.solver import solve
 
         try:
-            return solver.solve(
+            return solve(
                 problem = problem,
                 high_level_concept = high_level_concept,
                 tree_of_thought = tree_of_thought,
@@ -947,7 +953,7 @@ class Completions(Client):
         process: Literal["accuracy", "validate", "fact_check", "guardrails"] = "accuracy",
         schema: Optional[Union[str, dict]] = None,
         regenerate: bool = False,
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         temperature: float = 0.7,
@@ -1017,9 +1023,10 @@ class Completions(Client):
         Returns:
             Union[JudgmentResult, ValidationResult, RegeneratedResponse, FactCheckResult, GuardrailsResult]: The result of the judgment, validation, fact-check, guardrails check, or regeneration.
         """   
+        from .methods.validator import validate
 
         try:
-            return validator.validate(
+            return validate(
                 prompt = prompt,
                 responses = responses,
                 process = process,

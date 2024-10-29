@@ -26,12 +26,25 @@ import openai
 from pydantic import BaseModel, create_model
 from rich.progress import Progress
 
+# types
+from ..resources.types.config.client import (
+    ClientConfig, ClientProvider, ClientChecks,
+    DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT
+)
+from ..resources.types.completions.arguments import (
+    ChatCompletion, Completion, Tool, ToolType, CompletionArguments, Message,
+    InstructorMode, FunctionCall, Process, ChatCompletionModality,
+    ResponseFormat, ChatCompletionAudioParam, ChatCompletionStreamOptionsParam,
+    ChatCompletionToolChoiceOptionParam, ChatCompletionToolParam, ChatModel, Function
+)
+from ..resources.types.model_outputs import (
+    StringResponse, IntResponse, FloatResponse, BoolResponse, ListResponse
+)
+
 # Core utils
 from ..lib.exceptions import Yikes, ZyxError
 from ..lib.utils import console, logger
-from ..resources.types import completion_create_params as params
-from ..resources.types import model_outputs as outputs
-from ..resources.types.config import client as configtypes
+from ..lib.environment import ZYX_DEFAULT_MODEL
 from ..resources.utils import function_calling
 from ..resources.utils.tool_generator import _generate_tool
 
@@ -53,13 +66,13 @@ class Client:
 
     def __init__(
         self,
-        provider: Union[Literal["openai", "litellm"], configtypes.ClientProvider] = "openai",
+        provider: Union[Literal["openai", "litellm"], ClientProvider] = "openai",
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         organization: Optional[str] = None,
         project: Optional[str] = None,
-        timeout: Optional[Union[float, httpx.Timeout]] = configtypes.DEFAULT_TIMEOUT,
-        max_retries: Optional[int] = configtypes.DEFAULT_MAX_RETRIES,
+        timeout: Optional[Union[float, httpx.Timeout]] = DEFAULT_TIMEOUT,
+        max_retries: Optional[int] = DEFAULT_MAX_RETRIES,
         default_headers: Optional[Mapping[str, str]] = None,
         default_query: Optional[Mapping[str, object]] = None,
         verify_ssl: Optional[bool] = None,
@@ -68,7 +81,7 @@ class Client:
         verbose: Optional[bool] = None,
     ):
         # Initialize client config
-        self.config = configtypes.ClientConfig(
+        self.config = ClientConfig(
             provider=provider,
             api_key=api_key,
             base_url=base_url,
@@ -85,7 +98,7 @@ class Client:
         )
 
         # Initialize client checks
-        self.checks = configtypes.ClientChecks()
+        self.checks = ClientChecks()
 
         # Initialize client
         self._init_client()
@@ -194,7 +207,7 @@ class Client:
     # ----------------------------------------------------------------
 
     def __instructor_patch_openai_client(
-        self, mode: params.InstructorMode = "tool_call"
+        self, mode: InstructorMode = "tool_call"
     ) -> openai.OpenAI:
         """Patches the OpenAI client with instructor & given mode."""
         from instructor import Mode, from_openai
@@ -207,7 +220,7 @@ class Client:
             )
 
     def __instructor_patch_litellm_client(
-        self, mode: params.InstructorMode = "tool_call"
+        self, mode: InstructorMode = "tool_call"
     ) -> LiteLLM:
         """Patches the LiteLLM client with instructor."""
         from instructor import Mode, patch as litellm_patch
@@ -220,7 +233,7 @@ class Client:
             )
 
     def _patch_client(
-        self, mode: params.InstructorMode = "tool_call"
+        self, mode: InstructorMode = "tool_call"
     ) -> Union[openai.OpenAI, LiteLLM]:
         """Patches the client with instructor."""
         self.instructor = None
@@ -237,8 +250,8 @@ class Client:
     # ----------------------------------------------------------------
 
     def _build_tools(
-        self, tools: List[params.ToolType], model: str
-    ) -> List[params.Tool]:
+        self, tools: List[ToolType], model: str
+    ) -> List[Tool]:
         """Formats a list of tools for completion.
 
         Handles both function tools and string-based tools that need to be generated.
@@ -261,7 +274,7 @@ class Client:
                 else:
                     if self.config.verbose:
                         console.print("🔨 Processing existing tool function")
-                    formatted_tools.append(params.Tool(function=tool))
+                    formatted_tools.append(Tool(function=tool))
 
             for tool in formatted_tools:
                 if not tool.name:
@@ -284,10 +297,10 @@ class Client:
 
     def _execute_tools(
         self,
-        tools: List[params.Tool],
-        arguments: params.CompletionArguments,
-        response: params.Completion,
-    ) -> params.CompletionArguments:
+        tools: List[Tool],
+        arguments: CompletionArguments,
+        response: Completion,
+    ) -> CompletionArguments:
         """Executes tools and returns updated arguments."""
         arguments.messages.append(response.choices[0].message.model_dump())
 
@@ -340,7 +353,7 @@ class Client:
             return create_model("Response", **response_model)
 
     def _simplify_messages(
-        self, arguments: params.CompletionArguments
+        self, arguments: CompletionArguments
     ) -> List[Dict[str, Any]]:
         """Formats messages for instructor."""
         formatted_messages = []
@@ -386,7 +399,7 @@ class Client:
     # COMPLETION METHODS
     # ----------------------------------------------------------------
 
-    def _chat_completion(self, *args, **kwargs) -> params.ChatCompletion:
+    def _chat_completion(self, *args, **kwargs) -> ChatCompletion:
         if self.config.verbose:
             console.print("⏳ Creating chat completion...")
 
@@ -403,7 +416,7 @@ class Client:
             )
 
     def _instructor_completion(
-        self, mode: params.InstructorMode = "tool_call", *args, **kwargs
+        self, mode: InstructorMode = "tool_call", *args, **kwargs
     ) -> Type[BaseModel]:
         """Runs an instructor completion, returns a Pydantic model."""
         if not self.checks.is_instructor_initialized:
@@ -441,20 +454,20 @@ class Client:
             return None
 
         if response_model is str:
-            return outputs.StringResponse
+            return StringResponse
         elif response_model is int:
-            return outputs.IntResponse
+            return IntResponse
         elif response_model is float:
-            return outputs.FloatResponse
+            return FloatResponse
         elif response_model is bool:
-            return outputs.BoolResponse
+            return BoolResponse
         elif response_model is list:
             if any(isinstance(i, dict) for i in response_model):
                 class NestedListResponse(BaseModel):
                     response: List[BaseModel]
 
                 return NestedListResponse
-            return outputs.ListResponse
+            return ListResponse
         else:
             return None
 
@@ -464,9 +477,9 @@ class Client:
 
     def completion(
         self,
-        messages: Union[str, List[params.Message]],
-        model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
-        mode: Optional[params.InstructorMode] = "tool_call",
+        messages: Union[str, List[Message]],
+        model: Union[str, ChatModel] = ZYX_DEFAULT_MODEL,
+        mode: Optional[InstructorMode] = "tool_call",
         response_model: Optional[
             Union[
                 str,
@@ -480,48 +493,48 @@ class Client:
             ]
         ] = None,
         run_tools: Optional[bool] = True,
-        tools: Optional[List[Union[str, params.ToolType]]] = None,
-        process: Optional[params.Process] = None,
+        tools: Optional[List[Union[str, ToolType]]] = None,
+        process: Optional[Process] = None,
         chat: Optional[bool] = None,
         progress_bar: Optional[bool] = None,
         verbose: Optional[bool] = None,
-        max_retries: Optional[int] = params.DEFAULT_MAX_RETRIES,
-        audio: Optional[params.ChatCompletionAudioParam] = None,
+        max_retries: Optional[int] = DEFAULT_MAX_RETRIES,
+        audio: Optional[ChatCompletionAudioParam] = None,
         frequency_penalty: Optional[float] = None,
-        function_call: Optional[params.FunctionCall] = None,
-        functions: Optional[Iterable[params.Function]] = None,
+        function_call: Optional[FunctionCall] = None,
+        functions: Optional[Iterable[Function]] = None,
         logit_bias: Optional[Dict[str, int]] = None,
         logprobs: Optional[bool] = None,
         max_completion_tokens: Optional[int] = None,
         max_tokens: Optional[int] = None,
         metadata: Optional[Dict[str, str]] = None,
-        modalities: Optional[List[params.ChatCompletionModality]] = None,
+        modalities: Optional[List[ChatCompletionModality]] = None,
         n: Optional[int] = None,
         parallel_tool_calls: Optional[bool] = False,
         presence_penalty: Optional[float] = None,
-        response_format: Optional[params.ResponseFormat] = None,
+        response_format: Optional[ResponseFormat] = None,
         seed: Optional[int] = None,
         service_tier: Optional[Literal["auto", "default"]] = None,
         stop: Optional[Union[str, List[str]]] = None,
         store: Optional[bool] = None,
         stream: Optional[Literal[False]] | Literal[True] = None,
-        stream_options: Optional[params.ChatCompletionStreamOptionsParam] = None,
+        stream_options: Optional[ChatCompletionStreamOptionsParam] = None,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        tool_choice: Optional[params.ChatCompletionToolChoiceOptionParam] = None,
+        tool_choice: Optional[ChatCompletionToolChoiceOptionParam] = None,
         top_logprobs: Optional[int] = None,
         user: Optional[str] = None,
-    ) -> params.Completion:
+    ) -> Completion:
         """Creates a chat completion."""
         if response_model:
             if response_model in [str, int, float, bool, list]:
                 response_model = self._assign_response_model_type(response_model)
 
-        if max_retries is not None and max_retries != params.DEFAULT_MAX_RETRIES:
+        if max_retries is not None and max_retries != DEFAULT_MAX_RETRIES:
             self.config.max_retries = max_retries
 
         if model is None:
-            model = params.ZYX_DEFAULT_MODEL
+            model = ZYX_DEFAULT_MODEL
 
         rec = self._recommend(
             model=model, base_url=self.config.base_url, api_key=self.config.api_key
@@ -558,7 +571,7 @@ class Client:
             if not (isinstance(response_model, type) and issubclass(response_model, BaseModel)):
                 response_model = self._convert_to_response_model(response_model)
 
-        arguments = params.CompletionArguments(
+        arguments = CompletionArguments(
             messages=messages,
             model=model,
             run_tools=run_tools,
@@ -706,9 +719,9 @@ class Client:
 
 
 def completion(
-    messages: Union[str, List[params.Message]],
-    model: Union[str, params.ChatModel] = params.ZYX_DEFAULT_MODEL,
-    mode: Optional[params.InstructorMode] = "tool_call",
+    messages: Union[str, List[Message]],
+    model: Union[str, ChatModel] = ZYX_DEFAULT_MODEL,
+    mode: Optional[InstructorMode] = "tool_call",
     response_model: Optional[
         Union[
             str,
@@ -721,41 +734,41 @@ def completion(
             Type[list],
         ]
     ] = None,
-    provider: Optional[Union[Literal["openai", "litellm"], params.ClientProvider]] = None,
+    provider: Optional[Union[Literal["openai", "litellm"], ClientProvider]] = None,
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
     organization: Optional[str] = None,
     project: Optional[str] = None,
-    timeout: Optional[Union[float, httpx.Timeout]] = params.DEFAULT_TIMEOUT,
-    max_retries: Optional[int] = params.DEFAULT_MAX_RETRIES,
+    timeout: Optional[Union[float, httpx.Timeout]] = DEFAULT_TIMEOUT,
+    max_retries: Optional[int] = DEFAULT_MAX_RETRIES,
     run_tools: Optional[bool] = True,
-    tools: Optional[List[Union[str, params.ToolType]]] = None,
-    process: Optional[params.Process] = None,
+    tools: Optional[List[Union[str, ToolType]]] = None,
+    process: Optional[Process] = None,
     chat: Optional[bool] = None,
     progress_bar: Optional[bool] = None,
-    audio: Optional[params.ChatCompletionAudioParam] = None,
+    audio: Optional[ChatCompletionAudioParam] = None,
     frequency_penalty: Optional[float] = None,
-    function_call: Optional[params.FunctionCall] = None,
-    functions: Optional[Iterable[params.Function]] = None,
+    function_call: Optional[FunctionCall] = None,
+    functions: Optional[Iterable[Function]] = None,
     logit_bias: Optional[Dict[str, int]] = None,
     logprobs: Optional[bool] = None,
     max_completion_tokens: Optional[int] = None,
     max_tokens: Optional[int] = None,
     metadata: Optional[Dict[str, str]] = None,
-    modalities: Optional[List[params.ChatCompletionModality]] = None,
+    modalities: Optional[List[ChatCompletionModality]] = None,
     n: Optional[int] = None,
     parallel_tool_calls: Optional[bool] = False,
     presence_penalty: Optional[float] = None,
-    response_format: Optional[params.ResponseFormat] = None,
+    response_format: Optional[ResponseFormat] = None,
     seed: Optional[int] = None,
     service_tier: Optional[Literal["auto", "default"]] = None,
     stop: Optional[Union[str, List[str]]] = None,
     store: Optional[bool] = None,
     stream: Optional[Literal[False]] | Literal[True] = None,
-    stream_options: Optional[params.ChatCompletionStreamOptionsParam] = None,
+    stream_options: Optional[ChatCompletionStreamOptionsParam] = None,
     temperature: Optional[float] = None,
     top_p: Optional[float] = None,
-    tool_choice: Optional[params.ChatCompletionToolChoiceOptionParam] = None,
+    tool_choice: Optional[ChatCompletionToolChoiceOptionParam] = None,
     top_logprobs: Optional[int] = None,
     user: Optional[str] = None,
     default_headers: Optional[Mapping[str, str]] = None,
@@ -764,7 +777,7 @@ def completion(
     http_args: Optional[Mapping[str, object]] = None,
     http_client: Optional[httpx.Client] = None,
     verbose: Optional[bool] = None,
-) -> params.Completion:
+) -> Completion:
     """Creates a chat completion."""
     if provider is None:
         rec = Client._recommend(model=model, base_url=base_url, api_key=api_key)
