@@ -3,7 +3,7 @@
 
 # Constants
 # (zyx default model is editable)
-from ..._environ import ZYX_DEFAULT_MODEL
+from ...lib.environment import ZYX_DEFAULT_MODEL
 # openai
 from openai._constants import DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT
 

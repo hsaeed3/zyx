@@ -1,7 +1,7 @@
 # xnano.shared.types.completions.tool
 # tool calling types
 
-from ...._exceptions import Yikes
+from ....lib.exceptions import Yikes
 from ...utils import function_calling
 from pydantic import BaseModel, ConfigDict
 from typing import Any, Callable, Type, Dict, Optional, Union
