@@ -22,10 +22,6 @@ __all__ = [
     # singleton completion client
     "completion",
 
-    # zyx BaseModel
-    # pydantic extension
-    "BaseModel", "Field",
-
     # single-shot methods
     "classify",
     "coder",
@@ -40,6 +36,17 @@ __all__ = [
     "select",
     "solve",
     "validate",
+
+    # data
+    "BaseModel",
+    "Field",
+    "chunk",
+    "embeddings",
+    "Memory",
+    "read",
+    "read_url",
+    "scrape",
+    "web_search",
 ]
 
 from .lib.router import router
@@ -57,7 +64,15 @@ from .lib.utils import logger, console
 # DATA
 # ==============================
 
-
+from .data import (
+    BaseModel,
+    Field,
+    chunk,
+    embeddings,
+    Memory,
+    read,
+    read_url,
+)
 
 # ==============================
 # Completions & METHODS
@@ -65,10 +80,6 @@ from .lib.utils import logger, console
 
 
 from .completions.base_client import Client as _Client, completion
-
-
-from .data.basemodel import BaseModel
-from pydantic import Field
 
 
 class Completions(router):
