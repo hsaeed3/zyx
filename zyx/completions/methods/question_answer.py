@@ -2,7 +2,7 @@ from typing import List, Optional, Literal, Union
 from pydantic import BaseModel, create_model
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from ...data.resources.chunker import chunk as chunker
+from ...data.chunker import chunk as chunker
 from ...resources.types import completion_create_params as params
 from ..base_client import Client
 from ...lib.utils import logger

@@ -1,6 +1,6 @@
-# xnano.completions._client._function_resource
-# function resource (extends off xnano.completions._client.base)
-# easy shared client for all xnano llm functions, agents & completions
+# zyx.completions.main
+# function resource (extends off zyx.completions._client.base)
+# easy shared client for all zyx llm functions, agents & completions
 
 # BASE CLIENT
 from enum import Enum
@@ -40,7 +40,7 @@ Store = Type['Store']
 class Completions(Client):
 
 
-    """xnano LLM Completions Client"""
+    """zyx LLM Completions Client"""
 
 
     def __init__(
@@ -175,7 +175,7 @@ class Completions(Client):
 
     def coder(
         self,
-        description: str,
+        instructions: str,
         model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
@@ -196,7 +196,7 @@ class Completions(Client):
             ['file1.txt', 'file2.txt', 'file3.txt']
 
         Parameters:
-            description: Description of the code to generate
+            instructions: Instructions for the code to generate
             model: Model to use for code generation
             api_key: API key to use for code generation
             base_url: Base URL to use for code generation
@@ -215,7 +215,7 @@ class Completions(Client):
 
         try:
             return coder(
-                description = description,
+                instructions = instructions,
                 model = model,
                 api_key = api_key,
                 base_url = base_url,
@@ -236,7 +236,7 @@ class Completions(Client):
     def extract(
         self,
         target: Type[BaseModel],
-        text: Union[str, List[str]],
+        inputs: Union[str, List[str]],
         provider: Literal["litellm", "openai"] = "openai",
         model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         api_key: Optional[str] = None,
@@ -261,7 +261,7 @@ class Completions(Client):
 
         Parameters:
             target: Target model to extract into
-            text: Text to extract from
+            inputs: Inputs to extract from
             provider: Provider to use for extraction
             model: Model to use for extraction
             api_key: API key to use for extraction
@@ -285,7 +285,7 @@ class Completions(Client):
         try:
             return extract(
                 target = target,
-                text = text,
+                inputs = inputs,
                 provider = provider,
                 model = model,
                 api_key = api_key,
