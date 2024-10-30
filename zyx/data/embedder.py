@@ -1,6 +1,6 @@
 from openai import OpenAI
 from typing import List, Union, Optional, Literal
-from ..._rich import logger
+from ...lib.utils import logger
 
 
 # TYPING (Easy Model Names)

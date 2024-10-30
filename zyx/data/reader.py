@@ -15,12 +15,9 @@ import zipfile
 import csv
 import xml.etree.ElementTree as ET
 
+from ...lib.utils import logger
 
-from pydantic import BaseModel
-from ... import _rich as utils
-
-
-from ...basemodel import BaseModel as Document
+from ...extensions.basemodel import BaseModel as Document
 
 
 def read(
@@ -146,7 +143,7 @@ def _read_json(path: Path) -> Dict:
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
     except Exception as e:
-        utils.logger.error(f"Error reading JSON {path}: {str(e)}")
+        logger.error(f"Error reading JSON {path}: {str(e)}")
         return {}
 
 
@@ -166,7 +163,7 @@ def _read_pdf(path: Path) -> str:
                 text += _format_pdf_text(extracted_text)
         return text.strip()
     except Exception as e:
-        utils.logger.error(f"Error reading PDF {path}: {str(e)}")
+        logger.error(f"Error reading PDF {path}: {str(e)}")
         return ""
 
 
@@ -237,7 +234,7 @@ def _read_csv(path: Path) -> List[List[str]]:
             reader = csv.reader(csvfile)
             return list(reader)
     except Exception as e:
-        utils.logger.error(f"Error reading CSV {path}: {str(e)}")
+        logger.error(f"Error reading CSV {path}: {str(e)}")
         return []
 
 
@@ -249,7 +246,7 @@ def _read_text(path: Path) -> str:
         with open(path, "r", encoding="utf-8") as file:
             return file.read()
     except Exception as e:
-        utils.logger.error(f"Error reading text file {path}: {str(e)}")
+        logger.error(f"Error reading text file {path}: {str(e)}")
         return ""
 
 
@@ -262,7 +259,7 @@ def _read_xml(path: Path) -> Dict:
         root = tree.getroot()
         return _element_to_dict(root)
     except Exception as e:
-        utils.logger.error(f"Error reading XML {path}: {str(e)}")
+        logger.error(f"Error reading XML {path}: {str(e)}")
         return {}
 
 
@@ -317,7 +314,7 @@ def _read_docx(path: Path) -> str:
                     paragraphs.append(elem.text)
             return '\n'.join(paragraphs)
     except Exception as e:
-        utils.logger.error(f"Error reading DOCX {path}: {str(e)}")
+        logger.error(f"Error reading DOCX {path}: {str(e)}")
         return ""
 
 
@@ -354,5 +351,5 @@ def _read_xlsx(path: Path) -> List[List[str]]:
                     sheet_data.append(rows)
             return sheet_data
     except Exception as e:
-        utils.logger.error(f"Error reading XLSX {path}: {str(e)}")
+        logger.error(f"Error reading XLSX {path}: {str(e)}")
         return []
