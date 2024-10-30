@@ -713,11 +713,20 @@ class Client:
                             mode=mode, **arguments.model_dump_POST(True, response_model)
                         )
                         progress.remove_task(task_id)
-                        return response
                 else:
-                    return self._instructor_completion(
+                    response = self._instructor_completion(
                         mode=mode, **arguments.model_dump_POST(True, response_model)
                     )
+
+                # New logic for handling specific response model types
+                if isinstance(response_model, type) and not issubclass(response_model, BaseModel):
+                    if response_model is str:
+                        return response.choices[0].message.content
+                    else:
+                        return response_model(response)
+
+                return response
+
             except Exception as e:
                 raise ZyxError(
                     f"❌ [bold dark_red]CompletionError[/bold dark_red] Failed to create completion: {e}"
