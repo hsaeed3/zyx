@@ -63,10 +63,7 @@
 }
 
 /* Styling for code boxes */
-.md-typeset pre {
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
+
 
 .md-typeset code {
   border-radius: 3px;
@@ -196,11 +193,6 @@
 
   /* Shadow color for dark theme */
   --md-code-shadow-color:              rgba(0, 0, 0, 0.2);
-}
-
-/* Apply theme-specific shadow to code boxes */
-.md-typeset pre {
-  box-shadow: 0 2px 6px var(--md-code-shadow-color);
 }
 
 /* Ensure inline code uses theme background */

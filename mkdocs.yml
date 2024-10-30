@@ -93,8 +93,4 @@ extra_css:
 extra_javascript:
   - stylesheets/extras.js
 
-nav:
-  - Welcome to zyx: index.md
-  - Quickstarts:
-    - Quickstarts: quickstarts/index.md
-    - Perplexity: quickstarts/perplexity.ipynb
+

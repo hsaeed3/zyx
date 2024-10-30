@@ -86,6 +86,23 @@ class Client:
         http_client: Optional[httpx.Client] = None,
         verbose: Optional[bool] = None,
     ):
+        """Initialize a Base LLM Completions Client for Zyx.
+
+        Args:
+            provider(Union[Literal["openai", "litellm"], ClientProvider]): The provider to use for completions.
+            api_key(Optional[str]): The API key to use for completions.
+            base_url(Optional[str]): The base URL to use for completions.
+            organization(Optional[str]): The organization to use for completions.
+            project(Optional[str]): The project to use for completions.
+            timeout(Optional[Union[float, httpx.Timeout]]): The timeout to use for completions.
+            max_retries(Optional[int]): The maximum number of retries to use for completions.
+            default_headers(Optional[Mapping[str, str]]): The default headers to use for completions.
+            default_query(Optional[Mapping[str, object]]): The default query parameters to use for completions.
+            verify_ssl(Optional[bool]): Whether to verify SSL certificates.
+            http_args(Optional[Mapping[str, object]]): The HTTP arguments to use for completions.
+            http_client(Optional[httpx.Client]): The HTTP client to use for completions.
+            verbose(Optional[bool]): Whether to print verbose output.
+        """
         # Initialize client config
         self.config = ClientConfig(
             provider=provider,
@@ -531,7 +548,60 @@ class Client:
         top_logprobs: Optional[int] = None,
         user: Optional[str] = None,
     ) -> Completion:
-        """Creates a chat completion."""
+        """Creates a chat completion.
+        
+        Examples:
+        ```python
+        z.completion("hi", model = "gpt-4o")
+        ```
+
+        ```python
+        z.completion("hi", model = "gpt-4o", response_model = str)
+        ```
+
+        ```python
+        z.completion("hi", model = "gpt-4o", response_model = List[str])
+        ```
+
+        Parameters:
+            messages (Union[str, List[Message]]): The messages to send to the model.
+            model (Union[str, ChatModel]): The model to use for the completion.
+            mode (Optional[InstructorMode]): The mode to use for the completion.
+            response_model (Optional[Union[str, Type[BaseModel], Dict[str, Any], Type[str], Type[int], Type[float], Type[bool], Type[list]]]): The response model to use for the completion.
+            run_tools (Optional[bool]): Whether to run tools for the completion.
+            tools (Optional[List[Union[str, ToolType]]]): The tools to use for the completion.
+            process (Optional[Process]): The process to use for the completion.
+            chat (Optional[bool]): Whether to use chat mode for the completion.
+            progress_bar (Optional[bool]): Whether to show a progress bar for the completion.
+            audio (Optional[ChatCompletionAudioParam]): The audio parameters to use for the completion.
+            frequency_penalty (Optional[float]): The frequency penalty to use for the completion.
+            function_call (Optional[FunctionCall]): The function call to use for the completion.
+            functions (Optional[Iterable[Function]]): The functions to use for the completion.
+            logit_bias (Optional[Dict[str, int]]): The logit bias to use for the completion.
+            logprobs (Optional[bool]): Whether to return log probabilities for the completion.
+            max_completion_tokens (Optional[int]): The maximum number of completion tokens to use for the completion.
+            max_tokens (Optional[int]): The maximum number of tokens to use for the completion.
+            metadata (Optional[Dict[str, str]]): The metadata to use for the completion.
+            modalities (Optional[List[ChatCompletionModality]]): The modalities to use for the completion.
+            n (Optional[int]): The number of completions to generate.
+            parallel_tool_calls (Optional[bool]): Whether to allow parallel tool calls for the completion.
+            presence_penalty (Optional[float]): The presence penalty to use for the completion.
+            response_format (Optional[ResponseFormat]): The response format to use for the completion.
+            seed (Optional[int]): The seed to use for the completion.
+            service_tier (Optional[Literal["auto", "default"]]): The service tier to use for the completion.
+            stop (Optional[Union[str, List[str]]]): The stop sequence to use for the completion.
+            store (Optional[bool]): Whether to store the completion.
+            stream (Optional[Literal[False]] | Literal[True]): Whether to stream the completion.
+            stream_options (Optional[ChatCompletionStreamOptionsParam]): The stream options to use for the completion.
+            temperature (Optional[float]): The temperature to use for the completion.
+            top_p (Optional[float]): The top p value to use for the completion.
+            tool_choice (Optional[ChatCompletionToolChoiceOptionParam]): The tool choice to use for the completion.
+            top_logprobs (Optional[int]): The top log probabilities to use for the completion.
+            user (Optional[str]): The user to use for the completion.
+
+        Returns:
+            Completion: The completion.
+        """
         if response_model:
             if response_model in [str, int, float, bool, list]:
                 response_model = self._assign_response_model_type(response_model)
