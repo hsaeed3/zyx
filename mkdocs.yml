@@ -7,7 +7,7 @@ theme:
   name: material
 
   icon:
-    logo: material/lightning-bolt
+    logo: material/emoticon-happy
 
   favicon: fonts/icon.svg
 

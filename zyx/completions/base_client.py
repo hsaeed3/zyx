@@ -639,10 +639,6 @@ class Client:
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
-        for message in messages:
-            if "role" not in message or "content" not in message:
-                raise ZyxError("Invalid message format: 'role' and 'content' are required.")
-
         if response_model:
             if not (isinstance(response_model, type) and issubclass(response_model, BaseModel)):
                 response_model = self._convert_to_response_model(response_model)

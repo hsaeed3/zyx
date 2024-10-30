@@ -9,8 +9,10 @@ __all__ = [
 
 from ..lib.utils import logger
 from ..resources.types import completion_create_params as params
-from ..lib.environment import ZYX_DEFAULT_MODEL
 from ..completions.base_client import Client
+from ..lib.environment import ZYX_DEFAULT_MODEL
+
+from pydantic import ConfigDict
 
 import enum
 import time
@@ -352,69 +354,6 @@ class BaseModel(PydanticBaseModel):
             pass
 
         return value
-
-
-    @overload
-    @classmethod
-    def model_completion(
-        cls: Type[T],
-        messages: Union[str, List[params.Message]],
-        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        response_model: Union[Optional[PydanticBaseModel], List[PydanticBaseModel]] = None,
-        mode: params.InstructorMode = "tool_call",
-        max_retries: Optional[int] = None,
-        image: Optional[str] = None,
-        run_tools: Optional[bool] = True,
-        tools: Optional[List[Union[Dict[str, Any], Type[PydanticBaseModel], Callable]]] = None,
-        parallel_tool_calls: Optional[bool] = None,
-        tool_choice: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        top_p: Optional[float] = None,
-        frequency_penalty: Optional[float] = None,
-        presence_penalty: Optional[float] = None,
-        stop: Optional[List[str]] = None,
-        stream: Optional[bool] = None,
-        provider: Optional[Literal["openai", "litellm"]] = "openai",
-        progress_bar: Optional[bool] = True,
-        chat: Optional[bool] = False,
-        verbose: Optional[bool] = False,
-        **kwargs
-    ) -> Any: ...
-
-
-    @overload
-    def model_completion(
-        self: T,
-        messages: Union[str, List[params.Message]],
-        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        response_model: Union[Optional[PydanticBaseModel], List[PydanticBaseModel]] = None,
-        mode: params.InstructorMode = "tool_call",
-        max_retries: Optional[int] = None,
-        image: Optional[str] = None,
-        run_tools: Optional[bool] = True,
-        tools: Optional[List[Union[Dict[str, Any], Type[PydanticBaseModel], Callable]]] = None,
-        parallel_tool_calls: Optional[bool] = None,
-        tool_choice: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-        top_p: Optional[float] = None,
-        frequency_penalty: Optional[float] = None,
-        presence_penalty: Optional[float] = None,
-        stop: Optional[List[str]] = None,
-        stream: Optional[bool] = None,
-        provider: Optional[Literal["openai", "litellm"]] = "openai",
-        progress_bar: Optional[bool] = True,
-        chat: Optional[bool] = False,
-        verbose: Optional[bool] = False,
-        **kwargs
-    ) -> Any: ...
 
     @overload
     @classmethod
@@ -905,11 +844,29 @@ Please proceed with your analysis and data generation.
         return results[0] if n == 1 else results
 
 
+    @overload
     @classmethod
     def model_completion(
         cls: Type[T],
+        messages: Union[str, List[params.Message]],
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
+        **kwargs
+    ) -> Any:
+        ...
+
+    @overload
+    def model_completion(
+        self: T,
+        messages: Union[str, List[params.Message]],
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
+        **kwargs
+    ) -> Any:
+        ...
+
+    def model_completion(
+        cls_or_self: Union[Type[T], T],
         messages: Union[str, List[Dict[str, str]]],
-        model: Union[str,  params.ChatModel] = ZYX_DEFAULT_MODEL,
+        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
         response_model: Union[Optional[Type[PydanticBaseModel]], List[Optional[Type[PydanticBaseModel]]]] = None,
         mode: params.InstructorMode = "tool_call",
         max_retries: Optional[int] = None,
@@ -927,33 +884,16 @@ Please proceed with your analysis and data generation.
         stream: Optional[bool] = None,
         progress_bar: Optional[bool] = True,
         **kwargs
-    ) -> Any:
-        """Runs an LLM completion, with tools, streaming or Pydantic structured outputs.
+    ) -> params.Completion:
+        # Determine if called on class or instance
+        if isinstance(cls_or_self, BaseModel):
+            self = cls_or_self
+            cls = type(self)
+        else:
+            cls = cls_or_self
+            self = None
 
-        Args:
-            messages (Union[str, List[Dict[str, str]]]): The messages to generate a completion for.
-            model (Union[str, ChatModel]): The model to use for the completion.
-            response_model (Optional[Type[BaseModel]]): The Pydantic model to use for the completion.
-            mode (InstructorMode): The mode to use for the completion.
-            max_retries (Optional[int]): The maximum number of retries to use for the completion.
-            image (Optional[str]): The image to use for the completion.
-            run_tools (Optional[bool]): Whether to run tools for the completion.
-            tools (Optional[List[Union[Dict[str, Any], Type[BaseModel], Callable]]]): The tools to use for the completion.
-            parallel_tool_calls (Optional[bool]): Whether to run tool calls in parallel.
-            tool_choice (Optional[str]): The tool choice to use for the completion.
-            max_tokens (Optional[int]): The maximum number of tokens to use for the completion.
-            temperature (Optional[float]): The temperature to use for the completion.
-            top_p (Optional[float]): The top p to use for the completion.
-            frequency_penalty (Optional[float]): The frequency penalty to use for the completion.
-            presence_penalty (Optional[float]): The presence penalty to use for the completion.
-            stop (Optional[List[str]]): The stop to use for the completion.
-            stream (Optional[bool]): Whether to stream the completion.
-            progress_bar (Optional[bool]): Whether to print a progress bar.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            Response[Union[str, BaseModel, Generator, ChatCompletion]]: The completion.
-        """
+        # Initialize completion client
         completion_client = Client(
             api_key=kwargs.get('api_key'),
             base_url=kwargs.get('base_url'),
@@ -962,26 +902,28 @@ Please proceed with your analysis and data generation.
             verbose=kwargs.get('verbose', False),
         )
 
-        messages = completion_client.format_messages(messages)
+        # Format messages with proper system context
+        model_context = f"Context: {str(cls.__name__)}"
 
-        if image:
-            latest_message = messages[-1]
-            latest_message = completion_client.convert_to_image_message(latest_message, image)
-            messages = messages[:-1]
-            messages.append(latest_message)
+        if self is not None:
+            instance_data = self.model_dump_json()
+            # Wrap the instance data in triple backticks to format it as code
+            model_context += f"\nInstance data:\n```json\n{instance_data}\n```"
 
-        recommended_provider, recommended_model, recommended_base_url, recommended_api_key = completion_client.recommend_client_by_model(model)
+        if isinstance(messages, str):
+            messages = [
+                {"role": "system", "content": model_context},
+                {"role": "user", "content": messages}
+            ]
+        elif isinstance(messages, list) and messages:
+            if messages[0].get("role") != "system":
+                messages.insert(0, {"role": "system", "content": model_context})
+            else:
+                # Ensure that 'content' is a string and not None
+                content = messages[0].get('content', '')
+                messages[0]['content'] = f"{model_context}\n{content}"
 
-        if recommended_provider != completion_client.config.provider or recommended_base_url != completion_client.config.base_url or recommended_api_key != completion_client.config.api_key:
-            completion_client.__init__(api_key=recommended_api_key or completion_client.config.api_key,
-                              base_url=recommended_base_url or completion_client.config.base_url,
-                              organization=completion_client.config.organization,
-                              provider=recommended_provider,
-                              verbose=completion_client.config.verbose)
-
-        if model != recommended_model:
-            model = recommended_model
-
+        # Prepare completion arguments
         args = params.CompletionArguments(
             messages=messages,
             model=model,
@@ -990,12 +932,12 @@ Please proceed with your analysis and data generation.
             top_p=top_p,
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty,
-            mode = mode,
+            mode=mode,
             max_retries=max_retries,
             stop=stop,
             stream=stream,
             response_model=response_model,
-            progress_bar=progress_bar,
+            progress_bar=False,
             tools=tools,
             run_tools=run_tools,
             parallel_tool_calls=parallel_tool_calls,
@@ -1003,153 +945,25 @@ Please proceed with your analysis and data generation.
             **kwargs
         )
 
-        return completion_client.completion(
-            args.model_dump(),
-        )
-
-
-    @classmethod
-    def model_patch(
-        cls: Type[T],
-        instance: T,
-        fields: Optional[List[str]] = None,
-        instructions: Optional[str] = None,
-        model: Union[str, params.ChatModel] = ZYX_DEFAULT_MODEL,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        max_retries: Optional[int] = None,
-        temperature: Optional[float] = None,
-        mode: params.InstructorMode = "markdown_json_mode",
-        progress_bar: Optional[bool] = True,
-        verbose: bool = False,
-    ) -> T:
-        """
-        Regenerates specified fields of an existing instance of the Pydantic model.
-
-        Args:
-            instance (T): The instance of the Pydantic model to regenerate fields for.
-            fields (Optional[List[str]]): The fields to regenerate. If None, regenerate all fields.
-            instructions (Optional[str]): Additional instructions for the regeneration.
-            model (Union[str, ChatModel]): The model to use for the regeneration.
-            api_key (Optional[str]): The API key to use for the regeneration.
-            base_url (Optional[str]): The base URL to use for the regeneration.
-            organization (Optional[str]): The organization to use for the regeneration.
-            max_tokens (Optional[int]): The maximum number of tokens to use for the regeneration.
-            max_retries (int): The maximum number of retries to use for the regeneration.
-            temperature (float): The temperature to use for the regeneration.
-            mode (InstructorMode): The mode to use for the regeneration.
-            progress_bar (Optional[bool]): Whether to print a progress bar.
-            verbose (bool): Whether to print verbose output.
-
-        Returns:
-            T: The regenerated instance.
-        """
-        import warnings
-        warnings.warn(".regenerate() is depreciated, use .patch() for optimized schema regeneration.", DeprecationWarning)
-
-        fields_to_regenerate = fields or list(cls.model_fields.keys())
-        current_data = instance.model_dump()
-
-        # initialize zyx completions.lient -- base
-        completion_client = Client(
-            api_key=api_key,
-            base_url=base_url,
-            organization=organization,
-            provider="openai",
-            verbose=verbose,
-        )
-
-        # TODO: update progress bars to shared tqdm instances
+        # Execute completion
         if progress_bar:
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 transient=True
             ) as progress:
-                task_id = progress.add_task("Regenerating Model...", total=None)
-
-
-                # ensure valid field selection for regeneration
-                for field_name in fields_to_regenerate:
-                    if field_name not in cls.model_fields:
-                        raise ValueError(f"'{field_name}' is not a valid field in this model.")
-
-
-                    # regneration system_message for cohesiveness
-                    field_system_message = (
-                        f"You are a data generator. Your task is to regenerate a valid value for the following field:\n\n"
-                        f"Field name: {field_name}\n"
-                        f"Field type: {cls.model_fields[field_name].annotation}\n"
-                        f"Field constraints: {cls.model_fields[field_name].json_schema_extra}\n\n"
-                        f"Ensure that the generated value complies with the field's type and constraints.\n\n"
-                        f"ALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES."
-                    )
-                    field_user_message = f"Regenerate a value for the '{field_name}' field."
-
-
-                    # append current data to user_message for context
-                    if current_data:
-                        field_user_message += f"\nCurrent instance data: {current_data}"
-
-                    # append user instructions for content & guidelines
-                    field_user_message += f"\n\nUSER INSTRUCTIONS DEFINED BELOW FOR CONTENT & GUIDELINES\n\n<instructions>\n{instructions or 'No additional instructions provided.'}\n</instructions>"
-
-                    # run completion and update field value
-                    field_response = completion_client.completion(
-                        messages=[
-                            {"role": "system", "content": field_system_message},
-                            {"role": "user", "content": field_user_message},
-                        ],
-                        model=model,
-                        max_tokens=max_tokens,
-                        max_retries=max_retries,
-                        temperature=temperature,
-                        mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
-                        response_model=create_model("FieldResponse", value=(cls.model_fields[field_name].annotation, ...)),
-                        progress_bar=False,
-                    )
-                    current_data[field_name] = field_response.value
-
-                    progress.update(task_id, completed=1)
-
+                task_id = progress.add_task("Creating chat completion from model...", total=None)
+                response = completion_client.completion(
+                    **args.model_dump(),
+                )
+                progress.update(task_id, completed=1)
         else:
-            for field_name in fields_to_regenerate:
-                if field_name not in cls.model_fields:
-                    raise ValueError(f"'{field_name}' is not a valid field in this model.")
+            response = completion_client.completion(
+                **args.model_dump(),
+            )
 
-                field_system_message = (
-                    f"You are a data generator. Your task is to regenerate a valid value for the following field:\n\n"
-                    f"Field name: {field_name}\n"
-                    f"Field type: {cls.model_fields[field_name].annotation}\n"
-                    f"Field constraints: {cls.model_fields[field_name].json_schema_extra}\n\n"
-                    f"Ensure that the generated value complies with the field's type and constraints.\n\n"
-                    f"ALWAYS COMPLY WITH USER INSTRUCTIONS FOR CONTENT TOPICS & GUIDELINES."
-                )
-                field_user_message = f"Regenerate a value for the '{field_name}' field."
+        return response
 
-                if current_data:
-                    field_user_message += f"\nCurrent instance data: {current_data}"
-
-                field_user_message += f"\n\nUSER INSTRUCTIONS DEFINED BELOW FOR CONTENT & GUIDELINES\n\n<instructions>\n{instructions or 'No additional instructions provided.'}\n</instructions>"
-
-                field_response = completion_client.completion(
-                    messages=[
-                        {"role": "system", "content": field_system_message},
-                        {"role": "user", "content": field_user_message},
-                    ],
-                    model=model,
-                    max_tokens=max_tokens,
-                    max_retries=max_retries,
-                    temperature=temperature,
-                    mode="markdown_json_mode" if model.startswith(("ollama/", "ollama_chat/")) else mode,
-                    response_model=create_model("FieldResponse", value=(cls.model_fields[field_name].annotation, ...)),
-                    progress_bar=False,
-                )
-                current_data[field_name] = field_response.value
-
-        return cls(**current_data)
 
 
     @classmethod
@@ -1525,6 +1339,9 @@ Please wait for a user question to begin.
             )
 
         return response
+
+
+Field = PydanticField
 
 
 if __name__ == "__main__":
