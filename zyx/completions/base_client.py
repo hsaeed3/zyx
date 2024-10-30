@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pydantic import Field
+    from typing import Any, Callable, Dict, List, Optional, Type, Literal
+
 __all__ = ["Client", "completion"]
 
 # Standard library imports

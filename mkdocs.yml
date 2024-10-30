@@ -93,3 +93,6 @@ extra_javascript:
 
 nav:
   - Welcome to zyx: index.md
+  - Quickstarts:
+    - Quickstarts: quickstarts/index.md
+    - Perplexity: quickstarts/perplexity.ipynb

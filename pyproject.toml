@@ -6,11 +6,12 @@ readme = "readme.md"
 authors = [{ name = "Hammad Saeed", email = "hvmmad@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = [
+    "bs4>=0.0.2",
+    "duckduckgo-search>=6.3.3",
     "instructor>=1.6.3",
     "jsonpatch>=1.33",
     "litellm>=1.40.0",
     "pypdf2>=3.0.1",
-    "qdrant-client>=1.12.1",
     "rich>=13.9.3",
     "semchunk>=2.2.0",
 ]

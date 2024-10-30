@@ -1,7 +1,6 @@
 # zyx._router
 # module router (lazy loading)
 
-
 from __future__ import annotations
 
 __all__ = [
@@ -45,25 +44,33 @@ class router(metaclass=LazyLoaderMeta):
 
     @classmethod
     def _load(cls) -> Any:
-        import inspect
-        from importlib import import_module
+        import importlib
 
         if cls._module_cache is None:
             with cls._lock:
                 if cls._module_cache is None:
                     try:
-                        module = import_module(cls._module_name)
+                        # Use absolute module name to avoid conflicts with stdlib modules
+                        module = importlib.import_module(cls._module_name)
                         cls._module_cache = getattr(module, cls._attr_name)
 
-                        if inspect.isclass(cls._module_cache):
-                            return type(cls.__name__, (cls._module_cache,), {})
-                        elif inspect.isgeneratorfunction(cls._module_cache):
-                            return cls._wrap_generator(cls._module_cache)
-                        elif inspect.isfunction(cls._module_cache):
-                            return cls._wrap_function(cls._module_cache)
+                        return cls._wrap_module_cache()
                     except (ImportError, AttributeError) as e:
                         raise e
         return cls._module_cache
+
+    @classmethod
+    def _wrap_module_cache(cls) -> Any:
+        import inspect
+
+        if inspect.isclass(cls._module_cache):
+            return type(cls.__name__, (cls._module_cache,), {})
+        elif inspect.isgeneratorfunction(cls._module_cache):
+            return cls._wrap_generator(cls._module_cache)
+        elif inspect.isfunction(cls._module_cache):
+            return cls._wrap_function(cls._module_cache)
+        else:
+            return cls._module_cache
 
     @staticmethod
     def _wrap_generator(gen_func):
@@ -81,7 +88,11 @@ class router(metaclass=LazyLoaderMeta):
 
     @classmethod
     def init(cls, module_name: str, attr_name: str) -> None:
-        cls._module_name = module_name
+        # Ensure module_name is an absolute module name
+        if not module_name.startswith('.'):
+            cls._module_name = module_name
+        else:
+            raise ValueError("module_name must be an absolute module name to avoid conflicts with stdlib modules")
         cls._attr_name = attr_name
 
     def __getattr__(self, name: str) -> Any:
@@ -120,7 +131,3 @@ class router(metaclass=LazyLoaderMeta):
         if hasattr(module, "__contains__"):
             return item in module
         raise TypeError(f"{module} object does not support membership test")
-
-
-
-

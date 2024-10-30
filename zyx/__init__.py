@@ -8,6 +8,13 @@ zyx // super duper simple llm framework
 __all__ = [
     # zyx main modules
 
+    # utils
+    "logger",
+    "console",
+
+    # base
+    "_Client",
+
     # Completions Client
     # all zyx methods & agentic framework
     # if you want to directly use the agents module `from zyx.agents import Agents`
@@ -35,24 +42,102 @@ __all__ = [
     "validate",
 ]
 
-# client
-from .completions.main import (
-    Completions, completion
-)
+from .lib.router import router
 
-from .completions.methods.classifier import classify
-from .completions.methods.code_constructor import coder
-from .completions.methods.extractor import extract
-from .completions.methods.function_constructor import function
-from .completions.methods.generator import generate
-from .completions.methods.patcher import patch
-from .completions.methods.prompts import prompter
-from .completions.methods.planning import planner
-from .completions.methods.queries import query
-from .completions.methods.question_answer import qa
-from .completions.methods.selector import select
-from .completions.methods.solver import solve
-from .completions.methods.validator import validate
 
-# pydantic
-from .data.basemodel import BaseModel, Field
+# ==============================
+# UTILS
+# ==============================
+
+
+from .lib.utils import logger, console
+
+
+# ==============================
+# DATA
+# ==============================
+
+
+
+# ==============================
+# Completions & METHODS
+# ==============================
+
+
+from .completions.base_client import Client as _Client, completion
+
+
+from .data.basemodel import BaseModel
+from pydantic import Field
+
+
+class Completions(router):
+    pass
+
+Completions.init("zyx.completions.main", "Completions")
+
+
+class classifier(router):
+    pass
+
+classifier.init("zyx.completions.methods.classifier", "classifier")
+
+
+class coder(router):
+    pass
+
+coder.init("zyx.completions.methods.code_constructor", "coder")
+
+
+class extractor(router):
+    pass
+
+extractor.init("zyx.completions.methods.extractor", "extractor")
+
+
+class function(router):
+    pass
+
+function.init("zyx.completions.methods.function_constructor", "function")
+
+
+class generator(router):
+    pass
+
+generator.init("zyx.completions.methods.generator", "generator")
+
+
+class patcher(router):
+    pass
+
+patcher.init("zyx.completions.methods.patcher", "patcher")
+
+
+class planner(router):
+    pass
+
+planner.init("zyx.completions.methods.planning", "planner")
+
+
+class query(router):
+    pass
+
+query.init("zyx.completions.methods.question_answer", "query")
+
+
+class selector(router):
+    pass
+
+selector.init("zyx.completions.methods.selector", "selector")
+
+
+class solver(router):
+    pass
+
+solver.init("zyx.completions.methods.solver", "solver")
+
+
+class validator(router):
+    pass
+
+validator.init("zyx.completions.methods.validator", "validator")

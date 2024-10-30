@@ -9,8 +9,8 @@ __all__ = [
 
 from ..lib.utils import logger
 from ..resources.types import completion_create_params as params
-from ..completions.base_client import Client
 from ..lib.environment import ZYX_DEFAULT_MODEL
+from ..completions.base_client import Client
 
 import enum
 import time
@@ -1525,9 +1525,6 @@ Please wait for a user question to begin.
             )
 
         return response
-
-
-Field = PydanticField
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ from ..lib.utils import console
 from ..lib import exceptions
 
 # uses the zyx basemodel for easier LLM completions and modularity
-from ..data.basemodel import Field, BaseModel
+from ..data.basemodel import BaseModel
+from pydantic import Field
 
 # message utils
 from ..resources.utils.messages import MessagesUtils
@@ -30,8 +31,8 @@ from typing import Type, List, Union, Optional, Any, Literal, Dict
 # avoids circular import
 # agents is a method of the client; not a client itself
 Completions = Type["Completions"]
-# store
-Store = Type["Store"]
+# memory
+Memory = Type["Memory"]
 
 
 # ========================================================================
@@ -786,7 +787,7 @@ class Agents:
             role : str,
             name : Optional[str] = None,
             description : Optional[str] = None,
-            store : Optional[Store] = None,
+            memory : Optional[Memory] = None,
             top_k : int = 5,
             tools : Optional[Union[List[params.ToolType], str]] = None,
 
@@ -806,11 +807,11 @@ class Agents:
         try:
 
             # initialize base agent
-            agent = Agent(
+            agent = Agent(  
                 role = role,
                 name = name,
                 description = description,
-                store = store,
+                store = memory,
                 top_k = top_k,
                 tools = tools,
                 params = AgentCompletionParams(
