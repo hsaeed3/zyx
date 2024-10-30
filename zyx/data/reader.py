@@ -17,7 +17,7 @@ import xml.etree.ElementTree as ET
 
 from ..lib.utils import logger
 
-from .basemodel import BaseModel as Document
+from ..resources.basemodel import BaseModel as Document
 
 
 def read(

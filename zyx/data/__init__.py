@@ -1,6 +1,4 @@
 __all__ = [
-    "BaseModel",
-    "Field",
     "chunk",
     "embeddings",
     "Memory",
@@ -12,9 +10,6 @@ __all__ = [
 
 
 from ..lib.router import router
-
-from .basemodel import BaseModel
-from pydantic import Field
 
 
 class chunk(router):

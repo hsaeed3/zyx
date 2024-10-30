@@ -11,7 +11,7 @@ try:
 
     from ..lib.utils import logger
     from ..completions.base_client import completion
-    from ..data.basemodel import BaseModel
+    from ..resources.basemodel import BaseModel
     from ..data.chunker import chunk
     from ..completions.methods.generator import generate
     from .reader import read as reader

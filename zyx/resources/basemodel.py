@@ -8,7 +8,7 @@ __all__ = [
 
 
 from ..lib.utils import logger
-from ..resources.types import completion_create_params as params
+from .types import completion_create_params as params
 from ..completions.base_client import Client
 from ..lib.environment import ZYX_DEFAULT_MODEL
 
@@ -520,7 +520,7 @@ class BaseModel(PydanticBaseModel):
                 with Progress(
                     SpinnerColumn(),
                     TextColumn("[progress.description]{task.description}"),
-                    transient=True
+                    transient=True,
                 ) as progress:
                     task_id = progress.add_task("Generating Model(s)...", total=None)
 

@@ -201,6 +201,8 @@
   color: var(--md-code-fg-color);
 }
 
+
+
 /* Add horizontal padding to headers */
 .md-header_inner {
   margin-left: 20px;
@@ -258,6 +260,12 @@
   background: var(--md-code-bg-color);
 }
 
+.jupyter-wrapper .jp-RenderedText pre {
+  color: var(--md-code-fg-color) !important;
+  padding: 6px 0;
+  min-width: 14ex;
+}
+
 .jp-InputArea-prompt {
   padding: 6px 0;
   min-width: 14ex;
@@ -271,26 +279,11 @@
   padding: 8px;
 }
 
-.jp-OutputArea-prompt {
-  color: var(--md-code-fg-color);
-  opacity: 0.7;
-}
-
-.jp-OutputArea-output {
-  padding: 8px;
-  background: var(--md-code-bg-color);
-  border-radius: 4px;
-}
-
 [data-md-color-scheme="home-dark"] .jp-CodeCell {
   background: var(--md-code-bg-color);
 }
 
 [data-md-color-scheme="home-dark"] .jp-InputArea-editor {
-  background: var(--md-code-bg-color);
-}
-
-[data-md-color-scheme="home-dark"] .jp-OutputArea-output {
   background: var(--md-code-bg-color);
 }
 
@@ -302,9 +295,6 @@
   background: var(--md-code-bg-color);
 }
 
-[data-md-color-scheme="home-light"] .jp-OutputArea-output {
-  background: var(--md-code-bg-color);
-}
 
 [data-md-color-scheme="home-dark"] .jp-InputPrompt {
   background: var(--md-code-bg-color);

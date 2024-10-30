@@ -785,13 +785,18 @@ class Client:
                     )
 
                 # New logic for handling specific response model types
-                if isinstance(response_model, type) and not issubclass(response_model, BaseModel):
-                    if response_model is str:
-                        return response.choices[0].message.content
-                    else:
-                        return response_model(response)
-
-                return response
+                if isinstance(response_model, type) and issubclass(response_model, StringResponse):
+                    return response.response
+                elif isinstance(response_model, type) and issubclass(response_model, IntResponse):
+                    return response.response
+                elif isinstance(response_model, type) and issubclass(response_model, FloatResponse):
+                    return response.response
+                elif isinstance(response_model, type) and issubclass(response_model, BoolResponse):
+                    return response.response
+                elif isinstance(response_model, type) and issubclass(response_model, ListResponse):
+                    return response.response
+                else:
+                    return response
 
             except Exception as e:
                 raise ZyxError(

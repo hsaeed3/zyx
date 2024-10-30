@@ -60,16 +60,4 @@ from .data import (
 
 from .lib.utils import logger, console
 
-from .completions.methods.classifier import classify
-from .completions.methods.code_constructor import coder
-from .completions.methods.extractor import extract
-from .completions.methods.function_constructor import function
-from .completions.methods.generator import generate
-from .completions.methods.patcher import patch
-from .completions.methods.prompts import prompter
-from .completions.methods.planning import planner
-from .completions.methods.queries import query
-from .completions.methods.selector import select
-from .completions.methods.solver import solve
-from .completions.methods.validator import validate
 

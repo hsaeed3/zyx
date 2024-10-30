@@ -7,7 +7,7 @@ from ..lib.utils import console
 from ..lib import exceptions
 
 # uses the zyx basemodel for easier LLM completions and modularity
-from ..data.basemodel import BaseModel
+from ..resources.basemodel import BaseModel
 from pydantic import Field
 
 # message utils

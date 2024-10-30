@@ -1,6 +1,4 @@
 __all__ = [
-    "BaseModel",
-    "Field",
     "chunk",
     "embeddings",
     "Memory",
@@ -9,10 +7,6 @@ __all__ = [
     "scrape",
     "web_search"
 ]
-
-
-from .basemodel import BaseModel
-from pydantic import Field
 
 from .chunker import chunk
 from .embedder import embeddings

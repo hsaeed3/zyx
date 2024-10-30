@@ -13,11 +13,11 @@ def _generate_tool(client, tool_name: str, model: str) -> params.Tool:
     4. Places imports inside function body
     5. Implements core functionality implied by '{tool_name}'"""
 
-    from ...functions.coder import coder
+    from ...completions.methods.code_constructor import coder
 
     # Use coder to generate the implementation
     generated_code = coder(
-        description=function_prompt,
+        instructions=function_prompt,
         model=model, 
         temperature=0.2,
         client=client,

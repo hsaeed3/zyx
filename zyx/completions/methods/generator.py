@@ -1,3 +1,5 @@
+import warnings
+
 from ...resources.types import completion_create_params as params
 from ..base_client import Client
 from ...lib.utils import logger
@@ -27,6 +29,8 @@ def generate(
     """
     Generates a single or batch of pydantic models based on the provided target schema.
     """
+
+    warnings.warn("generate() is deprecated. Use the `BaseModel` extension instead for a much fuller feature set.")
 
     if verbose:
         logger.info(f"Generating {n} {target.__name__} models.")
