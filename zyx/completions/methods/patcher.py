@@ -4,7 +4,7 @@ from typing import Optional, List, Union
 from pydantic import create_model
 
 from ..base_client import Client
-from ...extensions.basemodel import BaseModel
+from ...data.basemodel import BaseModel
 from ...resources.types import completion_create_params as params
 
 def patch(

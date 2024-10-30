@@ -55,4 +55,4 @@ from .completions.methods.solver import solve
 from .completions.methods.validator import validate
 
 # pydantic
-from .extensions.basemodel import BaseModel, Field
+from .data.basemodel import BaseModel, Field

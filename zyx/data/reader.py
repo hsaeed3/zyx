@@ -15,9 +15,9 @@ import zipfile
 import csv
 import xml.etree.ElementTree as ET
 
-from ...lib.utils import logger
+from ..lib.utils import logger
 
-from ...extensions.basemodel import BaseModel as Document
+from .basemodel import BaseModel as Document
 
 
 def read(

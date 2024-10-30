@@ -7,7 +7,7 @@ from ..lib.utils import console
 from ..lib import exceptions
 
 # uses the zyx basemodel for easier LLM completions and modularity
-from ..extensions.basemodel import Field, BaseModel
+from ..data.basemodel import Field, BaseModel
 
 # message utils
 from ..resources.utils.messages import MessagesUtils
