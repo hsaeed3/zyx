@@ -43,8 +43,6 @@ __all__ = [
     "data"
 ]
 
-from .lib.router import router
-
 
 # ==============================
 # UTILS

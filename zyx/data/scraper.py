@@ -11,6 +11,7 @@ def limit_content_length(text: str, max_chars: int = 5000) -> str:
     """Limits the text content to a maximum number of characters."""
     return text[:max_chars]
 
+
 def scrape(
     inputs: Union[str, List[str]],
     target: Optional[Type[BaseModel]] = None,
