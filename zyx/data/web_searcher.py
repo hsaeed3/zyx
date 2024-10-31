@@ -1,5 +1,14 @@
-from typing import List
+from typing import List, Optional
 from duckduckgo_search import DDGS
+
+
+def web_search_tool(
+        query : str,
+        max_results : Optional[int] = 10,
+        verbose : bool = False
+) -> List[str]:
+    """Searches the web for a given query"""
+    return web_search(query, max_results, verbose)
 
 
 def web_search(query: str, max_results: int = 10, verbose: bool = False) -> List[str]:

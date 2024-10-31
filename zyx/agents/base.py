@@ -7,8 +7,7 @@ from ..lib.utils import console
 from ..lib import exceptions
 
 # uses the zyx basemodel for easier LLM completions and modularity
-from ..resources.basemodel import BaseModel
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 # message utils
 from ..resources.utils.messages import MessagesUtils
@@ -221,6 +220,11 @@ class Agents:
             self._parent.state.messages = self.messages
 
             pass
+
+
+
+        def get_object(self):
+            return self.object
 
 
         # get object prompt
@@ -700,7 +704,7 @@ class Agents:
         client,
         messages : Optional[List[params.Message]] = None,
         summary_length : int = 5,
-        verbose : bool = True
+        verbose : bool = True,
     ):
         
         try:

@@ -47,8 +47,6 @@ from .completions.base_client import Client as _Client, completion
 from .completions.main import Completions
 
 from .data import (
-    BaseModel,
-    Field,
     chunk,
     embeddings,
     Memory,
@@ -57,6 +55,8 @@ from .data import (
     scrape,
     web_search
 )
+
+from .resources.basemodel import BaseModel, PydanticField as Field
 
 from .lib.utils import logger, console
 

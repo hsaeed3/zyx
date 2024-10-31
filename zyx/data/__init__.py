@@ -5,7 +5,8 @@ __all__ = [
     "read",
     "read_url",
     "scrape",
-    "web_search"
+    "web_search",
+    "web_search_tool",
 ]
 
 
@@ -48,8 +49,4 @@ class scrape(router):
 scrape.init("zyx.data.scraper", "scrape")
 
 
-class web_search(router):
-    pass
-
-web_search.init("zyx.data.web_search", "web_search")
-    
+from .web_searcher import web_search, web_search_tool

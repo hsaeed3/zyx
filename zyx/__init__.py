@@ -64,7 +64,6 @@ from . import data as data
 # Completions & METHODS
 # ==============================
 
-
 from .completions.base_client import Client as _Client, completion
 
 from .completions.main import Completions

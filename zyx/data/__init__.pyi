@@ -5,7 +5,8 @@ __all__ = [
     "read",
     "read_url",
     "scrape",
-    "web_search"
+    "web_search",
+    "web_search_tool",
 ]
 
 from .chunker import chunk
@@ -14,4 +15,4 @@ from .memory import Memory
 from .reader import read
 from .url_reader import read_url
 from .scraper import scrape
-from .web_search import web_search
+from .web_searcher import web_search, web_search_tool

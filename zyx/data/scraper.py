@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from ..completions.methods.extractor import extract
 from ..resources.types import completion_create_params as params
 from bs4 import BeautifulSoup
-from .web_search import web_search
+from .web_searcher import web_search
 
 
 def limit_content_length(text: str, max_chars: int = 5000) -> str:
