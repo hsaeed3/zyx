@@ -1,7 +1,7 @@
 import mimetypes
 import json
 from pathlib import Path
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing as mp
 import requests
@@ -17,7 +17,12 @@ import xml.etree.ElementTree as ET
 
 from ..lib.utils import logger
 
-from ..resources.basemodel import BaseModel as Document
+from ..resources.basemodel import BaseModel, PydanticField as Field
+
+
+class Document(BaseModel):
+    content : str
+    metadata : Optional[Dict[str, str]] = Field(default_factory=dict)
 
 
 def read(
