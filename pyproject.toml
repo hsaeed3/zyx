@@ -11,6 +11,7 @@ dependencies = [
     # llm
     "instructor>=1.6.3",
     "litellm>=1.52.0",
+    "questionary>=1.10.0",
     # utils
     "rich>=13.9.4",
 ]
@@ -24,6 +25,7 @@ dev = [
     "ipykernel>=6.29.5",
     "ipython>=8.29.0",
     "ipywidgets>=8.1.5",
+    "pytest>=8.3.3",
     "ruff>=0.7.2",
     "uv>=0.4.30",
 ]
