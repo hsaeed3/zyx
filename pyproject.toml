@@ -1,6 +1,6 @@
 [project]
 name = "zyx"
-version = "1.1.0"
+version = "1.1.1"
 authors = [{ name = "Hammad Saeed", email = "hvmmad@gmail.com" }]
 
 description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM & Instructor."
