@@ -2,7 +2,7 @@
 # handlers for batch completions
 from __future__ import annotations
 
-from . import utils
+from ...zyx import utils
 
 from .types.completions.completion_arguments import CompletionArguments
 

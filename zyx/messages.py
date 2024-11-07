@@ -2,7 +2,7 @@
 # message utilities
 
 from .lib.exception import ZYXException
-from .types.completions.message import Message
+from .types.completions.completion_message import CompletionMessage
 from typing import List, Union
 
 
@@ -10,26 +10,26 @@ from typing import List, Union
 def format_messages(
         messages : Union[
             str,
-            Message,
-            List[Message],
-            List[List[Message]]
+            CompletionMessage,
+            List[CompletionMessage],
+            List[List[CompletionMessage]]
         ],
-) -> List[Message]:
+) -> List[CompletionMessage]:
     
     """
     Formats messages for use in completions.
 
     Args:
-        messages (Union[str, Message, List[Message]]): Messages to format.
+        messages (Union[str, CompletionMessage, List[CompletionMessage]]): Messages to format.
 
     Returns:
-        List[Message]: Formatted messages.
+        List[CompletionMessage]: Formatted messages.
     """
 
     if isinstance(messages, str):
         return [{"role": "user", "content": messages}]
     
-    elif isinstance(messages, Message):
+    elif isinstance(messages, CompletionMessage):
         return [messages]
     
     elif isinstance(messages, list) and isinstance(messages[0], dict):

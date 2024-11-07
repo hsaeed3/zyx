@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from . import messages as messages_utils
+from ...zyx import messages as messages_utils
 
 from .lib.console import console
 from .lib.exception import ZYXException
@@ -9,10 +9,11 @@ from .types.completions.completion_arguments import CompletionArguments
 from .types.completions.instructor_mode import InstructorMode
 from .types.completions.message import Message
 from .types.completions.response_model import ResponseModel
+from .types.completions.tools import ToolType, Tool
 
 import instructor
 
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from openai.types.chat.chat_completion import ChatCompletion
 
 
@@ -176,6 +177,12 @@ class BaseClient:
             mode : InstructorMode = "tool_call",
             response_model : Optional[ResponseModel] = None,
             response_format : Optional[ResponseModel] = None,
+
+            # tool calling
+            run_tools : Optional[bool] = None,
+            tools : List[ToolType] = None,
+            tool_choice : Optional[Literal["auto", "required", "none"]] = None,
+            parallel_tool_calls : Optional[bool] = None,
 
             stream : bool = False,
 
