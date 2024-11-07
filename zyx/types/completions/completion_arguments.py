@@ -3,6 +3,8 @@
 
 from pydantic import BaseModel
 from typing import Any, Callable, Dict, List, Optional, Type, Union, Literal
+import httpx
+from ._openai import ChatCompletionModality, ChatCompletionPredictionContentParam, ChatCompletionAudioParam
 
 
 # completion arguments
@@ -55,6 +57,32 @@ class CompletionArguments(BaseModel):
     base_url : Optional[str] = None
     organization : Optional[str] = None
     n : Optional[int] = None
+    timeout: Optional[Union[float, str, httpx.Timeout]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    stream_options: Optional[dict] = None
+    stop : Optional[Any] =None
+    max_completion_tokens: Optional[int] = None
+    max_tokens: Optional[int] = None
+    modalities: Optional[List[ChatCompletionModality]] = None
+    prediction: Optional[ChatCompletionPredictionContentParam] = None
+    audio: Optional[ChatCompletionAudioParam] = None
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    logit_bias: Optional[dict] = None
+    user: Optional[str] = None
+    # openai v1.0+ new params
+    seed: Optional[int] = None
+    logprobs: Optional[bool] = None
+    top_logprobs: Optional[int] = None
+    deployment_id : Optional[str] = None
+    extra_headers: Optional[dict] = None
+    # soon to be deprecated params by OpenAI
+    functions: Optional[List] = None
+    function_call: Optional[str] = None
+    # set api_base, api_version, api_key
+    api_version: Optional[str] = None
+    models_list: Optional[list] = None
     stream : Optional[bool] = None
 
     

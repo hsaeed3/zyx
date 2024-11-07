@@ -16,7 +16,7 @@ class CompletionTool(BaseModel):
     name : Optional[str] = None
 
     # arguments (used for execution)
-    arguments : Optional[Dict[str, Any]] = None
+    arguments : Optional[Union[Dict[str, Any], Dict, Any]] = None
 
     # description
     description : Optional[str] = None
@@ -33,3 +33,5 @@ class CompletionTool(BaseModel):
 
     # formatted function (completion request)
     formatted_function : Optional[Dict[str, Any]] = None
+
+    is_string_tool : Optional[bool] = False

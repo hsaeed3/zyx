@@ -1,9 +1,12 @@
-from zyx.completions import Completions
+from openai import pydantic_function_tool
+from pydantic import BaseModel
+from typing import Literal
+from rich import print
 
+class Sentiment(BaseModel):
+    sentiment: Literal["positive", "negative", "neutral"]
 
-# initialize completions client
-completions = Completions(verbose=True)
+print(
+    pydantic_function_tool(Sentiment)
+)
 
-
-print(completions.completion(
-    "hi", response_model = "response"))

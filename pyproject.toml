@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     # llm
     "instructor>=1.6.3",
+    "jsonpatch>=1.33",
     "litellm>=1.52.0",
     "questionary>=1.10.0",
     # utils

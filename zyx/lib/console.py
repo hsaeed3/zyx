@@ -8,6 +8,7 @@ from rich import print
 # console & ext imports
 from rich.console import Console as RichConsole
 from rich.progress import Progress, track
+from rich.live import Live
 # imports
 from contextlib import contextmanager
 import inspect
@@ -97,30 +98,32 @@ class Console(RichConsole):
         module = frame.f_globals["__name__"]
         self.print(f"⚠️ [bold yellow]ZYX WARNING[/bold yellow] | [yellow]{module}[/yellow] | [yellow italic]{message}[/yellow italic]")
 
- 
+
     # context manager for constant progress loader
     @contextmanager
-    def progress(self, prompt : str, *args, **kwargs) -> Tuple[Progress, int]:
+    def progress(self, prompt: str, *args, **kwargs) -> Tuple[Progress, int, int]:
         """
         Quick rich.progress manager
 
         Example:
-            with console.progress("Loading...") as (progress, task):
+            with console.progress("Loading...") as (progress, task, task_id):
                 progress.update(task, advance=1)
                 # ...
 
         Args:
-            message (str): Message to display in the progress loader
+            prompt (str): Message to display in the progress loader
             *args: Additional arguments to pass to the rich.progress.Progress constructor
             **kwargs: Additional keyword arguments to pass to the rich.progress.Progress constructor
 
         Returns:
-            Tuple[Progress, int]: Progress object and task id
+            Tuple[Progress, int, int]: Progress object, task, and task id
         """
-        with Progress(*args, **kwargs) as progress:
-            task = progress.add_task(f"[cyan]{prompt}[/cyan]", total=None)
+        with Progress(*args, **kwargs, console=self, transient = True) as progress:
+            task = progress.add_task(f"[plum3]{prompt}[/plum3]", total=None)
+            task_id = task
+            progress.start()
             try:
-                yield progress, task
+                yield progress
             finally:
                 progress.stop()
 

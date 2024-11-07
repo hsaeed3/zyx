@@ -5,11 +5,16 @@ from pydantic import BaseModel
 from typing import Any, Dict, Type, Union
 
 
+class Response(BaseModel):
+    response: str
+
+
 # response model
 ResponseModel = Union[
     # standard response_model input
     BaseModel,
     Type[BaseModel],
+    Type[Response],
 
     # quick string response (not a type -> the string becomes the field name)
     str,

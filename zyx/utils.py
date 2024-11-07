@@ -6,7 +6,7 @@ from pydantic import BaseModel, ValidationError, create_model
 from .lib.exception import ZYXException
 
 from .types.completions.completion_arguments import CompletionArguments
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 
 def parse_json_string_to_pydantic_model(json_string: str, response_format: Optional[BaseModel] = None) -> BaseModel:
@@ -66,7 +66,7 @@ def collect_completion_args(args : dict[str, Any]) -> CompletionArguments:
 
     try:
         # filter out arguments that are not in the CompletionArguments model
-        valid_args = {k: v for k, v in args.items() if k in CompletionArguments.__fields__}
+        valid_args = {k: v for k, v in args.items() if k in CompletionArguments.model_fields}
         
         # build the completion arguments
         completion_args = CompletionArguments(**valid_args)
@@ -107,13 +107,19 @@ def build_post_request(args: CompletionArguments, instructor : bool = False) -> 
             del args_dict[arg]
 
     # Use the tool.formatted_function param from the args as the tool arg
-    if 'tool' in args_dict:
-        args_dict['tool'] = args_dict['tool'].formatted_function
+    if args_dict.get('tools') is not None:
+        args_dict['tools'] = [
+            tool['formatted_function'] if isinstance(tool, dict) else tool.formatted_function
+            for tool in args_dict['tools']
+        ]
 
     # If tools is None, remove parallel_tool_calls and tool_choice
     if args_dict.get('tools') is None:
         args_dict.pop('parallel_tool_calls', None)
         args_dict.pop('tool_choice', None)
+
+    # remove everything else that is None
+    args_dict = {k: v for k, v in args_dict.items() if v is not None}
 
     return args_dict
 
