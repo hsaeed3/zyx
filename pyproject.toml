@@ -12,9 +12,11 @@ dependencies = [
     "instructor>=1.6.3",
     "jsonpatch>=1.33",
     "litellm>=1.52.0",
+    "qdrant-client>=1.12.1",
     "questionary>=1.10.0",
     # utils
     "rich>=13.9.4",
+    "semchunk>=2.2.0",
 ]
 
 [build-system]
