@@ -3,7 +3,7 @@ name = "llxm"
 version = "0.0.2"
 authors = [{ name = "Hammad Saeed", email = "hvmmad@gmail.com" }]
 
-description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM & Instructor."
+description = "extremely 'nano' llm toolkit"
 readme = "readme.md"
 
 requires-python = ">=3.9"
