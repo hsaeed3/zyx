@@ -1,4 +1,4 @@
-# xnano.lib.common.exceptions
+# llxm.exceptions
 # base exception class used internally
 
 import inspect
@@ -14,10 +14,10 @@ console = Console()
 install(console=console)
 
 
-# xnano exception
-class XNANOException(Exception):
+# llxm exception
+class LLXMException(Exception):
 
-    """Base exception class for xnano."""
+    """Base exception class for llxm."""
 
     def __init__(
             self,
@@ -29,12 +29,12 @@ class XNANOException(Exception):
         # console handles all other printing
         frame = inspect.currentframe().f_back
         module = frame.f_globals["__name__"]
-        self.message = f"[red]XNANO [italic bold white]{module}[/italic bold white] Exception:[/red] {message}"
+        self.message = f"[red]LLXM [italic bold white]{module}[/italic bold white] Exception:[/red] {message}"
 
 
     def __str__(self):
         # minimal message sent as non rich output
-        return "XNANO Exception Occured"
+        return "LLXM Exception Occured"
     
 
     # prints exception message on exit (to use rich formatting)
@@ -44,4 +44,4 @@ class XNANOException(Exception):
 
 # test
 if __name__ == "__main__":
-    raise XNANOException("This is a test exception")
+    raise LLXMException("This is a test exception")

@@ -1,9 +1,10 @@
+# llxm.types.completions.base_types
 # base types for completions
 
 from typing import Literal, TypeAlias, Type, Union
 
 
-Completions: TypeAlias = "xnano.completions.Completions"
+Completions: TypeAlias = "llxm.completions.Completions"
 
 
 # chat model literals

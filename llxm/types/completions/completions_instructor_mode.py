@@ -1,3 +1,4 @@
+# llxm.types.completions.completions_instructor_mode
 # instructor mode mapping
 
 from typing import Literal

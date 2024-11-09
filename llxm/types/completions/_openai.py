@@ -1,3 +1,4 @@
+# zyx.types.completions._openai
 # openai completion types
 
 from openai.types.chat.chat_completion_audio_param import ChatCompletionAudioParam

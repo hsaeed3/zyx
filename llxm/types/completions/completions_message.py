@@ -1,3 +1,4 @@
+# llxm.types.completions.completions_message
 # message base type
 
 import sys
