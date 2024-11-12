@@ -1,5 +1,7 @@
 # DEPRECIATED
 
+> **zyx** has been depreciated; please refer to [Xnano](https://github.com/hsaeed3/xnano) for the latest version of this repo!
+
 # Zyx
 
 
