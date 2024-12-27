@@ -1,54 +1,108 @@
-[tool.poetry]
+[project]
+
+# == base metadata ==
 name = "zyx"
-version = "1.0.13"
-description = "A hyper-fast, fun, quality-of-life focused & genuinely useful LLM toolkit. Inspired by Marvin-AI. Built on LiteLLM, Instructor & Qdrant."
-authors = ["Hammad Saeed <hvmmad@gmail.com>"]
+version = "1.1.0"
+
+description = "zyx"
+authors = [
+    { name = "Hammad Saeed", email = "hvmmad@gmail.com" }
+]
+
 readme = "readme.md"
+license = { file = "LICENSE" }
 
 
+# == python version ==
+requires-python = ">=3.9"
+
+
+# == package dependencies ==
+dependencies = [
+    "docstring-parser>=0.16",
+    "jsonpatch>=1.33",
+    "litellm>=1.55.10",
+]
+
+
+# == optional dependencies ==
+[project.optional-dependencies]
+docs = [
+    "markitdown>=0.0.1a1",
+]
+
+
+# == extra dependency groups ==
+[dependency-groups]
+# == dev tools ==
+dev = [
+    # core dev tools
+    # i love astral.sh
+    "ruff",
+    "uv",
+
+    # packaging
+    "twine",
+
+    # tests
+    "pytest",
+    "pytest-asyncio",
+
+    # docs
+    "mkdocstrings[python]",
+    "mkdocs-jupyter",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-git-revision-date-plugin",
+    "mkdocs-minify-plugin",
+    "mkdocs-awesome-pages-plugin",
+    "mkdocs-table-reader-plugin",
+]
+
+
+# == nanograph uses hatchling for package building ==
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+# == addition for zed IDE's (could be removed in future) ==
+# this is used to tell zed what venv to use for the python interpreter
+# assumes venv is at the root of the project
+# this is purely for dev
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
 
 
-[tool.poetry.dependencies]
-python = "^3.10"
-# LLMs
-instructor = "^1.4.2"
-litellm = "^1.46.5"
-# Scraping
-bs4 = "^0.0.2"
-duckduckgo-search = "^6.2.13"
-# Data / Processing
-python-docx = "^1.1.2"
-pypdf2 = "^3.0.1"
-openpyxl = "^3.1.5"
-# Data / Vector Store
-chromadb = "^0.5.11"
-semchunk = "^2.2.0"
-# Utilities
-rich = "^13.8.1"
-# Terminal App
-textual = "^0.79.1"
-pydub = "^0.25.1"
-sounddevice = "^0.5.0"
-soundfile = "^0.12.1"
+# == ruff config ==
+[tool.ruff]
+
+# == base / core linting config ==
+# py3.9 assumed as it is lowest lib version
+target-version = "py39"
+
+# line length & indents
+line-length = 120
+indent-width = 4
 
 
-[tool.poetry.extras]
-data = ["python-docx", "pypdf2", "openpyxl", "chromadb", "semchunk", "bs4", "duckduckgo-search"]
+# == ruff linting config ==
+[tool.ruff.lint]
+# ensure '_' namespace is protected if vars are unused
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 
-[tool.poetry.group.dev.dependencies]
-poetry = "^1.8.3"
-ruff = "^0.6.5"
-uv = "^0.4.12"
+# == ruff formatting config ==
+[tool.ruff.format]
+# strings in nanograph are double quoted
+quote-style = "double"
+# indent using spaces not tabs for consistency & more robust formatting
+indent-style = "space"
+# respect training commas
+skip-magic-trailing-comma = false
+# detect appropriate line ending
+line-ending = "auto"
 
 
-[tool.poetry.scripts]
-zyx = "zyx.resources.ext.app:terminal"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
