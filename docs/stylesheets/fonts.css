@@ -1,0 +1,63 @@
+@font-face {
+    font-family: "Zed Mono";
+    src: url("./zed_mono/zed-mono-extended.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Zed Mono";
+    src: url("./zed_mono/zed-mono-extendedbold.ttf") format("truetype");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Zed Mono";
+    src: url("./zed_mono/zed-mono-extendedbolditalic.ttf") format("truetype");
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Zed Mono";
+    src: url("./zed_mono/zed-mono-extendeditalic.ttf") format("truetype");
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Zed Sans";
+    src: url("./zed_mono/zed-sans-extended.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Zed Sans";
+    src: url("./zed_mono/zed-sans-extendedbold.ttf") format("truetype");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Zed Sans";
+    src: url("./zed_mono/zed-sans-extendedbolditalic.ttf") format("truetype");
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Zed Sans";
+    src: url("./zed_mono/zed-sans-extendeditalic.ttf") format("truetype");
+    font-weight: normal;
+    font-style: italic;
+}
+
+:root {
+    --md-text-font: "Zed Sans";
+}
+
+:root {
+    --md-code-font: "Zed Mono";
+}
