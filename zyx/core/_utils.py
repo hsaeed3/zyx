@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-zyx._utils
+zyx.core._utils
 
 This module contains flags, logging, config & caching utilities for zyx.
 All resources in this module are only meant to be used by the library
@@ -31,9 +31,8 @@ from rich.traceback import install
 # ===================================================================
 
 # [Rich Console]
-zyx_console : Console = Console()
-# why not just install here
-install(console = zyx_console)
+console : Console = Console(markup = True)
+install(console = console)
 
 # NOTE:
 # zyx uses rich.print() at builtins level... 
@@ -41,7 +40,21 @@ install(console = zyx_console)
 builtins.print = rprint
 
 # [Logger]
-zyx_logger : logging.Logger = None
+logger : logging.Logger = logging.getLogger("zyx")
+# Initialize with DEBUG level, but handler will control actual output
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():
+    logger.handlers.clear()
+    
+handler = RichHandler(
+    console = console,
+    markup = True,
+    show_time = True,
+    show_level = True,
+)
+# Default to WARNING until verbose/debug is set
+handler.setLevel(logging.WARNING)
+logger.addHandler(handler)
 
 
 # ===================================================================
@@ -71,15 +84,33 @@ zyx_debug : bool = False
 
 
 # [Helpers]
-def set_zyx_verbose(verbose : bool) -> None:
-    """Sets the verbose flag."""
+def set_zyx_verbose(verbose: bool) -> None:
+    """
+    Sets the verbose flag and adjusts logging level.
+    
+    Args:
+        verbose: If True, sets logging to INFO level
+    """
     global zyx_verbose
     zyx_verbose = verbose
+    if verbose:
+        handler.setLevel(logging.INFO)
+    else:
+        handler.setLevel(logging.WARNING)
     
-def set_zyx_debug(debug : bool) -> None:
-    """Sets the debug flag."""
+def set_zyx_debug(debug: bool) -> None:
+    """
+    Sets the debug flag and adjusts logging level.
+    
+    Args:
+        debug: If True, sets logging to DEBUG level
+    """
     global zyx_debug
     zyx_debug = debug
+    if debug:
+        handler.setLevel(logging.DEBUG)
+    else:
+        handler.setLevel(logging.WARNING if not zyx_verbose else logging.INFO)
 
 
 # ===================================================================
@@ -98,38 +129,9 @@ Used to prevent multiple initializations."""
 
 def get_logger() -> logging.Logger:
     """
-    Retrieves the zyx logger instance & initializes it if it doesn't exist.
+    Retrieves the zyx logger instance.
     """
-    
-    # Singleton Check
-    global zyx_logger
-    if zyx_logger is not None:
-        return zyx_logger
-    
-    else:
-        try:
-            # Create a new logger instance
-            zyx_logger = logging.getLogger("zyx")
-            # Init at Quiet Level
-            zyx_logger.setLevel(logging.WARNING)
-            # Clear existing handlers
-            if zyx_logger.hasHandlers():
-                zyx_logger.handlers.clear()
-                
-            # Apply RichHandler
-            handler = RichHandler(
-                console = zyx_console,
-                show_time = True,
-                show_level = True,
-                markup = True
-            )
-            handler.setLevel(logging.WARNING)
-            zyx_logger.addHandler(handler)
-        
-        except Exception as e:
-            raise RuntimeError(f"Failed to initialize zyx logger: {e}")
-        # Return
-        return zyx_logger
+    return logger
 
 
 # [Logging Style Helpers]
@@ -155,7 +157,7 @@ class Styles:
     
     @staticmethod
     def debug(message : str) -> str:
-        return f"[dim]{message}[/dim]"
+        return f"[deep_sky_blue2]DEBUG[/deep_sky_blue2]: [dim]{message}[/dim]"
     
     
     # [Console Display Helpers] ====================================
@@ -196,10 +198,6 @@ class Styles:
             raise TypeError(f"Cannot display item of type {type(item)}")
 
 
-# [Logger]
-zyx_logger = get_logger()
-
-
 # ===================================================================
 # [Base Exception]
 # ===================================================================
@@ -212,7 +210,7 @@ class ZyxException(Exception):
         super().__init__(message)
         self.message = message
         # Log
-        zyx_logger.error(message)
+        logger.error(message)
     
     
 # ===================================================================
@@ -318,11 +316,6 @@ def initialize_zyx():
     if zyx_initialized:
         return
     
-    # Get Base Logger
-    global zyx_logger
-    if zyx_logger is None:
-        zyx_logger = get_logger()
-    
     # Retrieve Global Flags
     global zyx_verbose
     global zyx_debug
@@ -336,5 +329,3 @@ def initialize_zyx():
     
     # Set Initialized Flag
     zyx_initialized = True
-    
-    
