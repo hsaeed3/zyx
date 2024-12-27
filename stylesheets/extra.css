@@ -1,0 +1,79 @@
+[data-md-color-scheme="zyx"] {
+    /* Primary colors */
+    --md-primary-fg-color: #2d2a2e;
+    --md-primary-fg-color--light: #403e41; 
+    --md-primary-fg-color--dark: #221f22;
+    --md-primary-bg-color: #fcfcfc;
+    --md-primary-bg-color--light: #fcfcfcb3;
+
+    /* Accent colors */
+    --md-accent-fg-color: #ab9df2;
+    --md-accent-fg-color--transparent: #ab9df21a;
+    --md-accent-bg-color: #fcfcfc;
+    --md-accent-bg-color--light: #fcfcfcb3;
+
+    /* Default colors */
+    --md-default-fg-color: #fcfcfc;
+    --md-default-fg-color--light: #fcfcfc80;
+    --md-default-fg-color--lighter: #fcfcfc40;
+    --md-default-fg-color--lightest: #fcfcfc10;
+    --md-default-bg-color: #1f1f21; /* Darkened and made more neutral/black */
+    --md-default-bg-color--light: #1f1f21b3;
+    --md-default-bg-color--lighter: #1f1f2180;
+    --md-default-bg-color--lightest: #1f1f2110;
+
+    /* Code colors */
+    --md-code-fg-color: #fcfcfc;
+    --md-code-bg-color: #403e41;
+
+    /* Code highlighting color */
+    --md-code-hl-color: #ab9df240;
+    --md-code-hl-number-color: #78dce8;
+    --md-code-hl-special-color: #ff6188;
+    --md-code-hl-function-color: #a9dc76;
+    --md-code-hl-constant-color: #ab9df2;
+    --md-code-hl-keyword-color: #ff6188;
+    --md-code-hl-string-color: #ffd866;
+    --md-code-hl-name-color: #fcfcfc;
+    --md-code-hl-operator-color: #ff6188;
+    --md-code-hl-punctuation-color: #fcfcfc;
+    --md-code-hl-comment-color: #727072;
+    --md-code-hl-generic-color: #fcfcfc;
+    --md-code-hl-variable-color: #f59762;
+
+    /* Typeset colors */
+    --md-typeset-color: var(--md-default-fg-color);
+    --md-typeset-a-color: var(--md-accent-fg-color);
+
+    /* Table colors */
+    --md-typeset-table-color: var(--md-default-fg-color--lighter);
+
+    /* Footer colors */
+    --md-footer-fg-color: #fcfcfc;
+    --md-footer-fg-color--light: #fcfcfc99;
+    --md-footer-fg-color--lighter: #fcfcfc66;
+    --md-footer-bg-color: #1f1f21; /* Matched to main background */
+    --md-footer-bg-color--dark: #18181a; /* Darkened to maintain contrast */
+
+    /* Shadow colors */
+    --md-shadow-z1: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.15),
+                   0 0 0.0625rem rgba(0, 0, 0, 0.25);
+    --md-shadow-z2: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.25),
+                   0 0 0.0625rem rgba(0, 0, 0, 0.35);
+    --md-shadow-z3: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.35),
+                   0 0 0.0625rem rgba(0, 0, 0, 0.45);
+
+    /* Mark color */
+    --md-typeset-mark-color: #ffd86680;
+
+    /* Warning colors */
+    --md-warning-fg-color: #2d2a2e;
+    --md-warning-bg-color: #ffd866;
+
+    /* Admonition colors */
+    --md-admonition-fg-color: var(--md-default-fg-color);
+    --md-admonition-bg-color: var(--md-default-bg-color);
+
+    /* Indicate dark color scheme */
+    color-scheme: dark;
+}
