@@ -1,0 +1,108 @@
+[project]
+
+# == base metadata ==
+name = "zyx"
+version = "1.1.0"
+
+description = "zyx"
+authors = [
+    { name = "Hammad Saeed", email = "hvmmad@gmail.com" }
+]
+
+readme = "readme.md"
+license = { file = "LICENSE" }
+
+
+# == python version ==
+requires-python = ">=3.9"
+
+
+# == package dependencies ==
+dependencies = [
+    "docstring-parser>=0.16",
+    "jsonpatch>=1.33",
+    "litellm>=1.55.10",
+]
+
+
+# == optional dependencies ==
+[project.optional-dependencies]
+docs = [
+    "markitdown>=0.0.1a1",
+]
+
+
+# == extra dependency groups ==
+[dependency-groups]
+# == dev tools ==
+dev = [
+    # core dev tools
+    # i love astral.sh
+    "ruff",
+    "uv",
+
+    # packaging
+    "twine",
+
+    # tests
+    "pytest",
+    "pytest-asyncio",
+
+    # docs
+    "mkdocstrings[python]",
+    "mkdocs-jupyter",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-git-revision-date-plugin",
+    "mkdocs-minify-plugin",
+    "mkdocs-awesome-pages-plugin",
+    "mkdocs-table-reader-plugin",
+]
+
+
+# == nanograph uses hatchling for package building ==
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+# == addition for zed IDE's (could be removed in future) ==
+# this is used to tell zed what venv to use for the python interpreter
+# assumes venv is at the root of the project
+# this is purely for dev
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+
+# == ruff config ==
+[tool.ruff]
+
+# == base / core linting config ==
+# py3.9 assumed as it is lowest lib version
+target-version = "py39"
+
+# line length & indents
+line-length = 120
+indent-width = 4
+
+
+# == ruff linting config ==
+[tool.ruff.lint]
+# ensure '_' namespace is protected if vars are unused
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+
+# == ruff formatting config ==
+[tool.ruff.format]
+# strings in nanograph are double quoted
+quote-style = "double"
+# indent using spaces not tabs for consistency & more robust formatting
+indent-style = "space"
+# respect training commas
+skip-magic-trailing-comma = false
+# detect appropriate line ending
+line-ending = "auto"
+
+
