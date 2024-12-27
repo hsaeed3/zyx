@@ -13,7 +13,7 @@ import os
 # [Initialization Check]
 # ===================================================================
 
-def test_zyx_initialized() -> None:
+def test_zyx_core_utils_initialized() -> None:
     
     """
     Tests library & cache initialization.
