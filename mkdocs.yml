@@ -1,0 +1,132 @@
+# [MKDocs Config]
+
+# ===============================
+# [Base Configuration]
+# ===============================
+
+# [Site Config]
+site_name: zyx
+site_author: Hammad Saeed
+# Site URL is using the GitHub Pages URL temporarily instead of
+# `zyx.hammad.fun` for migration to `hammad.dev`
+site_url: https://hsaeed3.github.io/zyx/
+site_description: A super duper comfy toolkit for using LLM's & building AI agents / multi agent workflows.
+
+# [Repository Config]
+repo_name: hsaeed3/zyx
+repo_url: https://github.com/hsaeed3/zyx
+
+
+# ===============================
+# [Theme]
+# ===============================
+
+# [Base Theme Config]
+theme:
+  name: material
+
+  # [Palette Config]
+  palette:
+    scheme: zyx
+
+  # [Features]
+  features:
+    # == announcement plugins (notifications)
+    - announce.dismiss
+    # == content plugins (page blocks / code blocks)
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.footnote.tooltips
+    - content.tabs.link
+    - content.tooltips
+    # == header plugins
+    # - header.autohide
+    - header.sticky
+    # == navigation plugins
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    # == search plugins
+    - search.highlight
+    - search.share
+    - search.suggest
+    # == table of contents plugins
+    - toc.integrate
+    - toc.follow
+
+  # ===============================
+  # [Markdown Extensions]
+  # ===============================
+
+  markdown_extensions:
+
+    # [Base Extensions]
+    - abbr
+    - admonition
+    - attr_list
+    - def_list
+    - footnotes
+    - md_in_html
+    - toc:
+      permalink: true
+    - pymdownx.arithmatex:
+        generic: true
+    - pymdownx.betterem:
+        smart_enable: all
+    - pymdownx.caret
+    - pymdownx.details
+    - pymdownx.emoji:
+        emoji_generator: !!python/name:material.extensions.emoji.to_svg
+        emoji_index: !!python/name:material.extensions.emoji.twemoji
+    - pymdownx.highlight:
+        anchor_linenums: true
+        line_spans: __span
+        pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.keys
+    - pymdownx.magiclink:
+        normalize_issue_symbols: true
+        repo_url_shorthand: true
+        user: squidfunk
+        repo: mkdocs-material
+    - pymdownx.mark
+    - pymdownx.smartsymbols
+    - pymdownx.snippets:
+        auto_append:
+          - includes/mkdocs.md
+    - pymdownx.superfences:
+        custom_fences:
+          - name: mermaid
+            class: mermaid
+            format: !!python/name:pymdownx.superfences.fence_code_format
+    - pymdownx.tabbed:
+        alternate_style: true
+        combine_header_slug: true
+        slugify: !!python/object/apply:pymdownx.slugs.slugify
+          kwds:
+            case: lower
+    - pymdownx.tasklist:
+        custom_checkbox: true
+    - pymdownx.tilde
+
+
+# ===============================
+# [Extras]
+# ===============================
+
+# [CSS]
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/fonts.css
