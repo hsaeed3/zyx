@@ -3,7 +3,7 @@ Core utility tests for zyx.
 """
 
 import pytest
-from zyx import _utils
+from zyx.core import _utils
 from pathlib import Path
 import logging
 import os
