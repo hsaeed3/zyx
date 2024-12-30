@@ -156,13 +156,13 @@ class Styles:
         return "[bold italic light_sky_blue_3]zyx[/bold italic light_sky_blue_3]"
     
     @staticmethod
-    def module(name : str) -> str:
+    def module(name : Any) -> str:
         """Module and/or 'main' name"""
-        return f"[bold light_coral]{name}[/bold light_coral]"
+        return f"[bold light_coral]{name if isinstance(name, str) else str(name)}[/bold light_coral]"
     
     @staticmethod
-    def debug(message : str) -> str:
-        return f"[deep_sky_blue2]DEBUG[/deep_sky_blue2]: [dim]{message}[/dim]"
+    def debug(message : Any) -> str:
+        return f"[deep_sky_blue2]DEBUG[/deep_sky_blue2]: [dim]{message if isinstance(message, str) else str(message)}[/dim]"
     
     
     # [Console Display Helpers] ====================================
