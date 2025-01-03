@@ -393,26 +393,3 @@ class Flags:
     set_zyx_verbose = set_zyx_verbose
     set_zyx_debug = set_zyx_debug
 
-
-class Utils:
-    """
-    Zyx utility functions & helpers.
-    """
-
-    # [Console]
-    console = console
-
-    # [Logger]
-    logger = logger
-
-    # [Styles]
-    Styles = Styles
-
-    # [Constants]
-    Constants = Constants
-
-    # [Config Utils]
-    ConfigUtils = ConfigUtils
-
-    # [Flags]
-    Flags = Flags
