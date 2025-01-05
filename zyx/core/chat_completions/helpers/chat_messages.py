@@ -81,7 +81,9 @@ def create_chat_message(
         content = json.dumps(content)
 
     if utils.zyx_debug:
-        utils.logger.debug(f"Created a role: [plum3]{role}[/plum3] message with content: [italic dim]{content}[/italic dim]")
+        utils.logger.debug(
+            f"Created a role: [plum3]{role}[/plum3] message with content: [italic dim]{content}[/italic dim]"
+        )
 
     # Return message with only present fields
     if images and tool_call_id:
