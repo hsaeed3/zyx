@@ -8,6 +8,9 @@
 # Ruff Cache
 .ruff_cache/
 
+# Sandbox
+sandbox/
+
 # Dev
 .dev/
 
