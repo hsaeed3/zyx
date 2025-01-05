@@ -46,7 +46,7 @@ def convert_context_to_string(context: Union[str, BaseModel, Any]) -> str:
         ZyxException: If the object cannot be converted to a string context
     """
     context_string = None
-    
+
     # Create context string from pydantic models
     if isinstance(context, type) and issubclass(context, BaseModel):
         try:
@@ -72,4 +72,3 @@ def convert_context_to_string(context: Union[str, BaseModel, Any]) -> str:
         utils.logger.debug(f"Converted object of type: [italic]{type(context)} {utils.Styles.module(context_string)}.")
 
     return context_string
-
