@@ -1,9 +1,8 @@
 """
-zyx.core.helpers.prompting
+zyx.core.chat_completions.helpers.context
 
-This module is an `extension` of the core `chat_messages` helper, providing
-functions specifically geared towards prompting (adding context, instructions)
-as well as a few general purpose functions directly for system messages.
+This module contains helper functions for converting various input object types
+to a string context.
 """
 
 from __future__ import annotations
@@ -45,30 +44,26 @@ def convert_context_to_string(context: Union[str, BaseModel, Any]) -> str:
     Raises:
         ZyxException: If the object cannot be converted to a string context
     """
-    context_string = None
+    # Return strings as-is
+    if isinstance(context, str):
+        return context
 
-    # Create context string from pydantic models
+    # Handle Pydantic model class
     if isinstance(context, type) and issubclass(context, BaseModel):
         try:
-            context_string = context.model_json_schema()
+            return json.dumps(context.model_json_schema())
         except Exception as e:
             raise utils.ZyxException(f"Failed to get JSON schema from model class {utils.Styles.module(context)}: {e}")
-    elif isinstance(context, BaseModel):
+
+    # Handle Pydantic model instance
+    if isinstance(context, BaseModel):
         try:
-            context_string = context.model_dump_json()
+            return context.model_dump_json()
         except Exception as e:
             raise utils.ZyxException(f"Failed to dump pydantic model {utils.Styles.module(context)} into dict: {e}")
 
-    # Convert to JSON string if not already
-    if not isinstance(context, str):
-        try:
-            context_string = json.dumps(context)
-        except Exception as e:
-            raise utils.ZyxException(
-                f"Failed to convert object {utils.Styles.module(context)} to JSON string context: {e}"
-            )
-
-    if utils.zyx_debug:
-        utils.logger.debug(f"Converted object of type: [italic]{type(context)} {utils.Styles.module(context_string)}.")
-
-    return context_string
+    # Handle other objects by converting to JSON
+    try:
+        return json.dumps(context)
+    except Exception as e:
+        raise utils.ZyxException(f"Failed to convert object {utils.Styles.module(context)} to JSON string context: {e}")

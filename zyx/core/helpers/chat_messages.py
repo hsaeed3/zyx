@@ -1,5 +1,5 @@
 """
-zyx.core.helpers.chat_messages
+zyx.core.chat_completions.helpers.chat_messages
 
 This module contains helper functions & processors for various tasks such as
 message thread formatting, validation, creation, etc.
@@ -13,7 +13,7 @@ import json
 from pydantic import BaseModel
 from typing import Any, Optional, Union, Sequence, Dict, List, Callable
 
-from ....types.completions import ChatMessage, ChatMessageRole, Image
+from ...types.completions import ChatMessage, ChatMessageRole, Image
 from zyx import utils
 
 
@@ -253,4 +253,88 @@ def format_or_create_system_chat_message(
             if utils.zyx_debug:
                 utils.logger.debug(f"Validated system message position in thread.")
 
+    return messages
+
+
+# ==============================================================
+# [Context Injection]
+# ==============================================================
+
+
+def add_system_context_to_thread(
+    context: str,
+    messages: List[Union[ChatMessage, Dict[str, Any], BaseModel]],
+) -> List[ChatMessage]:
+    """
+    Adds system context to a thread of messages.
+
+    Examples:
+        >>> messages = [ChatMessage(role="user", content="Hi")]
+        >>> add_system_context_to_thread("Be helpful", messages)
+        [ChatMessage(role="system", content="Be helpful"), ChatMessage(role="user", content="Hi")]
+
+    Args:
+        context: The system context to add
+        messages: The message thread to add context to
+
+    Returns:
+        List[ChatMessage]: Messages with system context added
+    """
+    # Validate all messages are Message objects
+    messages = [validate_chat_message(msg) for msg in messages]
+
+    # Determine if system message is present
+    if any(message.role == "system" for message in messages):
+        # Format thread to validate system message position
+        messages = format_or_create_system_chat_message(messages)
+
+        # Build context into system message
+        system_content = messages[0]["content"]
+        system_content = f"{system_content}\n\n{context}"
+        messages[0]["content"] = system_content
+
+    else:
+        # Create new system message
+        messages.insert(0, create_chat_message(content=context, role="system"))
+        if utils.zyx_debug:
+            utils.logger.debug(f"Added system context to thread as a new system message.")
+    # Return
+    return messages
+
+
+def add_user_context_to_thread(
+    context: str,
+    messages: List[Union[ChatMessage, Dict[str, Any], BaseModel]],
+) -> List[ChatMessage]:
+    """
+    Adds user context to a thread of messages.
+
+    Examples:
+        >>> messages = [ChatMessage(role="system", content="Be helpful")]
+        >>> add_user_context_to_thread("Hi", messages)
+        [ChatMessage(role="system", content="Be helpful"), ChatMessage(role="user", content="Hi")]
+
+    Args:
+        context: The user context to add
+        messages: The message thread to add context to
+
+    Returns:
+        List[ChatMessage]: Messages with user context added
+    """
+    # Validate all messages are Message objects
+    messages = [validate_chat_message(msg) for msg in messages]
+
+    # Check if the last message is a user message
+    if messages and messages[-1].role == "user":
+        # Append context to the last user message
+        user_content = messages[-1]["content"]
+        user_content = f"{user_content}\n\n{context}"
+        messages[-1]["content"] = user_content
+    else:
+        # Create new user message at the end
+        messages.append(create_chat_message(content=context, role="user"))
+        if utils.zyx_debug:
+            utils.logger.debug(f"Added user context to thread as a new user message.")
+
+    # Return
     return messages

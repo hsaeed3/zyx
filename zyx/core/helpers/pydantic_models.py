@@ -8,8 +8,10 @@ Pydantic models throughout the `zyx` package.
 from __future__ import annotations
 
 # [Imports]
-from typing import Any, Dict, Optional, Sequence, Union, Type
+from typing import Any, Dict, Optional, Sequence, Union, Type, Callable, get_type_hints
 from pydantic import BaseModel, Field, create_model
+import docstring_parser
+from inspect import signature
 
 from zyx import utils
 
@@ -113,15 +115,68 @@ def parse_type_to_pydantic_field_mapping(type_hint: Type, index: Optional[int] =
 
 
 # ==============================================================
-# [Model Creation]
+# [Model Creation // Conversion]
 # ==============================================================
 
 
-def convert_to_pydantic_model(
+def convert_python_function_to_pydantic_model_cls(func: Callable, model_name: Optional[str] = None) -> Type[BaseModel]:
+    """
+    Converts a Python function to a Pydantic BaseModel class.
+
+    Extracts type hints, default values, and docstring metadata to create a
+    properly annotated Pydantic model representing the function's parameters.
+
+    Args:
+        func: The function to convert to a BaseModel
+        model_name: Optional name for the generated model class. Defaults to function name.
+
+    Returns:
+        Type[BaseModel]: A new Pydantic BaseModel class representing the function parameters
+
+    Raises:
+        ValueError: If the function has invalid type hints or docstring
+    """
+    # Use function name if no model name provided
+    if not model_name:
+        model_name = func.__name__
+
+    # Get type hints and signature
+    hints = get_type_hints(func)
+    sig = signature(func)
+
+    # Parse docstring
+    docstring = docstring_parser.parse(func.__doc__ or "")
+
+    # Build field definitions
+    fields = {}
+    for name, param in sig.parameters.items():
+        # Get type annotation
+        field_type = hints.get(name, Any)
+
+        # Get default value
+        default = ... if param.default is param.empty else param.default
+
+        # Find parameter description from docstring
+        description = ""
+        for doc_param in docstring.params:
+            if doc_param.arg_name == name:
+                description = doc_param.description
+                break
+
+        # Create field with type, default and description
+        fields[name] = (field_type, Field(default=default, description=description))
+
+    # Create model class
+    model = create_model(model_name, __doc__=docstring.short_description, **fields)
+
+    return model
+
+
+def convert_to_pydantic_model_cls(
     target: Union[str, Type, Sequence[Union[str, Type]], Dict[str, Any], BaseModel],
 ) -> Type[BaseModel]:
     """
-    Creates a Pydantic model from various input formats.
+    Creates a Pydantic model class from various input formats.
 
     Handles:
     - Single field strings ("name: str")
