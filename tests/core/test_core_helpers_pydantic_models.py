@@ -140,8 +140,8 @@ def test_core_helpers_pydantic_models_convert_to_pydantic_model_cls():
     assert isinstance(model, type)  # Check that we get a model class
     field_dict = model.model_fields
     assert "name" in field_dict
-    
-    
+
+
 def test_core_helpers_pydantic_models_convert_python_function_to_pydantic_model_cls():
     # Define a sample function
     def sample_function(name: str, age: int = 30, active: bool = True):
@@ -170,7 +170,6 @@ def test_core_helpers_pydantic_models_convert_python_function_to_pydantic_model_
     assert field_dict["age"].default == 30
     assert field_dict["active"].annotation == bool
     assert field_dict["active"].default == True
-
 
 
 if __name__ == "__main__":
