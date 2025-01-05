@@ -1,6 +1,5 @@
 """
-zyx.core.helpers
+zyx.core.chat_completions.helpers
 
-This module contains helper functions & processors for various tasks such as
-message thread formatting, structured outputs, etc.
+This module contains helper functions & processors for the `chat_completions` module.
 """
