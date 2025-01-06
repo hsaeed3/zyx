@@ -24,7 +24,6 @@ response = zyx.create.completion("hi")
 hammad saeed | 2025
 """
 
-
 __all__ = [
     # [Core & Utility | Flags]
     # Logging
@@ -38,6 +37,7 @@ __all__ = [
 # [Imports]
 # [Configure Logging & Flags]
 from . import _logging as logging
+
 global zyx_verbose
 global zyx_debug
 zyx_verbose: bool = logging.zyx_verbose
