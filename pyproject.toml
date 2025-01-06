@@ -23,6 +23,7 @@ dependencies = [
     "instructor>=1.7.2",
     "jsonpatch>=1.33",
     "litellm>=1.55.10",
+    "networkx>=3.2.1",
 ]
 
 
