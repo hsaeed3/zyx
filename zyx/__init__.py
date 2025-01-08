@@ -1,5 +1,5 @@
 """
-### zyx
+### ✨ zyx
 
 A Python library for `effortlessly` creating and managing complex Generative AI
 applications & pipelines, with a `specification on controllable, on-message & autonomous
