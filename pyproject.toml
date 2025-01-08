@@ -19,18 +19,18 @@ requires-python = ">=3.9"
 
 # == package dependencies ==
 dependencies = [
-    "docstring-parser>=0.16",
+    "litellm>=1.55.10",
     "instructor>=1.7.2",
     "jsonpatch>=1.33",
-    "litellm>=1.55.10",
     "networkx>=3.2.1",
 ]
 
 
 # == optional dependencies ==
 [project.optional-dependencies]
-docs = [
+document = [
     "markitdown>=0.0.1a1",
+    "qdrant-client>=1.12.2",
 ]
 
 
