@@ -92,7 +92,7 @@ class APIResource:
     """The provider this manager is using."""
 
     # [Attributes]
-    _client: Union[OpenAI, LiteLLM, callable] = None
+    _client: Union[OpenAI, LiteLLM] = None
     """The base client to be used internally by the manager.
     
     Can be one of:
@@ -126,7 +126,7 @@ class APIResource:
         http_client: Optional[httpx.Client] = None,
         _strict_response_validation: Optional[bool] = False,
         config: Optional[ClientConfig] = None,
-        client: Optional[Union[OpenAI, LiteLLM, callable]] = None,
+        client: Optional[Union[OpenAI, LiteLLM]] = None,
         verbose: bool = False,
         debug: bool = False,
         **kwargs,
@@ -142,51 +142,67 @@ class APIResource:
         if debug:
             logging.set_verbosity_level(2)
 
-        config = APIResource.create_config(
-            api_key=api_key,
-            base_url=base_url,
-            organization=organization,
-            timeout=timeout,
-            max_retries=max_retries,
-            default_headers=default_headers,
-            project=project,
-            default_query=default_query,
-            websocket_base_url=websocket_base_url,
-            http_client=http_client,
-            _strict_response_validation=_strict_response_validation,
-            config=config,
-        )
-        non_none_config_values = {k: v for k, v in config.dump_for_openai().items() if v is not None}
-        if non_none_config_values:
-            logging.logger.debug(f"recieved config values on init: {non_none_config_values}")
-        else:
-            logging.logger.debug(f"no config values recieved on init")
+        if client is not None:
+            # simple check for openai or litellm for checking for chat attr
+            if isinstance(client, OpenAI) or hasattr(client, "chat"):
+                # set client to self
+                self.client = client
+                # set provider
+                if isinstance(client, OpenAI):
+                    self.provider = "openai"
+                else:
+                    self.provider = "litellm"
+                logging.logger.debug(f"recieved & set client instance on init: {client}")
+                logging.logger.debug(f"predicted client provider: {self.provider}")
 
-        if (
-            any(
-                [
-                    config.api_key,
-                    config.base_url,
-                    config.organization,
-                    config.timeout,
-                    config.max_retries,
-                    config.default_headers,
-                    config.project,
-                    config.default_query,
-                    config.websocket_base_url,
-                    config.http_client,
-                    config._strict_response_validation,
-                ]
+        else:
+            config = APIResource.create_config(
+                api_key=api_key,
+                base_url=base_url,
+                organization=organization,
+                timeout=timeout,
+                max_retries=max_retries,
+                default_headers=default_headers,
+                project=project,
+                default_query=default_query,
+                websocket_base_url=websocket_base_url,
+                http_client=http_client,
+                _strict_response_validation=_strict_response_validation,
+                config=config,
             )
-            or provider is not None
-        ):
-            if provider is not None:
-                logging.logger.debug(f"recieved client provider on init: {provider}")
+            non_none_config_values = {k: v for k, v in config.dump_for_openai().items() if v is not None}
+            if non_none_config_values:
+                logging.logger.debug(f"recieved config values on init: {non_none_config_values}")
+            else:
+                logging.logger.debug(f"no config values recieved on init")
 
-            self.load_client(provider=provider, config=config)
+            if (
+                any(
+                    [
+                        config.api_key,
+                        config.base_url,
+                        config.organization,
+                        config.timeout,
+                        config.max_retries,
+                        config.default_headers,
+                        config.project,
+                        config.default_query,
+                        config.websocket_base_url,
+                        config.http_client,
+                        config._strict_response_validation,
+                    ]
+                )
+                or provider is not None
+            ):
+                if provider is not None:
+                    logging.logger.debug(f"recieved client provider on init: {provider}")
 
-        else:
-            logging.logger.debug(f"no config or provider recieved on initialization.. skipping client creation")
+                # !! 
+                # load client
+                self.load_client(provider=provider, config=config)
+
+            else:
+                logging.logger.debug(f"no config or provider recieved on initialization.. skipping client creation")
 
     def create_client(
         self,
