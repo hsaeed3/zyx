@@ -8,7 +8,6 @@ as the resource for printing/getting inputs w/ rich text in the console.
 from __future__ import annotations
 
 # [Imports]
-from enum import Enum
 import inspect
 import logging
 from rich.console import Console
@@ -166,7 +165,7 @@ def get_verbosity_level() -> int:
 
 
 # [Set Verbose Mode]
-def verbose(verbose: bool) -> None:
+def set_verbose(verbose: bool) -> None:
     """
     Helper method to enable `verbose` mode for zyx, providing simple but useful &
     pretty CLI outputs through the `rich` library.
@@ -203,7 +202,7 @@ def verbose_print(*args, **kwargs) -> None:
 
 
 # [Set Debug Mode]
-def debug(debug: bool) -> None:
+def set_debug(debug: bool) -> None:
     """
     Helper method to enable `debug` mode for zyx, providing DEBUG level logging.
     """

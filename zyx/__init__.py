@@ -23,11 +23,11 @@ hammad saeed | 2025
 __all__ = [
     # logging
     "logging",
-    "debug",
-    "verbose",
+    "set_debug",
+    "set_verbose",
 ]
 
 
 # [Logging]
 from . import _logging as logging
-from ._logging import debug, verbose
+from ._logging import set_debug, set_verbose
