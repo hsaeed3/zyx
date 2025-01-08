@@ -7,10 +7,11 @@ from zyx import _api_resource
 
 
 logger = logging.getLogger("zyx")
-logger.setLevel(logging.DEBUG)
 
 
 def test_api_resource_litellm_resource():
+
+    logger.setLevel(logging.DEBUG)
 
     # test litellm client init
     litellm = _api_resource.LiteLLMResource.get_litellm()
@@ -33,6 +34,8 @@ def test_api_resource_litellm_resource():
 
 
 def test_api_resource_init():
+
+    logger.setLevel(logging.DEBUG)
 
     # test api resource inits w/ none
     api_resource = _api_resource.APIResource()
@@ -80,6 +83,8 @@ def test_api_resource_init():
 
 
 def test_api_resource_instructor_patch():
+
+    logger.setLevel(logging.DEBUG)
 
     from openai import OpenAI
 
