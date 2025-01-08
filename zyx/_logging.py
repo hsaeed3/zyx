@@ -10,6 +10,13 @@ from __future__ import annotations
 # [Imports]
 import inspect
 import logging
+from logging import (
+    Logger,
+    INFO,
+    DEBUG,
+    WARNING,
+    NOTSET,
+)
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.traceback import install
@@ -18,8 +25,9 @@ from rich.traceback import install
 __all__ = [
     # [Flags]
     "get_verbosity_level",
-    "verbose",
-    "debug",
+    "is_verbose",
+    "set_verbose",
+    "set_debug",
     # [Helpers]
     "verbose_print",
     "warn",
@@ -29,6 +37,12 @@ __all__ = [
     "console",
     # [Exceptions]
     "ZyxException",
+    # [logging]
+    "Logger",
+    "INFO",
+    "DEBUG",
+    "WARNING",
+    "NOTSET",
 ]
 
 
@@ -64,9 +78,8 @@ class _LoggingConfig:
     The current verbosity level of the `zyx` package. Most main modules in the library
     will provide both `verbose` and `debug` arguments that will be used to set this flag.
 
-    - `Level 0`: Silent (level WARNING)
-    - `Level 1`: Verbose (level WARNING + simple verbose CLI outputs & logging through the `rich` library)
-    - `Level 2`: DEBUG (level DEBUG + debug logs & verbose CLI outputs w/ rich)
+    - `Level 0`: Silent (no verbose CLI outputs)
+    - `Level 1`: Verbose (simple verbose CLI outputs & logging through the `rich` library)
     """
 
     def __new__(cls):
@@ -81,16 +94,8 @@ class _LoggingConfig:
     def set_verbosity_level(self, level: int) -> None:
         """Set the verbosity level of the `zyx` package."""
 
-        if level not in [0, 1, 2]:
-            raise ZyxException(f"Invalid verbosity level: {level}. Must be 0, 1, or 2.")
-
-        # Update the logger's level directly
-        if level == 0:
-            logger.setLevel(logging.WARNING)
-        elif level == 1:
-            logger.setLevel(logging.WARNING)
-        elif level == 2:
-            logger.setLevel(logging.DEBUG)
+        if level not in [0, 1]:
+            raise ZyxException(f"Invalid verbosity level: {level}. Must be 0 or 1.")
 
         # [Set Verbosity Level]
         self.verbosity_level = level
@@ -98,6 +103,13 @@ class _LoggingConfig:
     def get_verbosity_level(self) -> int:
         """Get the current verbosity level of the `zyx` package."""
         return self.verbosity_level
+
+    def set_debug_level(self, debug: bool) -> None:
+        """Set the logging level to DEBUG if debug is True, otherwise WARNING."""
+        if debug:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.WARNING)
 
 
 # [Singleton]
@@ -132,7 +144,7 @@ def _setup_logging() -> logging.Logger:
     # [Config]
     logging.basicConfig(
         level=logging.WARNING,
-        format="%(asctime)s - %(name)s.%(module)s.%(funcName)s - DEBUG - %(message)s",
+        format="%(name)s.%(module)s.%(funcName)s: %(message)s",
         handlers=[RichHandler(console=console, rich_tracebacks=True, show_time=False, show_level=False, markup=True)],
     )
 
@@ -179,6 +191,17 @@ def set_verbose(verbose: bool) -> None:
         _logging_config.set_verbosity_level(0)
 
 
+# [Verbose Value Helper]
+def is_verbose() -> bool:
+    """Simple helper function that checks the `zyx` library has verbose mode
+    enabled globally.
+
+    Returns:
+        bool: True if verbose mode is enabled, False otherwise.
+    """
+    return get_verbosity_level() >= 1
+
+
 # [Verbose Print]
 def verbose_print(*args, **kwargs) -> None:
     """
@@ -206,11 +229,9 @@ def set_debug(debug: bool) -> None:
     """
     Helper method to enable `debug` mode for zyx, providing DEBUG level logging.
     """
+    _logging_config.set_debug_level(debug)
     if debug:
-        _logging_config.set_verbosity_level(2)
         logger.debug("using DEBUG level logging")
-    else:
-        _logging_config.set_verbosity_level(0)
 
 
 # [Warning Helper]
