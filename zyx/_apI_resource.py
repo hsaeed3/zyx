@@ -24,7 +24,6 @@ from zyx import logging
 
 # Type Hint for LiteLLM's Client class
 LiteLLM = Type["LiteLLM"]
-litellm_completion: callable = ["completion"]
 
 
 # ===================================================================
