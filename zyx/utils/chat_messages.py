@@ -89,7 +89,7 @@ def create_chat_message(
 
     message = ChatMessage(**message_kwargs)
 
-    logging.logger.debug("created message", message)
+    logging.logger.debug("created new message for %s role: %s", role, message)
 
     return message
 
@@ -175,7 +175,7 @@ def convert_to_chat_messages(
     for message in messages:
         message = validate_chat_message(message)
 
-    logging.logger.debug(f"formatted {len(messages)} messages", messages)
+    logging.logger.debug("formatted %d messages: %s", len(messages), messages)
 
     return messages
 
@@ -230,7 +230,7 @@ def format_or_create_system_chat_message(
         # Add merged system message to the beginning of the thread
         messages.insert(0, system_message)
 
-        logging.logger.debug("merged system messages", system_message, "into one at the beginning of the thread")
+        logging.logger.debug("merged system messages into one at the beginning of the thread")
 
     elif len(system_messages) == 1:
         # Validate system message is at the beginning of the thread
