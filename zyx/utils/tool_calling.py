@@ -56,9 +56,7 @@ def convert_to_openai_tool(tool: Union[Callable, BaseModel, Dict[str, Any]]):
             logging.logger.debug(f"Converted Python function to OpenAI tool: {tool}")
             return tool
         except Exception as e:
-            raise logging.ZyxException(
-                f"Failed to convert Python function to OpenAI tool: {e}"
-            )
+            raise logging.ZyxException(f"Failed to convert Python function to OpenAI tool: {e}")
 
     # Convert Pydantic model to OpenAI tool dictionary
     if isinstance(tool, BaseModel):
@@ -70,9 +68,7 @@ def convert_to_openai_tool(tool: Union[Callable, BaseModel, Dict[str, Any]]):
             logging.logger.debug(f"Converted Pydantic model to OpenAI tool: {tool}")
             return tool
         except Exception as e:
-            raise logging.ZyxException(
-                f"Failed to convert Pydantic model to OpenAI tool: {e}"
-            )
+            raise logging.ZyxException(f"Failed to convert Pydantic model to OpenAI tool: {e}")
 
 
 # ==============================================================

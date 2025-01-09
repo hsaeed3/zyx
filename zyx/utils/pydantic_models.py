@@ -201,7 +201,6 @@ def convert_to_pydantic_model_cls(
         model_name = target.strip() if target.strip()[0].isupper() else "Response"
         model = create_model(model_name, **field_mapping)
 
-
         logging.logger.debug(f"Converted string {target} to Pydantic model class: {model.model_json_schema()}")
 
         return model

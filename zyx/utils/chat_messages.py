@@ -166,7 +166,6 @@ def convert_to_chat_messages(
     """
     # clear string case immediately
     if isinstance(messages, str):
-
         return [create_chat_message(content=messages)]
 
     if not isinstance(messages, list):
@@ -328,4 +327,3 @@ def add_user_context_to_thread(
 
     # Return
     return messages
-
