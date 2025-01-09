@@ -10,7 +10,6 @@ logger = logging.getLogger("zyx")
 
 
 def test_api_resource_litellm_resource():
-
     logger.setLevel(logging.DEBUG)
 
     # test litellm client init
@@ -19,12 +18,19 @@ def test_api_resource_litellm_resource():
     logger.debug(f"litellm client: {litellm}")
 
     # test litellm client mock method
-    assert litellm.completion(
-        model = "gpt-4o",
-        messages = [{"role": "user", "content": "Hello, world!"}],
-        mock_response = "Hello, world!",
-    ).choices[0].message.content == "Hello, world!"
-    logger.debug(f"litellm client mock method: {litellm.completion(model='gpt-4o', messages=[{'role': 'user', 'content': 'Hello, world!'}], mock_response='Hello, world!')}")
+    assert (
+        litellm.completion(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": "Hello, world!"}],
+            mock_response="Hello, world!",
+        )
+        .choices[0]
+        .message.content
+        == "Hello, world!"
+    )
+    logger.debug(
+        f"litellm client mock method: {litellm.completion(model='gpt-4o', messages=[{'role': 'user', 'content': 'Hello, world!'}], mock_response='Hello, world!')}"
+    )
 
     # test singleton
     client_1 = _api_resource.LiteLLMResource.get_litellm()
@@ -34,7 +40,6 @@ def test_api_resource_litellm_resource():
 
 
 def test_api_resource_init():
-
     logger.setLevel(logging.DEBUG)
 
     # test api resource inits w/ none
@@ -83,7 +88,6 @@ def test_api_resource_init():
 
 
 def test_api_resource_instructor_patch():
-
     logger.setLevel(logging.DEBUG)
 
     from openai import OpenAI
@@ -111,7 +115,6 @@ def test_api_resource_instructor_patch():
     # use mode: "tool_call" (instructor.Mode.TOOLS)
     client.load_patch(mode="tool_call")
     assert client.patch is not None
-
 
 
 if __name__ == "__main__":

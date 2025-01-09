@@ -7,7 +7,6 @@ from rich import print
 
 
 def test_logging():
-
     # ensure logger is initialized
     assert _logging.logger is not None
     assert _logging.logger.name == "zyx"
@@ -28,7 +27,6 @@ def test_logging():
     print("Verbosity level after set_verbose(True): ", _logging.get_verbosity_level())
 
     # test `print_verbose` method
-    
 
     # disable verbose mode
     _logging.set_verbose(False)
