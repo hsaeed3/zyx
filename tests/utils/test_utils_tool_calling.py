@@ -17,6 +17,7 @@ module_tag = "[bold italic sky_blue3]zyx.utils.tool_calling[/bold italic sky_blu
 
 def test_utils_tool_calling_convert_to_openai_tool_from_function() -> None:
     """Test converting a Python function to an OpenAI tool."""
+
     def sample_function(x: int) -> int:
         return x + 1
 
@@ -33,6 +34,7 @@ def test_utils_tool_calling_convert_to_openai_tool_from_function() -> None:
 
 def test_utils_tool_calling_convert_to_openai_tool_from_pydantic() -> None:
     """Test converting a Pydantic model to an OpenAI tool."""
+
     class SampleModel(BaseModel):
         x: int
 
