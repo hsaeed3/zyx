@@ -57,6 +57,11 @@ class LiteLLMResource:
             start_time = time.time()
             import litellm
 
+            # NOTE: _-----
+            # LiteLLM Flags
+            litellm.modify_params = True
+            litellm.drop_params = True
+
             end_time = time.time()
             if logging.get_verbosity_level() == 1:
                 logging.verbose_print(
@@ -90,7 +95,7 @@ class APIResource(ABC):
     """
 
     # implemenetation level property
-    supports_async : bool = False
+    supports_async: bool = False
     # ----------------------------
 
     provider: Optional[ClientProvider] = None
@@ -194,19 +199,17 @@ class APIResource(ABC):
                 if provider is not None:
                     logging.logger.debug(f"recieved client provider on init: {provider}")
 
-                # !! 
+                # !!
                 # load client
                 self.load_client(provider=provider, config=config)
 
             else:
                 logging.logger.debug(f"no config or provider recieved on initialization.. skipping client creation")
 
-
     # ===================================================================
     # [Abstract Methods & Properties]
     # ===================================================================
 
-    
     @abstractmethod
     def run(
         self,
@@ -218,7 +221,16 @@ class APIResource(ABC):
         """
         ...
 
-    
+    @abstractmethod
+    def static_run(
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Abstract static method for the primary execution method of the resource.
+        """
+        ...
+
     # [Async]
     @property
     def supports_async(self) -> bool:
@@ -226,7 +238,6 @@ class APIResource(ABC):
         Returns whether the resource supports async execution.
         """
         return self.supports_async
-    
 
     @abstractmethod
     def run_async(
@@ -239,6 +250,15 @@ class APIResource(ABC):
         """
         ...
 
+    @abstractmethod
+    def static_run_async(
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Abstract static method for the primary execution method of the resource.
+        """
+        ...
 
     def create_client(
         self,
@@ -584,7 +604,3 @@ class APIResource(ABC):
             handler=APIResource.get_instructor_raw_response,
         )
         logging.logger.debug("set instructor hooks for: raw response collection")
-
-
-
-
