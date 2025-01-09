@@ -1,7 +1,7 @@
 """
 zyx.types.chat_completions_params
 
-Input argument types for creating chat completions.
+Input & output argument types for creating chat completions.
 """
 
 from __future__ import annotations
@@ -104,4 +104,16 @@ The tools parameter for chat completions.
 
 It can be one of the following types:
 - Optional[List[Union[Callable, BaseModel, Dict[str, Any]]]]: A list of tools, each as a Callable, BaseModel, or a dictionary.
+"""
+
+
+# ===================================================================
+# [Outputs]
+# ===================================================================
+
+
+# [Generic Chat Completion if response_format is provided as a generic type]
+TypeCompletion = Union[str, int, float, bool, List[str], List[int], List[float], List[bool]]
+"""
+A generic type for chat completions that are not zyx specific.
 """
