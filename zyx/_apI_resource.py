@@ -9,6 +9,7 @@ the `Instructor` library for structured outputs.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Optional, Type, Union, Mapping
 import httpx
 import time
@@ -82,7 +83,7 @@ class LiteLLMResource:
 # ===================================================================
 
 
-class APIResource:
+class APIResource(ABC):
     """
     Singleton resource manager for the `OpenAI` & `Instructor` API clients. Provides an integration
     to patch with the `Instructor` library for structured outputs.
@@ -127,20 +128,12 @@ class APIResource:
         _strict_response_validation: Optional[bool] = False,
         config: Optional[ClientConfig] = None,
         client: Optional[Union[OpenAI, LiteLLM]] = None,
-        verbose: bool = False,
-        debug: bool = False,
         **kwargs,
     ):
         # set default attributes
         self.provider = None
         self.client = None
         self.patch = None
-
-        # set verbosity level
-        if verbose:
-            logging.set_verbose(True)
-        if debug:
-            logging.set_debug(True)
 
         if client is not None:
             # simple check for openai or litellm for checking for chat attr
@@ -204,7 +197,31 @@ class APIResource:
             else:
                 logging.logger.debug(f"no config or provider recieved on initialization.. skipping client creation")
 
+
+    @abstractmethod
     def create_client(
+        self,
+        provider: Optional[ClientProvider] = None,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        organization: Optional[str] = None,
+        timeout: Optional[Union[float, httpx.Timeout, None]] = None,
+        max_retries: Optional[int] = None,
+        default_headers: Optional[Mapping[str, str]] = None,
+        project: Optional[str] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        websocket_base_url: Optional[str] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: Optional[bool] = False,
+        config: Optional[ClientConfig] = None,
+    ) -> None:
+        """
+        Creates a new client instance.
+        """
+        pass
+
+
+    def _create_client(
         self,
         provider: Optional[ClientProvider] = None,
         api_key: Optional[str] = None,
