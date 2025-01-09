@@ -89,6 +89,10 @@ class APIResource(ABC):
     to patch with the `Instructor` library for structured outputs.
     """
 
+    # implemenetation level property
+    supports_async : bool = False
+    # ----------------------------
+
     provider: Optional[ClientProvider] = None
     """The provider this manager is using."""
 
@@ -198,30 +202,45 @@ class APIResource(ABC):
                 logging.logger.debug(f"no config or provider recieved on initialization.. skipping client creation")
 
 
+    # ===================================================================
+    # [Abstract Methods & Properties]
+    # ===================================================================
+
+    
     @abstractmethod
-    def create_client(
+    def run(
         self,
-        provider: Optional[ClientProvider] = None,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        timeout: Optional[Union[float, httpx.Timeout, None]] = None,
-        max_retries: Optional[int] = None,
-        default_headers: Optional[Mapping[str, str]] = None,
-        project: Optional[str] = None,
-        default_query: Optional[Mapping[str, object]] = None,
-        websocket_base_url: Optional[str] = None,
-        http_client: Optional[httpx.Client] = None,
-        _strict_response_validation: Optional[bool] = False,
-        config: Optional[ClientConfig] = None,
+        *args,
+        **kwargs,
     ) -> None:
         """
-        Creates a new client instance.
+        Abstract method for the primary execution method of the resource.
         """
-        pass
+        ...
+
+    
+    # [Async]
+    @property
+    def supports_async(self) -> bool:
+        """
+        Returns whether the resource supports async execution.
+        """
+        return self.supports_async
+    
+
+    @abstractmethod
+    def run_async(
+        self,
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Abstract method for the primary execution method of the resource.
+        """
+        ...
 
 
-    def _create_client(
+    def create_client(
         self,
         provider: Optional[ClientProvider] = None,
         api_key: Optional[str] = None,
