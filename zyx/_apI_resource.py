@@ -138,9 +138,9 @@ class APIResource:
 
         # set verbosity level
         if verbose:
-            logging.set_verbosity_level(1)
+            logging.set_verbose(True)
         if debug:
-            logging.set_verbosity_level(2)
+            logging.set_debug(True)
 
         if client is not None:
             # simple check for openai or litellm for checking for chat attr
