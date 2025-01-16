@@ -20,6 +20,8 @@ requires-python = ">=3.9"
 # == package dependencies ==
 dependencies = [
     "burr>=0.37.1",
+    "cachetools>=5.5.0",
+    "cattrs>=24.1.2",
     "instructor>=1.7.2",
     "litellm>=1.55.10",
     "qdrant-client>=1.12.2",
