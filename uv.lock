@@ -274,6 +274,15 @@ wheels = [
 ]
 
 [[package]]
+name = "burr"
+version = "0.37.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/9b/402bff6f22a5534ce4d684a09f2d97164e668b4247f29bbb3d04b1431bdb/burr-0.37.1.tar.gz", hash = "sha256:2027f963dbe7f11f2274f914ab40ea7723dd65d18e659b4287615638ee2af286", size = 25464047 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e4/59/1bcda0d68e4b13d81bc06ac511035a0e78825bddb493142a090df308c682/burr-0.37.1-py3-none-any.whl", hash = "sha256:e5aca6665cd59862e47428baad033851d1ae5ae9f2873af6897ab2af9559a98d", size = 5791490 },
+]
+
+[[package]]
 name = "certifi"
 version = "2024.12.14"
 source = { registry = "https://pypi.org/simple" }
@@ -4034,6 +4043,7 @@ name = "zyx"
 version = "1.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "burr" },
     { name = "instructor" },
     { name = "jsonpatch" },
     { name = "litellm" },
@@ -4068,6 +4078,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "burr", specifier = ">=0.37.1" },
     { name = "instructor", specifier = ">=1.7.2" },
     { name = "jsonpatch", specifier = ">=1.33" },
     { name = "litellm", specifier = ">=1.55.10" },

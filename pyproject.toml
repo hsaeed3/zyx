@@ -23,6 +23,7 @@ dependencies = [
     "instructor>=1.7.2",
     "jsonpatch>=1.33",
     "networkx>=3.2.1",
+    "burr>=0.37.1",
 ]
 
 
