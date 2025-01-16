@@ -4,7 +4,7 @@
 Objects are pydantic models that are set in the state,
 and can be used to store data in a structured way.
 
-The point of objects is that they can be directly 
+The point of objects is that they can be directly
 augumented by the agent, and can be used to store / regenerate / read data
 in a structured way.
 
