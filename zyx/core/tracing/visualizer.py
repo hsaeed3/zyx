@@ -263,3 +263,4 @@ class TracingVisualizer:
 # -----------------------------------------------------------------------------
 
 tracing_visualizer = TracingVisualizer()
+"""Singleton for the TracingVisualizer class"""
