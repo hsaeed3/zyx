@@ -123,18 +123,20 @@ class TracingVisualizer:
     # -------------------------------------------------------------------------
     # [Live Rendering Helpers]
     # -------------------------------------------------------------------------
-    
+
     def print_header(self):
         """Print the tracing enabled header."""
         color = self._styles.randomcolor()
-        console.print(f"🔍 {self._styles.title('zyx')} [bold {color}]Tracing enabled![/bold {color}] - [italic {color}]events will be logged to console[/italic {color}]")
+        console.print(
+            f"🔍 {self._styles.title('zyx')} [bold {color}]Tracing enabled![/bold {color}] - [italic {color}]events will be logged to console[/italic {color}]"
+        )
 
     def _render_tree(self):
         """Renders a Rich.Tree dynamically based on the current logs & state."""
         # Only render tree if there are logs
         if not self._logs:
             return ""
-            
+
         root = Tree(f"{self._styles.title('🔎 Trace')}")
         for entity, tree in self._logs.items():
             root.add(tree)
@@ -172,7 +174,7 @@ class TracingVisualizer:
                     self._live = Live(
                         "",  # Start with empty content
                         console=console,
-                        refresh_per_second=4
+                        refresh_per_second=4,
                     )
                     self._live.start()
                     self._is_active = True
