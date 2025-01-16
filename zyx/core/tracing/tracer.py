@@ -380,7 +380,7 @@ def on(pattern: Union[str, TracedEventPattern], func: Optional[Callable] = None)
         raise
 
 
-def emit(event: Union[str, TracedEventType], data: Optional[Any] = None) -> Any:
+def emit(event: Union[str, TracedEventPattern], data: Optional[Any] = None) -> Any:
     """Emit an event to trigger registered hooks.
 
     Args:
