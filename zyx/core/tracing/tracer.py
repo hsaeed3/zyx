@@ -263,7 +263,7 @@ class Tracer:
             if patterns is True:
                 # Remove extra newlines and move print to visualizer
                 tracing_visualizer.print_header()
-            
+
             if patterns is False:
                 self.active_patterns.clear()
                 logger.debug("CORE:TRACER disabled all patterns")
