@@ -19,12 +19,22 @@ requires-python = ">=3.9"
 
 # == package dependencies ==
 dependencies = [
+    # Graph-Like API for building LLM Agents
     "burr>=0.37.1",
+    # Cache Tools
     "cachetools>=5.5.0",
+    # Cool Gizmos
     "cattrs>=24.1.2",
+    # Semantic Chunking
+    "chonkie>=0.4.1",
+    # Structured Outputs
     "instructor>=1.7.2",
+    # LLM API
     "litellm>=1.55.10",
+    # Vector DB
     "qdrant-client>=1.12.2",
+    # UI / CLI
+    "textual>=1.0.0",
 ]
 
 
@@ -32,7 +42,6 @@ dependencies = [
 [project.optional-dependencies]
 document = [
     "markitdown>=0.0.1a1",
-    "qdrant-client>=1.12.2",
 ]
 
 
