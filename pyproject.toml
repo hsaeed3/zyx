@@ -1,121 +1,72 @@
 [project]
-
-# == base metadata ==
 name = "zyx"
-version = "1.1.0"
-
-description = "zyx"
-authors = [
-    { name = "Hammad Saeed", email = "hvmmad@gmail.com" }
-]
-
-readme = "readme.md"
-license = { file = "LICENSE" }
-
-
-# == python version ==
-requires-python = ">=3.9"
-
-
-# == package dependencies ==
+version = "2.0.0"
+authors = [{name = "Hammad Saeed", email = "hammadaidev@gmail.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    # Graph-Like API for building LLM Agents
-    "burr>=0.37.1",
-    # Cache Tools
-    "cachetools>=5.5.0",
-    # Cool Gizmos
-    "cattrs>=24.1.2",
-    # Semantic Chunking
-    "chonkie>=0.4.1",
-    # Structured Outputs
-    "instructor>=1.7.2",
-    # LLM API
-    "litellm>=1.55.10",
-    # Vector DB
-    "qdrant-client>=1.12.2",
-    # UI / CLI
-    "textual>=1.0.0",
 ]
 
-
-# == optional dependencies ==
 [project.optional-dependencies]
-document = [
-    "markitdown>=0.0.1a1",
+litellm = [
+    "litellm"
+]
+poml = [
+    "poml"
 ]
 
-
-# == extra dependency groups ==
-[dependency-groups]
-# == dev tools ==
-dev = [
-    # core dev tools
-    # i love astral.sh
-    "ruff",
-    "uv",
-
-    # packaging
-    "twine",
-
-    # tests
-    "pytest",
-    "pytest-asyncio",
-
-    # docs
-    "mkdocstrings[python]",
-    "mkdocs-jupyter",
-    "mkdocs-material",
-    "mkdocs-material-extensions",
-    "mkdocs-git-revision-date-localized-plugin",
-    "mkdocs-git-revision-date-plugin",
-    "mkdocs-minify-plugin",
-    "mkdocs-awesome-pages-plugin",
-    "mkdocs-table-reader-plugin",
-]
-
-
-# == nanograph uses hatchling for package building ==
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["zyx"]
+exclude = [
+    "/docs",
+    "/.venv",
+    "/.pytest_cache",
+    "/__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    ".DS_Store",
+    "Thumbs.db",
+    "/libs",
+    "/scripts",
+    "/deprecated",
+    "/tests"
+]
 
-# == addition for zed IDE's (could be removed in future) ==
-# this is used to tell zed what venv to use for the python interpreter
-# assumes venv is at the root of the project
-# this is purely for dev
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
+[dependency-groups]
+dev = [
+    "ruff",
+    "uv",
+    "pytest",
+    "pytest-asyncio",
+    "twine>=6.1.0",
 
+    "ipython",
+    "ipykernel",
 
-# == ruff config ==
-[tool.ruff]
+    "mkdocs",
+    "mkdocstrings[python]",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-jupyter",
 
-# == base / core linting config ==
-# py3.9 assumed as it is lowest lib version
-target-version = "py39"
+    # dev
+    "poml"
+]
 
-# line length & indents
-line-length = 120
-indent-width = 4
-
-
-# == ruff linting config ==
-[tool.ruff.lint]
-# ensure '_' namespace is protected if vars are unused
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-
-# == ruff formatting config ==
-[tool.ruff.format]
-# strings in nanograph are double quoted
-quote-style = "double"
-# indent using spaces not tabs for consistency & more robust formatting
-indent-style = "space"
-# respect training commas
-skip-magic-trailing-comma = false
-# detect appropriate line ending
-line-ending = "auto"
-
-
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/docs",
+    "/.venv",
+    "/.pytest_cache",
+    "/__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    ".DS_Store",
+]
