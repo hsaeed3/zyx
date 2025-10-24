@@ -1,121 +1,46 @@
-[project]
-
-# == base metadata ==
-name = "zyx"
-version = "1.1.0"
-
-description = "zyx"
-authors = [
-    { name = "Hammad Saeed", email = "hvmmad@gmail.com" }
-]
-
-readme = "readme.md"
-license = { file = "LICENSE" }
-
-
-# == python version ==
-requires-python = ">=3.9"
-
-
-# == package dependencies ==
-dependencies = [
-    # Graph-Like API for building LLM Agents
-    "burr>=0.37.1",
-    # Cache Tools
-    "cachetools>=5.5.0",
-    # Cool Gizmos
-    "cattrs>=24.1.2",
-    # Semantic Chunking
-    "chonkie>=0.4.1",
-    # Structured Outputs
-    "instructor>=1.7.2",
-    # LLM API
-    "litellm>=1.55.10",
-    # Vector DB
-    "qdrant-client>=1.12.2",
-    # UI / CLI
-    "textual>=1.0.0",
-]
-
-
-# == optional dependencies ==
-[project.optional-dependencies]
-document = [
-    "markitdown>=0.0.1a1",
-]
-
-
-# == extra dependency groups ==
-[dependency-groups]
-# == dev tools ==
-dev = [
-    # core dev tools
-    # i love astral.sh
-    "ruff",
-    "uv",
-
-    # packaging
-    "twine",
-
-    # tests
-    "pytest",
-    "pytest-asyncio",
-
-    # docs
-    "mkdocstrings[python]",
-    "mkdocs-jupyter",
-    "mkdocs-material",
-    "mkdocs-material-extensions",
-    "mkdocs-git-revision-date-localized-plugin",
-    "mkdocs-git-revision-date-plugin",
-    "mkdocs-minify-plugin",
-    "mkdocs-awesome-pages-plugin",
-    "mkdocs-table-reader-plugin",
-]
-
-
-# == nanograph uses hatchling for package building ==
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
 
-# == addition for zed IDE's (could be removed in future) ==
-# this is used to tell zed what venv to use for the python interpreter
-# assumes venv is at the root of the project
-# this is purely for dev
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
+[tool.hatch.build.targets.wheel]
+packages = ["zyx"]
 
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = true
 
-# == ruff config ==
-[tool.ruff]
+[project]
+name = "zyx"
+dynamic = ["version"]
+description = "ZYX"
+authors = [{name = "Hammad Saeed", email = "hammadaidev@gmail.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.11"
+dependencies = [
+    "instructor>=1.11.3",
+    "litellm>=1.78.7",
+]
 
-# == base / core linting config ==
-# py3.9 assumed as it is lowest lib version
-target-version = "py39"
+[dependency-groups]
+dev = [
+    "logfire",
+    "ruff",
+    "uv",
+    "pytest",
+    "pytest-asyncio", 
+    "twine>=6.1.0",
 
-# line length & indents
-line-length = 120
-indent-width = 4
+    # all examples use marimo in favor of jupyter because marimo
+    # is very good :)
+    "marimo",
 
-
-# == ruff linting config ==
-[tool.ruff.lint]
-# ensure '_' namespace is protected if vars are unused
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-
-# == ruff formatting config ==
-[tool.ruff.format]
-# strings in nanograph are double quoted
-quote-style = "double"
-# indent using spaces not tabs for consistency & more robust formatting
-indent-style = "space"
-# respect training commas
-skip-magic-trailing-comma = false
-# detect appropriate line ending
-line-ending = "auto"
-
-
+    # docs
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocstrings[python]",
+]
