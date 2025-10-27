@@ -5,6 +5,11 @@ repo_url: https://github.com/hsaeed3/zyx
 
 theme:
   name: material
+  palette:
+    - scheme: zyx-gray
+      toggle:
+        icon: material/theme-light-dark
+        name: Switch theme
 
   icon:
     logo: material/emoticon-happy
@@ -35,15 +40,10 @@ theme:
     - content.code.line-numbers
     - content.tooltips
 
-  palette:
-    scheme: home-dark
-    primary: blue
-    accent: light blue
-
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/hsaeed3/zyx
+      link: https://github.com/hsaeed3/adhd
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/hsaeed3/
     - icon: fontawesome/brands/spotify
@@ -53,13 +53,6 @@ plugins:
   - mkdocstrings
   - search
   - tags
-  - mkdocs-jupyter:
-      highlight_extra_classes: "CodeMirror"
-      ignore_h1_titles: true
-      include_source: true
-      show_input: true
-      execute: false
-      include_buttons: true
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -76,8 +69,27 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.tabbed:
       alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - admonition
   - pymdownx.details
+  - def_list
+  - tables
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - "<span style='color: white;'>ZYX</span>":
+    - "Introduction": index.md
+    - Concepts:
+        - "Installation": concepts/installation.md
+        - "Templates" : concepts/templates.md
+        - "Getting Started": concepts/getting-started.md
 
 extra_css:
   - stylesheets/extras.css
+  - stylesheets/title-fx.css
+
+extra_javascript:
+  - stylesheets/title-fx.js

@@ -1,5 +1,16 @@
 # zyx
 
-I am currently in the process of rebuilding `zyx` from the ground up, with a new approach to nearly all steps of creating chat completions, agents & tooling. In the meantime, take a look at [`xnano`](https://github.com/hsaeed3/xnano) for the latest stable implementation of my LLM abstracts and tools.
+`zyx` is a fundamentally different (and much more fun may I add), way to interact with language and
+embedding models to define and iterate through workflows, agents, and more.
 
-> 🚧 🚧 🚧
+## Installation
+
+```bash
+pip install zyx
+```
+
+## Introduction
+
+The foundational idea of the framework is to provide an interface that standardizes on the OpenAI
+Chat Completions API format and rather than focus on the explcit definition of agents, provide a
+single, incredibly composable interface: `zyx.run()` and `zyx.arun()`.
