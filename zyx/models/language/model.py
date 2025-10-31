@@ -17,6 +17,8 @@ from ..providers import (
     ModelProvider,
     ModelProviderName,
     infer_language_model_provider,
+    custom_model_provider,
+    MODEL_PROVIDERS,
 )
 from .types import (
     LanguageModelSettings,
@@ -99,7 +101,17 @@ class LanguageModel(Generic[T]):
         self,
         model: LanguageModelName | str,
         *,
+        api_key: str | None = None,
         provider: ModelProvider | ModelProviderName | str,
+        settings: LanguageModelSettings | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        model: LanguageModelName | str,
+        *,
+        base_url: str,
         api_key: str | None = None,
         settings: LanguageModelSettings | None = None,
     ) -> None: ...
@@ -108,9 +120,10 @@ class LanguageModel(Generic[T]):
         self,
         model: LanguageModelName | str,
         *,
+        base_url: str | None = None,
+        api_key: str | None = None,
         adapter: ModelAdapter | ModelAdapterType | None = None,
         provider: ModelProvider | ModelProviderName | str | None = None,
-        api_key: str | None = None,
         settings: LanguageModelSettings | None = None,
     ):
         """Initialize a LanguageModel instance.
@@ -122,15 +135,24 @@ class LanguageModel(Generic[T]):
                 If AdapterType string ("auto", "openai", "litellm"), used for adapter selection.
             provider: Provider configuration (ModelProvider instance, provider name,
                 or custom base URL). If not provided, will be inferred from model name.
+            base_url: Custom base URL for the API endpoint. Cannot be used with provider.
             api_key: Optional API key override
             settings: Default settings for model invocations
 
         Raises:
-            ValueError: If model format is invalid or provider cannot be inferred
+            ValueError: If model format is invalid, provider cannot be inferred,
+                or both provider and base_url are specified
         """
         self._model = model
         self._settings = settings
         self._adapter = None
+
+        # Validate that both provider and base_url are not provided
+        if provider is not None and base_url is not None:
+            raise ValueError(
+                "Cannot specify both 'provider' and 'base_url'. "
+                "Use 'provider' for known providers or 'base_url' for custom endpoints."
+            )
 
         if adapter is not None:
             if isinstance(adapter, ModelAdapter):
@@ -145,6 +167,7 @@ class LanguageModel(Generic[T]):
                 self._adapter = self._create_adapter(
                     model=model,
                     provider=provider,
+                    base_url=base_url,
                     api_key=api_key,
                     adapter_type=adapter,
                 )
@@ -153,6 +176,7 @@ class LanguageModel(Generic[T]):
             self._adapter = self._create_adapter(
                 model=model,
                 provider=provider,
+                base_url=base_url,
                 api_key=api_key,
                 adapter_type="auto",
             )
@@ -161,6 +185,7 @@ class LanguageModel(Generic[T]):
         self,
         model: str,
         provider: ModelProvider | ModelProviderName | str | None,
+        base_url: str | None,
         api_key: str | None,
         adapter_type: str,
     ) -> ModelAdapter:
@@ -169,12 +194,27 @@ class LanguageModel(Generic[T]):
         Args:
             model: Model name
             provider: Provider configuration or None to infer
+            base_url: Custom base URL for the API endpoint
             api_key: Optional API key
             adapter_type: Type of adapter to create
 
         Returns:
             Configured ModelAdapter instance
         """
+        # Handle base_url case - create custom provider
+        if base_url is not None:
+            custom_provider = custom_model_provider(base_url=base_url, api_key=api_key)
+            if adapter_type == "litellm":
+                return LiteLLMModelAdapter(provider=custom_provider, api_key=api_key)
+            elif adapter_type == "openai":
+                return OpenAIModelAdapter(provider=custom_provider, api_key=api_key)
+            elif adapter_type == "auto":
+                # For custom base URLs, prefer OpenAI adapter as it's more compatible
+                _logger.debug(f"Using OpenAI adapter for custom base URL: {base_url}")
+                return OpenAIModelAdapter(provider=custom_provider, api_key=api_key)
+            else:
+                raise ValueError(f"Unknown adapter_type: {adapter_type}")
+
         # Parse model string to extract provider if prefixed
         model_provider = None
         model_name = model
@@ -217,8 +257,6 @@ class LanguageModel(Generic[T]):
             # Auto-select based on provider compatibility
             # Get provider object if it's a string
             if isinstance(provider, str):
-                from ..providers import MODEL_PROVIDERS
-
                 provider_obj = MODEL_PROVIDERS.get(provider.lower())
             else:
                 provider_obj = provider
@@ -497,7 +535,7 @@ class LanguageModel(Generic[T]):
         """Internal method for structured output generation."""
         _logger.debug(
             f"Running structured output with model: {self._model}, "
-            f"response_model: {response_model.__name__}, stream: {stream}"
+            f"response_model: {response_model}, stream: {stream}"
         )
 
         # Get instructor mode from settings or use default
