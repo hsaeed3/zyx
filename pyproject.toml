@@ -30,6 +30,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+anthropic = ["anthropic"]
 litellm = ["litellm"]
 mcp = ["mcp"]
 
