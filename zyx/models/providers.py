@@ -4,9 +4,7 @@ from enum import Enum
 from functools import lru_cache
 import os
 from typing import Dict, Literal, TypeAliasType
-from dataclasses import dataclass, field
-
-from openai import AsyncOpenAI
+from dataclasses import dataclass
 
 __all__ = [
     "ModelProviderName",
@@ -141,7 +139,7 @@ class ModelProvider:
             self.api_key_env,
             self.default_api_key if self.default_api_key is not None else None,
         )
-        if self.requires_api_key and env_api_key is None:
+        if self.requires_api_key is True and env_api_key is None:
             raise ValueError(
                 f"API key is required for provider '{self.name}', but none was provided "
                 f"and the environment variable '{self.api_key_env}' is not set."
