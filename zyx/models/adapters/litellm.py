@@ -138,33 +138,21 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         if provider is None:
             # Use default provider - LiteLLM will infer everything from model name
             self._provider = MODEL_PROVIDERS["LITELLM_BACKEND_DEFAULT"]
-            _logger.debug(
-                "Initialized LiteLLMModelAdapter with default provider (LiteLLM inference)"
-            )
 
         elif isinstance(provider, ModelProvider):
             # Direct ModelProvider instance
             self._provider = provider
-            _logger.debug(
-                f"Initialized LiteLLMModelAdapter with provider: {provider.name}"
-            )
 
         elif isinstance(provider, str):
             # String provider name or custom base URL
             if provider.lower() in MODEL_PROVIDERS:
                 # Known provider
                 self._provider = MODEL_PROVIDERS[provider.lower()]
-                _logger.debug(
-                    f"Initialized LiteLLMModelAdapter with known provider: {provider.lower()}"
-                )
             else:
                 # Custom base URL - create custom provider
                 self._provider = custom_model_provider(
                     base_url=provider,
                     api_key=api_key,
-                )
-                _logger.debug(
-                    f"Initialized LiteLLMModelAdapter with custom base url: {provider}"
                 )
         else:
             raise ValueError(
@@ -234,9 +222,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
                 self.client,  # This is litellm.acompletion
                 mode=instructor_mode,
             )
-            _logger.debug(
-                f"Created Instructor client for LiteLLM with mode: {instructor_mode}"
-            )
 
         if instructor_mode and self._instructor_client.mode != instructor_mode:
             self._instructor_client.mode = instructor_mode
@@ -262,10 +247,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         Returns:
             ChatCompletion or async iterable of ChatCompletionChunk
         """
-        _logger.debug(
-            f"Creating chat completion with model: {model}, stream: {stream}, "
-            f"using LiteLLMModelAdapter."
-        )
 
         # Ensure we have the client
         client = self.client
@@ -352,10 +333,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
             kwargs["api_key"] = self._api_key
 
         if stream:
-            _logger.debug(
-                f"LiteLLMModelAdapter generating structured output stream "
-                f"for model '{model}' with response model '{response_model.__name__}'."
-            )
 
             async def _gen():
                 try:
@@ -376,11 +353,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
 
             return _gen()
         else:
-            _logger.debug(
-                f"LiteLLMModelAdapter generating structured output "
-                f"for model '{model}' with response model '{response_model.__name__}'."
-            )
-
             try:
                 output = await instructor_client.chat.completions.create(
                     model=model,
@@ -410,7 +382,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         Returns:
             CreateEmbeddingResponse
         """
-        _logger.debug(f"LiteLLMModelAdapter generating embeddings for model '{model}'.")
 
         # Get LiteLLM module
         litellm = get_litellm()

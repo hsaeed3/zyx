@@ -125,10 +125,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                     base_url=self._provider.base_url,
                     http_client=http_client or cached_async_http_client(),
                 )
-
-                _logger.debug(
-                    f"Inherited preinitialized AsyncOpenAI client for provider or base url: {self._provider.name}."
-                )
             else:
                 if isinstance(provider, str):
                     # NOTE:
@@ -149,9 +145,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                                 ]
                             )
 
-                            _logger.debug(
-                                f"Reusing cached AsyncOpenAI client for provider: {provider.lower()}."
-                            )
                         else:
                             self._client = AsyncOpenAI(
                                 api_key=self._provider.get_api_key(api_key),
@@ -162,9 +155,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                                 provider.lower()
                             ] = self._client
 
-                            _logger.debug(
-                                f"Initialized a new AsyncOpenAI client for provider: {provider.lower()}."
-                            )
                     else:
                         self._provider = custom_model_provider(
                             base_url=provider, api_key=api_key
@@ -177,10 +167,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                         )
                         _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[provider] = (
                             self._client
-                        )
-
-                        _logger.debug(
-                            f"Initialized a new AsyncOpenAI client for custom base url: {provider}."
                         )
                 else:
                     raise ValueError(
@@ -245,14 +231,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
         stream: bool = False,
         **kwargs,
     ) -> ChatCompletion | AsyncIterable[ChatCompletionChunk]:
-        _logger.debug(
-            f"Creating chat completion with model: {model}, stream: {stream}, using OpenAIModelAdapter."
-        )
-        _logger.debug(
-            f"OpenAIModelAdapter generating chat completion for model '{model}' "
-            f"with stream={stream}."
-        )
-
         async def _stream_gen(params: dict):
             async for chunk in self.client.chat.completions.create(**params):
                 yield chunk
@@ -315,11 +293,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
         if stream:
 
             async def _gen():
-                _logger.debug(
-                    f"OpenAIModelAdapter generating structured output stream "
-                    f"for model '{model}' with response model '{response_model.__name__}'."
-                )
-
                 try:
                     async for output in client.chat.completions.create_partial(
                         model=model,
@@ -336,11 +309,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
 
             return _gen()
         else:
-            _logger.debug(
-                f"OpenAIModelAdapter generating structured output "
-                f"for model '{model}' with response model '{response_model.__name__}'."
-            )
-
             try:
                 output = await client.chat.completions.create(
                     model=model,
@@ -359,8 +327,6 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
     async def create_embedding(
         self, model: str, input: Iterable[str], **kwargs
     ) -> CreateEmbeddingResponse:
-        _logger.debug(f"OpenAIModelAdapter generating embeddings for model '{model}'.")
-
         params = {
             "model": model,
             "input": input,

@@ -486,8 +486,8 @@ class LanguageModel(Generic[T]):
         settings: dict,
     ) -> LanguageModelResponse[str] | AsyncIterator[LanguageModelResponse[str]]:
         """Internal method for standard text completions."""
-        _logger.debug(
-            f"Running text completion with model: {self._model}, stream: {stream}"
+        _logger.info(
+            f"Generating chat completion with model: {self._model}, stream: {stream} & adapter: '{self._adapter.name}'."
         )
 
         # ensure instructor mode is not present
@@ -549,9 +549,9 @@ class LanguageModel(Generic[T]):
         settings: dict,
     ) -> LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]:
         """Internal method for structured output generation."""
-        _logger.debug(
+        _logger.info(
             f"Running structured output with model: {self._model}, "
-            f"response_model: {response_model}, stream: {stream}"
+            f"response_model: {response_model}, stream: {stream} & adapter: '{self._adapter.name}'."
         )
 
         # Get instructor mode from settings or use default

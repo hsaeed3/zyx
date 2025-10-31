@@ -288,7 +288,6 @@ class EmbeddingModel:
         _logger.info(
             f"Generating embeddings using model '{self.model}' with adapter '{self._adapter.name}'"
         )
-        _logger.debug(f"Using settings: {merged_settings}")
 
         return await self._adapter.create_embedding(
             model=self.model,
