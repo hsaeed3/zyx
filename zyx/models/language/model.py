@@ -10,7 +10,7 @@ from openai.types.chat.chat_completion_message_param import ChatCompletionMessag
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 from ...core._logging import _get_logger
-from ..adapters import ModelAdapter, ModelAdapterType
+from ..adapters import ModelAdapter, ModelAdapterType, InstructorModeName
 from ..adapters.openai import OpenAIModelAdapter
 from ..adapters.litellm import LiteLLMModelAdapter, is_litellm_initialized
 from ..providers import (
@@ -49,6 +49,9 @@ class LanguageModel(Generic[T]):
         - Flexible configuration through settings
 
     Examples:
+        ```python
+        from zyx.models import LanguageModel
+
         # Standard text completion
         model = LanguageModel("openai/gpt-4")
         response = await model.arun("What is 2+2?")
@@ -73,6 +76,7 @@ class LanguageModel(Generic[T]):
         model = LanguageModel("openai/gpt-4")
         async for chunk in model.arun("Write a story", stream=True):
             print(chunk.output, end="", flush=True)
+        ```
     """
 
     _model: str
@@ -314,7 +318,7 @@ class LanguageModel(Generic[T]):
         type: Type[T] = str,
         tools: Iterable[ChatCompletionToolParam] | None = None,
         stream: bool = False,
-        instructor_mode: str | InstructorMode | None = None,
+        instructor_mode: InstructorModeName | InstructorMode | None = None,
         settings: LanguageModelSettings | None = None,
         **kwargs,
     ) -> LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]:
@@ -333,6 +337,9 @@ class LanguageModel(Generic[T]):
             LanguageModelResponse or async iterator of responses if streaming
 
         Examples:
+            ```python
+            from zyx.models import LanguageModel
+
             # Simple text completion
             response = await model.arun("What is 2+2?")
             print(response.output)  # "4"
@@ -347,6 +354,7 @@ class LanguageModel(Generic[T]):
             # Streaming
             async for chunk in model.arun("Write a story", stream=True):
                 print(chunk.output, end="")
+            ```
         """
         # Normalize messages to list format
         if isinstance(messages, str):
@@ -396,7 +404,7 @@ class LanguageModel(Generic[T]):
         type: Type[T] = str,
         tools: Iterable[ChatCompletionToolParam] | None = None,
         stream: bool = False,
-        instructor_mode: str | InstructorMode | None = None,
+        instructor_mode: InstructorModeName | InstructorMode | None = None,
         settings: LanguageModelSettings | None = None,
         **kwargs,
     ) -> LanguageModelResponse[T] | Iterator[LanguageModelResponse[T]]:
@@ -481,6 +489,14 @@ class LanguageModel(Generic[T]):
         _logger.debug(
             f"Running text completion with model: {self._model}, stream: {stream}"
         )
+
+        # ensure instructor mode is not present
+        # .... not worth to assert
+        if "instructor_mode" in settings:
+            _logger.warning(
+                "`instructor_mode` parameter found for standard chat completion of output type `str`. This parameter will be ignored."
+            )
+            settings.pop("instructor_mode")
 
         # Clean model name (remove provider prefix if present)
         model_name = self._adapter.provider.clean_model(self._model)

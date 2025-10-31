@@ -83,23 +83,55 @@ def _pretty_print_language_model_response(response: LanguageModelResponse) -> st
     return content
 
 
-def _rich_pretty_print_language_model_response(response: LanguageModelResponse) -> str:
-    content = "[bold dodger_blue2]LanguageModelResponse:[/bold dodger_blue2]\n"
-    content += (
-        f"{response.output if response.output is not None else 'No Output Content'}"
+def _rich_pretty_print_language_model_response(response: LanguageModelResponse):
+    from rich.table import Table
+    from rich import box
+    from rich.text import Text
+    from rich.console import Group
+    from rich.markup import escape
+
+    output_table = Table(
+        show_edge=False,
+        show_header=True,
+        expand=False,
+        row_styles=["none", "dim"],
+        box=box.SIMPLE,
+    )
+    output_table.add_column(
+        f"\n[bold dodger_blue2]LanguageModelResponse:",
+        style="bold dodger_blue2",
+        no_wrap=True,
+    )
+    output_table.add_column("", justify="right")
+
+    output_table.add_row("", f"[italic]{escape(str(response.output))}[/italic]")
+
+    output_table.add_row(
+        "\n[dim sandy_brown]Model:[/dim sandy_brown]",
+        f"\n[dim italic]{escape(response.model)}[/dim italic]",
     )
 
-    content += f"\n\n[bold sandy_brown]>>>[/bold sandy_brown] [sandy_brown]Model[/sandy_brown]: [italic]{response.model}[/italic]"
-
     if response.output and not isinstance(response.output, str):
-        content += f"\n[bold sandy_brown]>>>[/bold sandy_brown] [sandy_brown]Type[/sandy_brown]: [italic]{response.type}[/italic]"
-        content += f"\n[bold sandy_brown]>>>[/bold sandy_brown] [sandy_brown]Instructor Mode[/sandy_brown]: [italic]{response.instructor_mode.name}[/italic]"
+        output_table.add_row(
+            "[dim sandy_brown]Type:[/dim sandy_brown]",
+            f"[dim italic]{escape(str(response.type))}[/dim italic]",
+        )
+        output_table.add_row(
+            "[dim sandy_brown]Instructor Mode:[/dim sandy_brown]",
+            f"[dim italic]{escape(response.instructor_mode.name)}[/dim italic]",
+        )
 
     if response.is_streamed:
-        content += "\n[bold sandy_brown]>>>[/bold sandy_brown] [sandy_brown]Streamed Response[/sandy_brown]: [italic]True[/italic]"
+        output_table.add_row(
+            "[dim sandy_brown]Streamed Response:[/dim sandy_brown]",
+            "[dim italic]True[/dim italic]",
+        )
     if response.has_tool_calls and not response.is_structured:
-        content += f"\n[bold sandy_brown]>>>[/bold sandy_brown] [sandy_brown]Tools Called[/sandy_brown]: [italic]{', '.join(response.get_tools_called)}[/italic]"
-    return content
+        output_table.add_row(
+            "[dim sandy_brown]Tools Called:[/dim sandy_brown]",
+            f"[dim italic]{escape(', '.join(response.get_tools_called))}[/dim italic]",
+        )
+    return Group(output_table, Text.from_markup(""))
 
 
 class LanguageModelResponse(BaseModel, Generic[T]):
@@ -122,7 +154,9 @@ class LanguageModelResponse(BaseModel, Generic[T]):
     `None` in the case a language model response contains no message content,
     (e.g., when only tool calls are made)."""
 
-    completion: ChatCompletion | ChatCompletionChunk | None = Field(default=None)
+    completion: ChatCompletion | ChatCompletionChunk | None = Field(
+        default=None, repr=False
+    )
     """The full chat completion response or streamed chat completion chunk from
     the model."""
 
@@ -130,9 +164,6 @@ class LanguageModelResponse(BaseModel, Generic[T]):
     """The `instructor` mode used to generate the structured output, if applicable.
     This is `None` if the response does not involve structured output generation.
     """
-
-    def __repr__(self) -> str:
-        return _pretty_print_language_model_response(self)
 
     def __str__(self) -> str:
         return _pretty_print_language_model_response(self)

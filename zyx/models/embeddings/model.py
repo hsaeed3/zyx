@@ -319,15 +319,20 @@ class EmbeddingModel:
         """
         import asyncio
 
-        return asyncio.run(
-            self.arun(
-                input=input,
-                dimensions=dimensions,
-                encoding_format=encoding_format,
-                user=user,
-                **kwargs,
+        # Create a new event loop to avoid issues with closed or nested loops
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(
+                self.arun(
+                    input=input,
+                    dimensions=dimensions,
+                    encoding_format=encoding_format,
+                    user=user,
+                    **kwargs,
+                )
             )
-        )
+        finally:
+            loop.close()
 
     def _merge_settings(
         self,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable, Iterable, Callable
-from typing import Generic, TypeVar, Type, Tuple, TypeAlias, Literal
+from typing import Generic, TypeVar, Type, Tuple, TypeAlias, Literal, TypeAliasType
 
 from instructor import AsyncInstructor, Mode as InstructorMode
 from openai.types.chat.chat_completion import ChatCompletion
@@ -31,6 +31,52 @@ ModelAdapterClient = TypeVar("ModelAdapterClient")
 ResponseModel = TypeVar("ResponseModel")
 """Helper typevar representation for the `response_model` parameter used when
 generating structured outputs through `instructor`."""
+
+
+InstructorModeName = TypeAliasType(
+    "InstructorModeName",
+    Literal[
+        "function_call",  # deprecated as per instructor 1.11.3
+        "parallel_tool_call",
+        "tool_call",
+        "tools_strict",
+        "json_mode",
+        "json_o1",
+        "markdown_json_mode",
+        "json_schema_mode",
+        "responses_tools",
+        "responses_tools_with_inbuilt_tools",
+        "xai_json",
+        "xai_tools",
+        "anthropic_tools",
+        "anthropic_reasoning_tools",
+        "anthropic_json",
+        "anthropic_parallel_tools",
+        "mistral_tools",
+        "mistral_structured_outputs",
+        "vertexai_tools",
+        "vertexai_json",
+        "vertexai_parallel_tools",
+        "gemini_json",
+        "gemini_tools",
+        "genai_tools",
+        "genai_structured_outputs",
+        "cohere_tools",
+        "json_object",
+        "cerebras_tools",
+        "cerebras_json",
+        "fireworks_tools",
+        "fireworks_json",
+        "writer_tools",
+        "writer_json",
+        "bedrock_tools",
+        "bedrock_json",
+        "perplexity_json",
+        "openrouter_structured_outputs",
+    ],
+)
+"""String alias for `instructor.mode.Mode`. There is no real
+need for this to exist, but it is and we are."""
 
 
 class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
@@ -129,7 +175,7 @@ class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
         model: str,
         messages: Iterable[ChatCompletionMessageParam],
         response_model: Type[ResponseModel],
-        instructor_mode: InstructorMode | str | None = None,
+        instructor_mode: InstructorMode | InstructorModeName | None = None,
         stream: bool = False,
         **kwargs,
     ) -> (
