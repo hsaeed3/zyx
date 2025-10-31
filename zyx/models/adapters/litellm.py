@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+# NOTE:
+# used for litellm async client warnings
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    category=RuntimeWarning,
+    message="coroutine 'close_litellm_async_clients' was never awaited",
+)
+
 from collections.abc import AsyncIterable, Iterable, Callable
 from functools import lru_cache
 from importlib.util import find_spec
 from typing import Type, Tuple
 import time
 
-from instructor import (
-    from_litellm,
-    AsyncInstructor,
-    Mode as InstructorMode
-)
+from instructor import from_litellm, AsyncInstructor, Mode as InstructorMode
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -72,21 +78,24 @@ def get_litellm():
         litellm.modify_params = True
         _LITELLM_INSTANCE = litellm
 
-        _logger.info("Completed One Time Load of `LiteLLM` in %.2f seconds", time.time() - start_time)
+        _logger.info(
+            "Completed One Time Load of `LiteLLM` in %.2f seconds",
+            time.time() - start_time,
+        )
 
     return _LITELLM_INSTANCE
 
 
 class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
     """Model adapter for LiteLLM-based model providers.
-    
+
     LiteLLM acts as a universal adapter that can communicate with any LLM provider.
     Unlike OpenAIModelAdapter which uses an AsyncOpenAI client instance, this adapter
     uses LiteLLM's module-level functions (acompletion, aembedding) directly.
-    
+
     NOTE: The `client` attribute for this adapter represents `litellm.acompletion`
     callable rather than a class instance.
-    
+
     Model Name Format:
         LiteLLM expects provider-prefixed model names:
         - "openai/gpt-4"
@@ -107,7 +116,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         api_key: str | None = None,
     ):
         """Initialize a new `LiteLLMModelAdapter` instance.
-        
+
         Args:
             provider: The `ModelProvider`, `ModelProviderName` string, or custom
                 base url string to use. If not provided, uses a default provider
@@ -129,26 +138,34 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         if provider is None:
             # Use default provider - LiteLLM will infer everything from model name
             self._provider = MODEL_PROVIDERS["LITELLM_BACKEND_DEFAULT"]
-            _logger.debug("Initialized LiteLLMModelAdapter with default provider (LiteLLM inference)")
-        
+            _logger.debug(
+                "Initialized LiteLLMModelAdapter with default provider (LiteLLM inference)"
+            )
+
         elif isinstance(provider, ModelProvider):
             # Direct ModelProvider instance
             self._provider = provider
-            _logger.debug(f"Initialized LiteLLMModelAdapter with provider: {provider.name}")
-        
+            _logger.debug(
+                f"Initialized LiteLLMModelAdapter with provider: {provider.name}"
+            )
+
         elif isinstance(provider, str):
             # String provider name or custom base URL
             if provider.lower() in MODEL_PROVIDERS:
                 # Known provider
                 self._provider = MODEL_PROVIDERS[provider.lower()]
-                _logger.debug(f"Initialized LiteLLMModelAdapter with known provider: {provider.lower()}")
+                _logger.debug(
+                    f"Initialized LiteLLMModelAdapter with known provider: {provider.lower()}"
+                )
             else:
                 # Custom base URL - create custom provider
                 self._provider = custom_model_provider(
                     base_url=provider,
                     api_key=api_key,
                 )
-                _logger.debug(f"Initialized LiteLLMModelAdapter with custom base url: {provider}")
+                _logger.debug(
+                    f"Initialized LiteLLMModelAdapter with custom base url: {provider}"
+                )
         else:
             raise ValueError(
                 "The `provider` parameter must be either a `ModelProvider`, "
@@ -169,7 +186,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
     @property
     def client(self) -> Callable:
         """Returns the litellm.acompletion function.
-        
+
         Note: This is a function, not a client instance. LiteLLM uses
         module-level functions rather than client objects.
         """
@@ -194,14 +211,13 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         return self._instructor_client
 
     def get_instructor_client(
-        self,
-        instructor_mode: InstructorMode | str | None = None
+        self, instructor_mode: InstructorMode | str | None = None
     ) -> AsyncInstructor:
         """Retrieve an `Instructor` client patched from LiteLLM.
-        
+
         Args:
             instructor_mode: The instructor mode to use. Defaults to TOOLS.
-        
+
         Returns:
             AsyncInstructor instance configured for LiteLLM
         """
@@ -216,9 +232,11 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
             # the completion function, not a client instance
             self._instructor_client = self.instructor_patch_fn(
                 self.client,  # This is litellm.acompletion
-                mode=instructor_mode
+                mode=instructor_mode,
             )
-            _logger.debug(f"Created Instructor client for LiteLLM with mode: {instructor_mode}")
+            _logger.debug(
+                f"Created Instructor client for LiteLLM with mode: {instructor_mode}"
+            )
 
         if instructor_mode and self._instructor_client.mode != instructor_mode:
             self._instructor_client.mode = instructor_mode
@@ -230,17 +248,17 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         model: str,
         messages: Iterable[ChatCompletionMessageParam],
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> ChatCompletion | AsyncIterable[ChatCompletionChunk]:
         """Create a chat completion using LiteLLM.
-        
+
         Args:
             model: Model name (should be provider-prefixed for LiteLLM,
                 e.g., "openai/gpt-4", "anthropic/claude-3-opus")
             messages: Chat messages
             stream: Whether to stream the response
             **kwargs: Additional parameters to pass to LiteLLM
-        
+
         Returns:
             ChatCompletion or async iterable of ChatCompletionChunk
         """
@@ -254,27 +272,24 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
 
         # Add API key to kwargs if we have one
         if self._api_key:
-            kwargs['api_key'] = self._api_key
+            kwargs["api_key"] = self._api_key
 
         try:
             if stream:
+
                 async def _stream_gen():
                     async for chunk in await client(
-                        model=model,
-                        messages=messages,
-                        stream=True,
-                        **kwargs
+                        model=model, messages=messages, stream=True, **kwargs
                     ):
                         # Validate and convert LiteLLM response to OpenAI format
-                        yield _validate_litellm_response(chunk, "chat_completion:stream")
-                
+                        yield _validate_litellm_response(
+                            chunk, "chat_completion:stream"
+                        )
+
                 return _stream_gen()
             else:
                 response = await client(
-                    model=model,
-                    messages=messages,
-                    stream=False,
-                    **kwargs
+                    model=model, messages=messages, stream=False, **kwargs
                 )
                 # Validate and convert LiteLLM response to OpenAI format
                 return _validate_litellm_response(response, "chat_completion")
@@ -291,10 +306,13 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         response_model: Type[ResponseModel],
         instructor_mode: InstructorMode | str | None = None,
         stream: bool = False,
-        **kwargs
-    ) -> Tuple[ResponseModel, ChatCompletion] | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]:
+        **kwargs,
+    ) -> (
+        Tuple[ResponseModel, ChatCompletion]
+        | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]
+    ):
         """Create a structured output using LiteLLM and Instructor.
-        
+
         Args:
             model: Model name (provider-prefixed for LiteLLM)
             messages: Chat messages
@@ -302,7 +320,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
             instructor_mode: Instructor mode to use
             stream: Whether to stream the response
             **kwargs: Additional parameters
-        
+
         Returns:
             Tuple of (structured_output, completion) or async iterable of tuples
         """
@@ -313,7 +331,9 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         def _response_callback(response: ChatCompletion | ChatCompletionChunk):
             nonlocal completion
             if stream:
-                completion = _validate_litellm_response(response, "chat_completion:stream")
+                completion = _validate_litellm_response(
+                    response, "chat_completion:stream"
+                )
             else:
                 completion = _validate_litellm_response(response, "chat_completion")
 
@@ -329,7 +349,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
 
         # Add API key to kwargs if we have one
         if self._api_key:
-            kwargs['api_key'] = self._api_key
+            kwargs["api_key"] = self._api_key
 
         if stream:
             _logger.debug(
@@ -339,11 +359,13 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
 
             async def _gen():
                 try:
-                    async for output in instructor_client.chat.completions.create_partial(
+                    async for (
+                        output
+                    ) in instructor_client.chat.completions.create_partial(
                         model=model,
                         messages=messages,
                         response_model=response_model,
-                        **kwargs
+                        **kwargs,
                     ):
                         yield (output, completion)
                 except Exception as e:
@@ -364,7 +386,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
                     model=model,
                     messages=messages,
                     response_model=response_model,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 raise RuntimeError(
@@ -375,39 +397,30 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
             return (output, completion)
 
     async def create_embedding(
-        self,
-        model: str,
-        input: Iterable[str],
-        **kwargs
+        self, model: str, input: Iterable[str], **kwargs
     ) -> CreateEmbeddingResponse:
         """Create embeddings using LiteLLM.
-        
+
         Args:
             model: Model name (provider-prefixed for LiteLLM,
                 e.g., "openai/text-embedding-3-small")
             input: Text input(s) to embed
             **kwargs: Additional parameters
-        
+
         Returns:
             CreateEmbeddingResponse
         """
-        _logger.debug(
-            f"LiteLLMModelAdapter generating embeddings for model '{model}'."
-        )
+        _logger.debug(f"LiteLLMModelAdapter generating embeddings for model '{model}'.")
 
         # Get LiteLLM module
         litellm = get_litellm()
 
         # Add API key to kwargs if we have one
         if self._api_key:
-            kwargs['api_key'] = self._api_key
+            kwargs["api_key"] = self._api_key
 
         try:
-            response = await litellm.aembedding(
-                model=model,
-                input=input,
-                **kwargs
-            )
+            response = await litellm.aembedding(model=model, input=input, **kwargs)
             return _validate_litellm_response(response, "embedding")
         except Exception as e:
             raise RuntimeError(
@@ -416,21 +429,20 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
 
 
 def _validate_litellm_response(
-    response,
-    response_type: str
+    response, response_type: str
 ) -> ChatCompletion | ChatCompletionChunk | CreateEmbeddingResponse:
     """Validate and convert LiteLLM responses to OpenAI format.
-    
+
     LiteLLM returns its own response objects that are similar but not identical
     to OpenAI's. This function validates and converts them to proper OpenAI types.
-    
+
     Args:
         response: LiteLLM response object
         response_type: Type of response ("chat_completion", "chat_completion:stream", "embedding")
-    
+
     Returns:
         Validated OpenAI-format response
-    
+
     Raises:
         ValueError: If response validation fails
     """
