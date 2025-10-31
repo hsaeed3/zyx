@@ -5,12 +5,13 @@ import logging
 from rich import get_console
 from rich.logging import RichHandler
 from rich import traceback
+
 traceback.install(console=get_console(), width=120, extra_lines=3)
 
 __all__ = ["_get_logger"]
 
 
-_ZYX_LOGGER : logging.Logger | None = None
+_ZYX_LOGGER: logging.Logger | None = None
 """Singleton logger instance for the `zyx` library."""
 
 
@@ -22,16 +23,16 @@ class _ZyxRichHandler(RichHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
-            console = get_console(),
-            markup = True,
-            rich_tracebacks = True,
-            tracebacks_show_locals = True,
-            show_time = True,
-            show_path = False,
-            **kwargs
+            console=get_console(),
+            markup=True,
+            rich_tracebacks=True,
+            tracebacks_show_locals=True,
+            show_time=True,
+            show_path=False,
+            **kwargs,
         )
 
-    def get_level_text(self, record : logging.LogRecord) -> str:
+    def get_level_text(self, record: logging.LogRecord) -> str:
         level_name = record.levelname
         level_no = record.levelno
 
@@ -47,8 +48,8 @@ class _ZyxRichHandler(RichHandler):
             return f"[bold white on red]{level_name}[/bold white on red]"
         else:
             return f"[bold]{level_name}[/bold]"
-        
-    def render_message(self, record : logging.LogRecord, message : str) -> str:
+
+    def render_message(self, record: logging.LogRecord, message: str) -> str:
         level_no = record.levelno
 
         if level_no == logging.CRITICAL or level_no == logging.ERROR:
@@ -72,12 +73,12 @@ def _get_logger(
         level = logging.NOTSET
     if isinstance(level, str):
         level = logging.getLevelNamesMapping()[level.upper()]
-    
+
     global _ZYX_LOGGER
     logger_name = name or "zyx"
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
-    
+
     # Only add handler to root 'zyx' logger
     if logger_name == "zyx":
         if not any(isinstance(h, RichHandler) for h in logger.handlers):
@@ -85,15 +86,15 @@ def _get_logger(
             rich_handler.setLevel(logging.NOTSET)
             logger.addHandler(rich_handler)
             logger.propagate = False
-        
+
         if _ZYX_LOGGER is None:
             _ZYX_LOGGER = logger
     else:
         # All child loggers propagate to root
         logger.propagate = True
         # Do not add handler to child loggers
-    
+
     if _ZYX_LOGGER is None:
         _ZYX_LOGGER = _get_logger("zyx", level)
-    
+
     return logger

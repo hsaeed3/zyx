@@ -6,20 +6,14 @@ from collections.abc import AsyncIterable, Iterable
 from functools import lru_cache
 from typing import Type, Tuple, overload, Dict
 
-from instructor import (
-    from_openai,
-    AsyncInstructor,
-    Mode as InstructorMode
-)
+from instructor import from_openai, AsyncInstructor, Mode as InstructorMode
 from httpx import AsyncClient
 from openai import AsyncOpenAI
 from openai.types.completion_create_params import (
     CompletionCreateParamsNonStreaming,
-    CompletionCreateParamsStreaming
+    CompletionCreateParamsStreaming,
 )
-from openai.types.embedding_create_params import (
-    EmbeddingCreateParams
-)
+from openai.types.embedding_create_params import EmbeddingCreateParams
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -38,12 +32,14 @@ from . import ModelAdapter, ResponseModel
 _logger = _get_logger(__name__)
 
 
-_OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT : AsyncClient | None = None
+_OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT: AsyncClient | None = None
 """Singlton instance of an `AsyncClient` used by default for all
 `OpenAIModelAdapter` instances that do not provide their own `http_client`."""
 
 
-_OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS : Dict[ModelProviderName | str, AsyncOpenAI] = {}
+_OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS: Dict[
+    ModelProviderName | str, AsyncOpenAI
+] = {}
 """Cache of `AsyncOpenAI` clients keyed by their provider name or custom
 base url string."""
 
@@ -53,35 +49,33 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
     providers, and any custom defined providers through a base url.
     """
 
-    _provider : ModelProvider
+    _provider: ModelProvider
 
-    _client : AsyncOpenAI
-    _instructor_client : AsyncInstructor
+    _client: AsyncOpenAI
+    _instructor_client: AsyncInstructor
 
     @overload
     def __init__(
         self,
         *,
-        provider : ModelProvider | ModelProviderName | str = "openai",
-        api_key : str | None = None,
-        http_client : AsyncClient | None = None
-    ):
-        ...
+        provider: ModelProvider | ModelProviderName | str = "openai",
+        api_key: str | None = None,
+        http_client: AsyncClient | None = None,
+    ): ...
 
     @overload
-    def __init__(self, *, openai_client : AsyncOpenAI):
-        ...
+    def __init__(self, *, openai_client: AsyncOpenAI): ...
 
     def __init__(
         self,
         *,
-        provider : ModelProvider | ModelProviderName | str | None = None,
-        api_key : str | None = None,
-        http_client : AsyncClient | None = None,
-        openai_client : AsyncOpenAI | None = None
+        provider: ModelProvider | ModelProviderName | str | None = None,
+        api_key: str | None = None,
+        http_client: AsyncClient | None = None,
+        openai_client: AsyncOpenAI | None = None,
     ):
         """Initialize a new `OpenAIModelAdapter` instance.
-        
+
         Args:
             provider: The `ModelProvider`, `ModelProviderName` string, or custom
                 base url string to use for this backend. If not provided,
@@ -97,9 +91,9 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                 instance to use directly. If provided, the `provider`, `api_key`,
                 and `http_client` parameters must not be provided.
         """
-        self._client : AsyncOpenAI = None
-        self._instructor_client : AsyncInstructor = None
-        self._provider : ModelProvider = None
+        self._client: AsyncOpenAI = None
+        self._instructor_client: AsyncInstructor = None
+        self._provider: ModelProvider = None
 
         assert provider is not None or openai_client is not None, (
             "Either a `provider` or an existing `openai_client` must be provided to instantiate an OpenAIModelAdapter.\n\n"
@@ -108,23 +102,28 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
         )
 
         if openai_client is not None:
-            assert provider is None, ("Cannot provide both an existing `openai_client` and a `provider` parameter.")
-            assert api_key is None, ("Cannot provide both an existing `openai_client` and an `api_key` parameter.")
-            assert http_client is None, ("Cannot provide both an existing `openai_client` and a custom `http_client` parameter.")
+            assert provider is None, (
+                "Cannot provide both an existing `openai_client` and a `provider` parameter."
+            )
+            assert api_key is None, (
+                "Cannot provide both an existing `openai_client` and an `api_key` parameter."
+            )
+            assert http_client is None, (
+                "Cannot provide both an existing `openai_client` and a custom `http_client` parameter."
+            )
 
             self._client = openai_client
             self._provider = custom_model_provider(
-                base_url = self._client.base_url,
-                api_key = self._client.api_key
+                base_url=self._client.base_url, api_key=self._client.api_key
             )
         else:
             if isinstance(provider, ModelProvider):
                 self._provider = provider
 
                 self._client = AsyncOpenAI(
-                    api_key = self._provider.get_api_key(api_key),
-                    base_url = self._provider.base_url,
-                    http_client = http_client or cached_async_http_client()
+                    api_key=self._provider.get_api_key(api_key),
+                    base_url=self._provider.base_url,
+                    http_client=http_client or cached_async_http_client(),
                 )
 
                 _logger.debug(
@@ -133,42 +132,52 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
             else:
                 if isinstance(provider, str):
                     # NOTE:
-                    # if a custom provider has been initialized once, it should 
+                    # if a custom provider has been initialized once, it should
                     # be able to pull it on the next initialization if needed
                     if provider.lower() in MODEL_PROVIDERS:
                         self._provider = MODEL_PROVIDERS[provider.lower()]
 
                         global _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS
 
-                        if provider.lower() in _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS:
-                            self._client = _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[provider.lower()]
+                        if (
+                            provider.lower()
+                            in _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS
+                        ):
+                            self._client = (
+                                _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[
+                                    provider.lower()
+                                ]
+                            )
 
                             _logger.debug(
                                 f"Reusing cached AsyncOpenAI client for provider: {provider.lower()}."
                             )
                         else:
                             self._client = AsyncOpenAI(
-                                api_key = self._provider.get_api_key(api_key),
-                                base_url = self._provider.base_url,
-                                http_client = http_client or cached_async_http_client()
+                                api_key=self._provider.get_api_key(api_key),
+                                base_url=self._provider.base_url,
+                                http_client=http_client or cached_async_http_client(),
                             )
-                            _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[provider.lower()] = self._client
+                            _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[
+                                provider.lower()
+                            ] = self._client
 
                             _logger.debug(
                                 f"Initialized a new AsyncOpenAI client for provider: {provider.lower()}."
                             )
                     else:
                         self._provider = custom_model_provider(
-                            base_url = provider,
-                            api_key = api_key
+                            base_url=provider, api_key=api_key
                         )
 
                         self._client = AsyncOpenAI(
-                            api_key = self._provider.get_api_key(api_key),
-                            base_url = self._provider.base_url,
-                            http_client = http_client or cached_async_http_client()
+                            api_key=self._provider.get_api_key(api_key),
+                            base_url=self._provider.base_url,
+                            http_client=http_client or cached_async_http_client(),
                         )
-                        _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[provider] = self._client
+                        _OPENAI_MODEL_ADAPTER_CACHED_ASYNC_OPENAI_CLIENTS[provider] = (
+                            self._client
+                        )
 
                         _logger.debug(
                             f"Initialized a new AsyncOpenAI client for custom base url: {provider}."
@@ -182,35 +191,34 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
     @property
     def name(self) -> str:
         return "openai"
-    
+
     @property
     def provider(self) -> ModelProvider:
         return self._provider
-    
+
     @property
     def client(self) -> AsyncOpenAI:
         return self._client
-    
+
     @property
     def instructor_patch_fn(self):
         return from_openai
-    
+
     @property
     def instructor_mode(self) -> InstructorMode:
         if self._instructor_client is not None:
             return self._instructor_client.mode
-        
+
     @property
     def instructor_client(self) -> AsyncInstructor:
         return self._instructor_client
-        
+
     def get_instructor_client(
-        self,
-        instructor_mode : InstructorMode | str | None = None
+        self, instructor_mode: InstructorMode | str | None = None
     ) -> AsyncInstructor:
         """Retrieve an `Instructor` client patched from the primary client associated
         with this model backend.
-        
+
         If no `instructor_mode` is provided, the default mode set is
         `instructor.Mode.TOOLS`.
         """
@@ -222,23 +230,21 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                 instructor_mode = InstructorMode.TOOLS
 
             self._instructor_client = self.instructor_patch_fn(
-                self.client,
-                instructor_mode
+                self.client, instructor_mode
             )
 
         if instructor_mode:
             self._instructor_client.mode = instructor_mode
 
         return self._instructor_client
-    
+
     async def create_chat_completion(
         self,
-        model : str,
-        messages : list[ChatCompletionMessageParam],
-        stream : bool = False,
-        **kwargs
+        model: str,
+        messages: list[ChatCompletionMessageParam],
+        stream: bool = False,
+        **kwargs,
     ) -> ChatCompletion | AsyncIterable[ChatCompletionChunk]:
-        
         _logger.debug(
             f"Creating chat completion with model: {model}, stream: {stream}, using OpenAIModelAdapter."
         )
@@ -247,10 +253,8 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
             f"with stream={stream}."
         )
 
-        async def _stream_gen(params : dict):
-            async for chunk in self.client.chat.completions.create(
-                **params
-            ):
+        async def _stream_gen(params: dict):
+            async for chunk in self.client.chat.completions.create(**params):
                 yield chunk
 
         params = {
@@ -274,32 +278,32 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
             if stream:
                 return _stream_gen(params)
             else:
-                return await self.client.chat.completions.create(
-                    **params
-                )
+                return await self.client.chat.completions.create(**params)
         except Exception as e:
             raise RuntimeError(
                 f"Error during chat completion with model '{model}': {e}"
             ) from e
-        
+
     async def create_structured_output(
         self,
-        model : str,
-        messages : Iterable[ChatCompletionMessageParam],
-        response_model : Type[ResponseModel],
-        instructor_mode : InstructorMode | str | None = None,
-        stream : bool = False,
-        **kwargs
-    ) -> Tuple[ResponseModel, ChatCompletion] | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]:
-
+        model: str,
+        messages: Iterable[ChatCompletionMessageParam],
+        response_model: Type[ResponseModel],
+        instructor_mode: InstructorMode | str | None = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> (
+        Tuple[ResponseModel, ChatCompletion]
+        | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]
+    ):
         client = self.get_instructor_client(instructor_mode)
 
-        completion : ChatCompletion | ChatCompletionChunk = None
+        completion: ChatCompletion | ChatCompletionChunk = None
 
         def _response_callback(response):
             nonlocal completion
             completion = response
-        
+
         client.on("completion:response", _response_callback)
 
         if isinstance(instructor_mode, str):
@@ -309,6 +313,7 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
             client.mode = instructor_mode
 
         if stream:
+
             async def _gen():
                 _logger.debug(
                     f"OpenAIModelAdapter generating structured output stream "
@@ -317,10 +322,10 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
 
                 try:
                     async for output in client.chat.completions.create_partial(
-                        model = model,
-                        messages = messages,
-                        response_model = response_model,
-                        **kwargs
+                        model=model,
+                        messages=messages,
+                        response_model=response_model,
+                        **kwargs,
                     ):
                         yield (output, completion)
                 except Exception as e:
@@ -328,6 +333,7 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                         f"Error during streamed structured output generation "
                         f"with model '{model}': {e}"
                     ) from e
+
             return _gen()
         else:
             _logger.debug(
@@ -337,10 +343,10 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
 
             try:
                 output = await client.chat.completions.create(
-                    model = model,
-                    messages = messages,
-                    response_model = response_model,
-                    **kwargs
+                    model=model,
+                    messages=messages,
+                    response_model=response_model,
+                    **kwargs,
                 )
             except Exception as e:
                 raise RuntimeError(
@@ -349,17 +355,11 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                 ) from e
 
             return (output, completion)
-    
-    async def create_embedding(
-        self,
-        model : str,
-        input : Iterable[str],
-        **kwargs
-    ) -> CreateEmbeddingResponse:
 
-        _logger.debug(
-            f"OpenAIModelAdapter generating embeddings for model '{model}'."
-        )
+    async def create_embedding(
+        self, model: str, input: Iterable[str], **kwargs
+    ) -> CreateEmbeddingResponse:
+        _logger.debug(f"OpenAIModelAdapter generating embeddings for model '{model}'.")
 
         params = {
             "model": model,
@@ -373,9 +373,7 @@ class OpenAIModelAdapter(ModelAdapter[AsyncOpenAI, ResponseModel]):
                 params[k] = v
 
         try:
-            return await self.client.embeddings.create(
-                **params
-            )
+            return await self.client.embeddings.create(**params)
         except Exception as e:
             raise RuntimeError(
                 f"Error during embedding generation with model '{model}': {e}"
@@ -389,7 +387,7 @@ def cached_async_http_client() -> AsyncClient:
     if _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT is None:
         _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT = AsyncClient()
         return _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT
-    
+
     if _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT.is_closed:
         _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT = AsyncClient()
     return _OPENAI_MODEL_ADAPTER_ASYNC_HTTP_CLIENT
