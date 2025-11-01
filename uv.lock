@@ -1305,7 +1305,7 @@ wheels = [
 
 [[package]]
 name = "marimo"
-version = "0.17.5"
+version = "0.17.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1326,9 +1326,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/10/eb6941daee8efb8ba6368ebf57d47be78dbbd698c83333af8cf78d7f2544/marimo-0.17.5.tar.gz", hash = "sha256:a985fb777bb2f1874f76a84af37a1ea2358f1edeca0620df07abaa2fe9e859eb", size = 33975335, upload-time = "2025-10-30T21:34:01.576Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/71/c628d970b2d27f69aa862c2d27802e325116fc2c090d71609a82d43a0cf0/marimo-0.17.6.tar.gz", hash = "sha256:88eadc0f635c4d8b8bf404170830621ede9cc1585c275449dd546a31505c157c", size = 33455675, upload-time = "2025-10-31T18:23:46.065Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/7b/9bd2e1021030d39efc7de52b949098c30889e27b96c134d63c3e1641a55f/marimo-0.17.5-py3-none-any.whl", hash = "sha256:b1afea61de03657a71077763160c230c81011659bebc1d259906eb578bcd0e3e", size = 34492982, upload-time = "2025-10-30T21:34:05.187Z" },
+    { url = "https://files.pythonhosted.org/packages/53/7d/35935281130b50105573dffb7e67c31bf590ae721529be3efe1e5e5e5458/marimo-0.17.6-py3-none-any.whl", hash = "sha256:d34f9a2fc77ef842cc921e6bdd0f66affa1c61a336f355ed232e9e69d029ffae", size = 33971874, upload-time = "2025-10-31T18:23:41.155Z" },
 ]
 
 [[package]]
@@ -1790,11 +1790,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "2.10.0"
+version = "2.10.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/56/e5/ef07d31c2e07d99eecac8e14ace5c20aeb00ecba4ed5bb00343136380524/narwhals-2.10.0.tar.gz", hash = "sha256:1c05bbef2048a4045263de7d98c3d06140583eb13d796dd733b2157f05d24485", size = 582423, upload-time = "2025-10-27T17:55:55.632Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/c4/71f10e273c7192ace91b22766e1955f99be14980079147b492f5f9b5cbd5/narwhals-2.10.1.tar.gz", hash = "sha256:d6e3a9b1c0904a82984dec58a3d12b3bc08e9d61bbee639e7bb05349e663d036", size = 584727, upload-time = "2025-10-31T17:09:30.745Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/13/024ae0586d901f8a6f99e2d29b4ae217e8ef11d3fd944cdfc3bbde5f2a08/narwhals-2.10.0-py3-none-any.whl", hash = "sha256:baed44e8fc38e800e3a585e3fa9843a7079a6fad5fbffbecee4348d6ac52298c", size = 418077, upload-time = "2025-10-27T17:55:53.709Z" },
+    { url = "https://files.pythonhosted.org/packages/62/cd/9481a199a086ac9f91eaa232b56cff90ca7fdc2cb6658de93825b1007094/narwhals-2.10.1-py3-none-any.whl", hash = "sha256:eed3d9ec8f821963456fef306c1ad11017995982169fca1f38f71c97d6a97b9b", size = 419490, upload-time = "2025-10-31T17:09:28.898Z" },
 ]
 
 [[package]]
@@ -3522,6 +3522,7 @@ dependencies = [
     { name = "markitdown" },
     { name = "nest-asyncio" },
     { name = "sqlite-vec" },
+    { name = "typer-slim" },
 ]
 
 [package.optional-dependencies]
@@ -3559,6 +3560,7 @@ requires-dist = [
     { name = "mcp", marker = "extra == 'mcp'" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "sqlite-vec", specifier = ">=0.1.6" },
+    { name = "typer-slim", specifier = ">=0.20.0" },
 ]
 provides-extras = ["anthropic", "litellm", "mcp"]
 
