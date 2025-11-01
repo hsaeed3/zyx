@@ -82,10 +82,6 @@ markdown_extensions:
 nav:
   - "<span style='color: white;'>ZYX</span>":
     - "Introduction": index.md
-    - Concepts:
-        - "Installation": concepts/installation.md
-        - "Templates" : concepts/templates.md
-        - "Getting Started": concepts/getting-started.md
 
 extra_css:
   - stylesheets/extras.css
