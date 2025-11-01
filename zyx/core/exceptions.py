@@ -1,5 +1,7 @@
 """zyx.core.exceptions"""
 
+from typing import Any, Dict
+
 from rich import get_console
 from rich import traceback
 
@@ -8,9 +10,14 @@ traceback.install()
 __all__ = [
     "rich_warning",
     "ZyxError",
+    "InstructorLibraryException",
     "ModelProviderException",
     "ModelProviderInferenceException",
     "ModelAdapterException",
+    "LiteLLMModelAdapterError",
+    "OpenAIModelAdapterError",
+    "ModelRequestException",
+    "ModelResponseException",
 ]
 
 
@@ -124,3 +131,71 @@ class OpenAIModelAdapterError(ModelAdapterException):
 
     def __init__(self, message: str, *args, **kwargs):
         super().__init__(name="openai", message=message, *args, **kwargs)
+
+
+class ModelRequestException(zyxError):
+    """Base exception raised if an error occurs during parameter formatting
+    or rendering prior to sending a request to a generative AI model."""
+
+    def __init__(
+        self,
+        model: str,
+        type: str = "",
+        message: str = "",
+        params: Dict[str, Any] | None = None,
+        *args,
+        **kwargs,
+    ):
+        self.model = model
+        self.type = type
+        self.params = params
+        self.message = message
+        super().__init__(message, *args, **kwargs)
+
+    def __str__(self) -> str:
+        content = f"Error generating a response from AI Model: {self.model} of type {self.type.upper()}.\n"
+        if self.params:
+            content += " \nRelevant Parameters:\n"
+            content += "\n".join(
+                [f"  - {key}: {value}" for key, value in self.params.items()]
+            )
+        else:
+            content += "."
+        if self.message:
+            content += f"\n\n{self.message}"
+
+        return content
+
+
+class ModelResponseException(zyxError):
+    """Base exception raised if a generative AI model fails to return a
+    response"""
+
+    def __init__(
+        self,
+        model: str,
+        type: str = "",
+        message: str = "",
+        params: Dict[str, Any] | None = None,
+        *args,
+        **kwargs,
+    ):
+        self.model = model
+        self.type = type
+        self.params = params
+        self.message = message
+        super().__init__(message, *args, **kwargs)
+
+    def __str__(self) -> str:
+        content = f"Error processing request for ai model: {self.model} of type {self.type.upper()}.\n"
+        if self.params:
+            content += " \nRelevant Parameters:\n"
+            content += "\n".join(
+                [f"  - {key}: {value}" for key, value in self.params.items()]
+            )
+        else:
+            content += "."
+        if self.message:
+            content += f"\n\n{self.message}"
+
+        return content

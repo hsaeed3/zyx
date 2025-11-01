@@ -29,6 +29,8 @@ from ..providers import (
     ModelProvider,
 )
 from .types import (
+    LanguageModelRequestError,
+    LanguageModelResponseError,
     LanguageModelSettings,
     LanguageModelResponse,
     LanguageModelName,
@@ -539,9 +541,19 @@ class LanguageModel(Generic[T]):
 
             return _stream_wrapper()
         else:
-            completion = await self._adapter.create_chat_completion(
-                model=model_name, messages=messages, stream=False, **settings
-            )
+            try:
+                completion = await self._adapter.create_chat_completion(
+                    model=model_name, messages=messages, stream=False, **settings
+                )
+            except Exception as e:
+                raise LanguageModelResponseError(
+                    model=self._model,
+                    type=self._adapter.provider.name
+                    if self._adapter.provider
+                    else None,
+                    message="Error generating chat completion.",
+                    params={"stream": False},
+                )
 
             # Extract content from completion
             content = None

@@ -13,6 +13,11 @@ from openai.types.chat.chat_completion_message_tool_call import (
 )
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 
+from ....core.exceptions import (
+    ModelRequestException,
+    ModelResponseException,
+)
+
 __all__ = [
     "LanguageModelSettings",
     "LanguageModelResponse",
@@ -22,6 +27,18 @@ __all__ = [
 
 T = TypeVar("T")
 """Generic variable alias for the structured output type of a language model."""
+
+
+class LanguageModelRequestError(ModelRequestException):
+    """Exception raised when there is an error in the language model request."""
+
+    pass
+
+
+class LanguageModelResponseError(ModelResponseException):
+    """Exception raised when there is an error in the language model response."""
+
+    pass
 
 
 class LanguageModelSettings(BaseModel):
