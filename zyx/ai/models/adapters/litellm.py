@@ -1,9 +1,9 @@
-"""zyx.models.adapters.litellm"""
+"""zyx.ai.models.adapters.litellm"""
 
 from __future__ import annotations
 
 # NOTE:
-# used for litellm async client warnings
+# avoids litellm async client warnings
 import warnings
 
 warnings.filterwarnings(
@@ -12,29 +12,39 @@ warnings.filterwarnings(
     message="coroutine 'close_litellm_async_clients' was never awaited",
 )
 
+import logging
 from collections.abc import AsyncIterable, Iterable, Callable
 from functools import lru_cache
 from importlib.util import find_spec
 from typing import Type, Tuple
 import time
 
-from instructor import from_litellm, AsyncInstructor, Mode as InstructorMode
+from pydantic import BaseModel
+
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.create_embedding_response import CreateEmbeddingResponse
 
-from ...core._logging import _get_logger
-from ..providers import (
-    ModelProvider,
-    ModelProviderName,
-    MODEL_PROVIDERS,
-    custom_model_provider,
+from ....core.exceptions import (
+    LiteLLMModelAdapterError,
+    ModelProviderInferenceException,
 )
-from . import ModelAdapter, ResponseModel
+from ...utils.structured_outputs import (
+    from_litellm,
+    StructuredOutputType,
+    AsyncInstructor,
+    InstructorMode,
+    InstructorModeName,
+    prepare_structured_output_model,
+)
+from ..providers import ModelProviderInfo, ModelProvider, ModelProviderName
+from . import ModelAdapter
+
+__all__ = ["LiteLLMModelAdapter"]
 
 
-_logger = _get_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 _LITELLM_INSTANCE = None
@@ -42,8 +52,8 @@ _LITELLM_INSTANCE = None
 
 
 def _raise_litellm_not_available_error() -> None:
-    raise ImportError(
-        "LiteLLM is required to use non-OpenAI or OpenAI-like model providers. \n"
+    raise LiteLLMModelAdapterError(
+        "LiteLLM is required to use non-OpenAI or OpenAI-like model providers.\n"
         "You can install LiteLLM via pip with either:\n\n"
         "    `pip install litellm`\n\n"
         "    `pip install 'zyx[litellm]'`\n"
@@ -86,7 +96,7 @@ def get_litellm():
     return _LITELLM_INSTANCE
 
 
-class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
+class LiteLLMModelAdapter(ModelAdapter[Callable, StructuredOutputType]):
     """Model adapter for LiteLLM-based model providers.
 
     LiteLLM acts as a universal adapter that can communicate with any LLM provider.
@@ -104,63 +114,58 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         - etc.
     """
 
-    _provider: ModelProvider
-    _api_key: str | None
+    _provider: ModelProviderInfo
     _client: Callable
     _instructor_client: AsyncInstructor
 
+    # NOTE:
+    # only if cases explicitly given, this normally
+    # wont be needed when using litellm
+    _api_key: str | None = None
+
     def __init__(
         self,
+        provider: ModelProviderName | ModelProviderInfo | None = None,
         *,
-        provider: ModelProvider | ModelProviderName | None = None,
         api_key: str | None = None,
     ):
-        """Initialize a new `LiteLLMModelAdapter` instance.
+        """Initialize the LiteLLM model adapter.
 
         Args:
-            provider: The `ModelProvider`, `ModelProviderName` string, or custom
-                base url string to use. If not provided, uses a default provider
-                that lets LiteLLM handle all inference.
-            api_key: An optional API key string to use for authentication.
-                If not provided, LiteLLM will attempt to retrieve the API key
-                from environment variables based on the model name.
+            provider: The model provider name or info. If `None`, attempts to
+                infer the provider based on environment variables or defaults to
+                'openai'.
+            api_key: Optional API key for the model provider.
         """
         self._provider = None
         self._api_key = None
         self._client = None
         self._instructor_client = None
 
-        # Verify LiteLLM is available
         if not is_litellm_available():
             _raise_litellm_not_available_error()
 
-        # Handle provider initialization
         if provider is None:
-            # Use default provider - LiteLLM will infer everything from model name
-            self._provider = MODEL_PROVIDERS["LITELLM_BACKEND_DEFAULT"]
-
-        elif isinstance(provider, ModelProvider):
-            # Direct ModelProvider instance
-            self._provider = provider
-
-        elif isinstance(provider, str):
-            # String provider name or custom base URL
-            if provider.lower() in MODEL_PROVIDERS:
-                # Known provider
-                self._provider = MODEL_PROVIDERS[provider.lower()]
-            else:
-                # Custom base URL - create custom provider
-                self._provider = custom_model_provider(
-                    base_url=provider,
-                    api_key=api_key,
-                )
-        else:
-            raise ValueError(
-                "The `provider` parameter must be either a `ModelProvider`, "
-                "`ModelProviderName` string, or a custom base url string."
+            self._provider = ModelProviderInfo(
+                name="LITELLM_DEFAULT",
+                supported_adapters=["litellm"],
             )
+        else:
+            if isinstance(provider, str):
+                self._provider = ModelProvider.get_provider(provider)
+            else:
+                self._provider = provider
 
-        # Store API key if provided (overrides provider's default)
+            if not "litellm" in self._provider.supported_adapters:
+                raise ModelProviderInferenceException(
+                    model="Unknown",
+                    message=(
+                        f"The specified provider '{self._provider.name}' "
+                        "does not support the 'litellm' adapter."
+                    ),
+                )
+
+        # set api key if provided
         self._api_key = api_key
 
     @property
@@ -168,7 +173,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         return "litellm"
 
     @property
-    def provider(self) -> ModelProvider:
+    def provider(self) -> ModelProviderInfo:
         return self._provider
 
     @property
@@ -276,7 +281,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
                 return _validate_litellm_response(response, "chat_completion")
 
         except Exception as e:
-            raise RuntimeError(
+            raise LiteLLMModelAdapterError(
                 f"Error during chat completion with model '{model}': {e}"
             ) from e
 
@@ -284,13 +289,13 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         self,
         model: str,
         messages: Iterable[ChatCompletionMessageParam],
-        response_model: Type[ResponseModel],
-        instructor_mode: InstructorMode | str | None = None,
+        response_model: Type[StructuredOutputType],
+        instructor_mode: InstructorMode | InstructorModeName | None = None,
         stream: bool = False,
         **kwargs,
     ) -> (
-        Tuple[ResponseModel, ChatCompletion]
-        | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]
+        Tuple[StructuredOutputType, ChatCompletion]
+        | AsyncIterable[Tuple[StructuredOutputType, ChatCompletionChunk]]
     ):
         """Create a structured output using LiteLLM and Instructor.
 
@@ -305,6 +310,10 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         Returns:
             Tuple of (structured_output, completion) or async iterable of tuples
         """
+        # handle response model
+        if not isinstance(response_model, BaseModel):
+            response_model = prepare_structured_output_model(response_model)
+
         instructor_client = self.get_instructor_client(instructor_mode)
 
         completion: ChatCompletion | ChatCompletionChunk = None
@@ -346,7 +355,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
                     ):
                         yield (output, completion)
                 except Exception as e:
-                    raise RuntimeError(
+                    raise LiteLLMModelAdapterError(
                         f"Error during streamed structured output generation "
                         f"with model '{model}': {e}"
                     ) from e
@@ -361,11 +370,10 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
                     **kwargs,
                 )
             except Exception as e:
-                raise RuntimeError(
+                raise LiteLLMModelAdapterError(
                     f"Error during structured output generation with model "
                     f"'{model}': {e}"
                 ) from e
-
             return (output, completion)
 
     async def create_embedding(
@@ -382,7 +390,6 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
         Returns:
             CreateEmbeddingResponse
         """
-
         # Get LiteLLM module
         litellm = get_litellm()
 
@@ -394,7 +401,7 @@ class LiteLLMModelAdapter(ModelAdapter[Callable, ResponseModel]):
             response = await litellm.aembedding(model=model, input=input, **kwargs)
             return _validate_litellm_response(response, "embedding")
         except Exception as e:
-            raise RuntimeError(
+            raise LiteLLMModelAdapterError(
                 f"Error during embedding generation with model '{model}': {e}"
             ) from e
 

@@ -1,4 +1,4 @@
-"""zyx.models.adapters"""
+"""zyx.ai.models.adapters"""
 
 from __future__ import annotations
 
@@ -6,80 +6,39 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable, Iterable, Callable
 from typing import Generic, TypeVar, Type, Tuple, TypeAlias, Literal, TypeAliasType
 
-from instructor import AsyncInstructor, Mode as InstructorMode
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.create_embedding_response import CreateEmbeddingResponse
 
-import nest_asyncio
+from ...utils.structured_outputs import (
+    AsyncInstructor,
+    InstructorMode,
+    InstructorModeName,
+    StructuredOutputType,
+)
+from ..providers import ModelProviderInfo
 
-nest_asyncio.apply()
-
-from ..providers import ModelProvider
-
-__all__ = ["ModelAdapter", "ModelAdapterClient", "ModelAdapterType", "ResponseModel"]
+__all__ = ["ModelAdapter", "ModelAdapterClient", "ModelAdapterName"]
 
 
-ModelAdapterType: TypeAlias = Literal["auto", "openai", "litellm"]
+ModelAdapterName = TypeAliasType(
+    "ModelAdapterName",
+    Literal[
+        "auto",
+        "openai",
+        "litellm",
+    ],
+)
+"""Represents the strategy or name of a model adapter to use with
+a specified model provider."""
 
 
 ModelAdapterClient = TypeVar("ModelAdapterClient")
 """Generic variable alias for the client object attached to a model adapter."""
 
 
-ResponseModel = TypeVar("ResponseModel")
-"""Helper typevar representation for the `response_model` parameter used when
-generating structured outputs through `instructor`."""
-
-
-InstructorModeName = TypeAliasType(
-    "InstructorModeName",
-    Literal[
-        "function_call",  # deprecated as per instructor 1.11.3
-        "parallel_tool_call",
-        "tool_call",
-        "tools_strict",
-        "json_mode",
-        "json_o1",
-        "markdown_json_mode",
-        "json_schema_mode",
-        "responses_tools",
-        "responses_tools_with_inbuilt_tools",
-        "xai_json",
-        "xai_tools",
-        "anthropic_tools",
-        "anthropic_reasoning_tools",
-        "anthropic_json",
-        "anthropic_parallel_tools",
-        "mistral_tools",
-        "mistral_structured_outputs",
-        "vertexai_tools",
-        "vertexai_json",
-        "vertexai_parallel_tools",
-        "gemini_json",
-        "gemini_tools",
-        "genai_tools",
-        "genai_structured_outputs",
-        "cohere_tools",
-        "json_object",
-        "cerebras_tools",
-        "cerebras_json",
-        "fireworks_tools",
-        "fireworks_json",
-        "writer_tools",
-        "writer_json",
-        "bedrock_tools",
-        "bedrock_json",
-        "perplexity_json",
-        "openrouter_structured_outputs",
-    ],
-)
-"""String alias for `instructor.mode.Mode`. There is no real
-need for this to exist, but it is and we are."""
-
-
-class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
+class ModelAdapter(ABC, Generic[ModelAdapterClient, StructuredOutputType]):
     """Abstract base class for a model adapter. A model adapter is responsible
     for providing an interface for a specific LLM provider. A model adapter
     cannot be initialized without a valid `ModelProvider`.
@@ -93,14 +52,16 @@ class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
 
     @property
     @abstractmethod
-    def provider(self) -> ModelProvider:
-        """The currently set `ModelProvider` associated with this model backend."""
+    def provider(self) -> ModelProviderInfo:
+        """The currently set `ModelProviderInfo` associated with this model backend."""
+        raise NotImplementedError()
 
     @property
     @abstractmethod
     def client(self) -> ModelAdapterClient:
         """The client object used to interact with the LLM provider's API.
         This is directly instantiated by the model adapter."""
+        raise NotImplementedError()
 
     @property
     @abstractmethod
@@ -174,13 +135,13 @@ class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
         self,
         model: str,
         messages: Iterable[ChatCompletionMessageParam],
-        response_model: Type[ResponseModel],
+        response_model: Type[StructuredOutputType],
         instructor_mode: InstructorMode | InstructorModeName | None = None,
         stream: bool = False,
         **kwargs,
     ) -> (
-        Tuple[ResponseModel, ChatCompletion]
-        | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]
+        Tuple[StructuredOutputType, ChatCompletion]
+        | AsyncIterable[Tuple[StructuredOutputType, ChatCompletionChunk]]
     ):
         """Create a structured output using the specified model, messages,
         and response model.
@@ -189,7 +150,7 @@ class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
             model (str): The model to use for the structured output.
             messages (Iterable[ChatCompletionMessageParam]): The messages to
                 include in the structured output.
-            response_model (Type[ResponseModel]): The response model to use
+            response_model (Type[StructuredOutputType]): The response model to use
                 for structuring the output.
             instructor_mode (InstructorMode | str | None, optional): The
                 instructor mode to use. Defaults to None.
@@ -199,7 +160,7 @@ class ModelAdapter(ABC, Generic[ModelAdapterClient, ResponseModel]):
                 API call.
 
         Returns:
-            Tuple[ResponseModel, ChatCompletion] | AsyncIterable[Tuple[ResponseModel, ChatCompletionChunk]]:
+            Tuple[StructuredOutputType, ChatCompletion] | AsyncIterable[Tuple[StructuredOutputType, ChatCompletionChunk]]:
                 The structured output and chat completion
                 response or an async iterable of structured outputs and chat
                 completion chunks if streaming is enabled.

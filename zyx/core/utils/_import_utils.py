@@ -17,6 +17,12 @@ import inspect
 import ast
 import hashlib
 
+from ._logging import _get_logger
+
+# `_import_utils` is always the first module to be initialized
+# within `zyx`, so logging will always be setup here
+_get_logger()
+
 
 __all__ = (
     "type_checking_getattr_fn",
