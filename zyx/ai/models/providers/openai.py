@@ -106,6 +106,14 @@ OPENAI_MODEL_PROVIDERS: Dict[str | ModelProviderName, ModelProviderInfo] = {
         supported_embedding_model_prefixes=frozenset({"text-embedding-"}),
         supported_adapters=frozenset({"openai", "litellm"}),
     ),
+    "openrouter": ModelProviderInfo(
+        name="openrouter",
+        base_url="https://openrouter.ai/api/v1",
+        api_key_env="OPENROUTER_API_KEY",
+        api_key_required=True,
+        api_key_default=None,
+        supported_adapters=frozenset({"openai", "litellm"}),
+    ),
     "ollama": ModelProviderInfo(
         name="ollama",
         base_url="http://localhost:11434/v1",
