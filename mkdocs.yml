@@ -82,6 +82,7 @@ markdown_extensions:
 nav:
   - "<span style='color: white;'>ZYX</span>":
     - "Introduction": index.md
+    - "Getting Started": getting-started.md
 
 extra_css:
   - stylesheets/extras.css
@@ -89,3 +90,4 @@ extra_css:
 
 extra_javascript:
   - stylesheets/title-fx.js
+  - stylesheets/markdown-fx.js
