@@ -1,30 +1,51 @@
 """zyx.models"""
 
-from .._internal import _import_utils
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .embeddings.model import EmbeddingModel
-    from .embeddings.types import EmbeddingModelName, EmbeddingEncodingFormat
+from .._lib import _import_utils
 
-    from .language.model import LanguageModel
+if TYPE_CHECKING:
+    from .clients import ModelClient
+    from .definition import ModelDefinition
+    from .embeddings.model import EmbeddingModel, arun_embed, embedder, run_embed
+    from .embeddings.types import (
+        EmbeddingEncodingFormat,
+        EmbeddingModelName,
+        EmbeddingModelSettings,
+    )
+    from .language.model import LanguageModel, arun_llm, llm, run_llm
     from .language.types import (
         LanguageModelName,
-        LanguageModelSettings,
         LanguageModelResponse,
+        LanguageModelSettings,
     )
+    from .providers import ModelProvider, ModelProviderRegistry
 
 
 __all__ = [
-    # zyx.models.embeddings
-    "EmbeddingModel",
-    "EmbeddingModelName",
-    "EmbeddingEncodingFormat",
+    # zyx.models.definition
+    "ModelDefinition",
+    # zyx.models.providers
+    "ModelProvider",
+    "ModelProviderRegistry",
+    # zyx.models.clients
+    "ModelClient",
     # zyx.models.language
     "LanguageModel",
+    "llm",
+    "run_llm",
+    "arun_llm",
     "LanguageModelName",
-    "LanguageModelSettings",
     "LanguageModelResponse",
+    "LanguageModelSettings",
+    # zyx.models.embeddings
+    "EmbeddingModel",
+    "embedder",
+    "run_embed",
+    "arun_embed",
+    "EmbeddingModelName",
+    "EmbeddingEncodingFormat",
+    "EmbeddingModelSettings",
 ]
 
 

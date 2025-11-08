@@ -3,27 +3,22 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from functools import cached_property
 from dataclasses import dataclass
-from typing import (
-    Generic,
-    Type,
-    Literal,
-    TypeAliasType,
-    TypeVar,
-)
+from functools import cached_property
+from typing import Generic, Literal, Type, TypeAliasType, TypeVar
 
 from instructor import Mode
-
 from openai.types.chat.chat_completion import ChatCompletion
-from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_assistant_message_param import (
     ChatCompletionAssistantMessageParam,
 )
+from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
 )
 from openai.types.completion_usage import CompletionUsage
+
+from ..definition import ModelSettings
 
 __all__ = [
     "LanguageModelSettings",
@@ -36,7 +31,7 @@ T = TypeVar("T")
 
 
 @dataclass
-class LanguageModelSettings:
+class LanguageModelSettings(ModelSettings):
     """A definition of a language model, and associated settings.
 
     A language model can be defined within `zyx` by using a
@@ -66,6 +61,10 @@ class LanguageModelSettings:
 
     parallel_tool_calls: bool | None = None
     """Whether to allow parallel tool calls when invoking the model."""
+
+    @property
+    def kind(self) -> str:
+        return "language_model"
 
 
 @dataclass
@@ -98,14 +97,12 @@ class LanguageModelResponse(Generic[T]):
     """
 
     def __str__(self):
-        from ..._internal._beautification import _pretty_print_language_model_response
+        from ..._lib._beautification import _pretty_print_language_model_response
 
         return _pretty_print_language_model_response(self)
 
     def __rich__(self):
-        from ..._internal._beautification import (
-            _rich_pretty_print_language_model_response,
-        )
+        from ..._lib._beautification import _rich_pretty_print_language_model_response
 
         return _rich_pretty_print_language_model_response(self)
 
@@ -200,6 +197,7 @@ class LanguageModelResponse(Generic[T]):
 LanguageModelName = TypeAliasType(
     "LanguageModelName",
     Literal[
+        "mock",
         "anthropic/claude-3-5-haiku-20241022",
         "anthropic/claude-3-5-haiku-latest",
         "anthropic/claude-3-5-sonnet-20240620",

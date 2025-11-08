@@ -2,23 +2,15 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
-from typing import (
-    Any,
-    List,
-    Generic,
-    TypedDict,
-    Type,
-    TypeVar,
-)
+from typing import Any, Generic, List, Type, TypedDict, TypeVar
 
 from instructor import Mode
-from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.create_embedding_response import (
     CreateEmbeddingResponse as EmbeddingModelResponse,
 )
-
 
 T = TypeVar("T")
 

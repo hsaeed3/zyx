@@ -1,11 +1,33 @@
 """zyx.models.embeddings.types"""
 
-from typing import TypeAliasType, Literal
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Literal, TypeAliasType
+
+from ..definition import ModelSettings
 
 __all__ = [
+    "EmbeddingModelSettings",
     "EmbeddingEncodingFormat",
     "EmbeddingModelName",
 ]
+
+
+@dataclass
+class EmbeddingModelSettings(ModelSettings):
+    """A definition of an embedding model, and associated settings."""
+
+    @property
+    def kind(self) -> str:
+        return "embedding_model"
+
+    dimensions: int | None = None
+    """The dimensions to generate embeddings for."""
+    encoding_format: EmbeddingEncodingFormat | None = None
+    """The format to return the embeddings in."""
+    user: str | None = None
+    """The user to generate embeddings for."""
 
 
 EmbeddingEncodingFormat = TypeAliasType(
@@ -18,6 +40,7 @@ EmbeddingEncodingFormat = TypeAliasType(
 EmbeddingModelName = TypeAliasType(
     "EmbeddingModelName",
     Literal[
+        "mock",
         "openai/text-embedding-3-small",
         "openai/text-embedding-3-large",
         "openai/text-embedding-ada-002",

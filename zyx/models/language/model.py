@@ -2,33 +2,22 @@
 
 from __future__ import annotations
 
-import logging
 import asyncio
-from collections.abc import AsyncIterator, Iterable
+import functools
+import logging
+from collections.abc import AsyncIterator, Callable, Iterable
 from dataclasses import asdict
-from typing import (
-    Any,
-    Dict,
-    TypeVar,
-    Type,
-)
+from typing import Any, Dict, Generic, Literal, Type, TypeVar
 
 from instructor import Mode
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 
-from ..providers import (
-    ModelProvider,
-    ModelProviderName,
-    ModelProviderRegistry,
-)
-from ..clients import ModelClient
-from ..clients.openai import OpenAIModelClient
-from ..clients.litellm import LiteLLMModelClient
-from .types import LanguageModelSettings, LanguageModelResponse, LanguageModelName
+from ...core.schemas.schema import Schema
+from ..definition import ModelDefinition, ModelDefinitionError
+from ..providers import ModelProvider, ModelProviderName
+from .types import LanguageModelName, LanguageModelResponse, LanguageModelSettings
 
-__all__ = [
-    "LanguageModel",
-]
+__all__ = ["LanguageModel", "arun_llm", "run_llm", "llm"]
 
 
 _logger = logging.getLogger(__name__)
@@ -37,14 +26,31 @@ _logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class LanguageModel:
+class LanguageModel(ModelDefinition, Generic[T]):
     """A simple, unified interface around language model provider clients,
     (OpenAI, LiteLLM) along with the Instructor library for generating chat
     completions and structured outputs.
 
+    !!! note
+        This class is generic over the type of the response.
+
     All `Model` suffix class interfaces within `ZYX` (LanguageModel,
     EmbeddingModel, etc.) implement a `run()` and `arun()` method for
     all 'unified' or main functionality."""
+
+    @property
+    def kind(self) -> str:
+        return "language_model"
+
+    @property
+    def model(self) -> LanguageModelName | str:
+        """Get the model name for this language model."""
+        return self._model
+
+    @property
+    def settings(self) -> LanguageModelSettings:
+        """Get the settings for this language model."""
+        return self._settings
 
     def __init__(
         self,
@@ -61,87 +67,13 @@ class LanguageModel:
 
         NOTE: A `LanguageModel` instance does not run tools.
         """
-        self._model = model
-        self._client: ModelClient[T] | None = None
-        self._provider: ModelProvider | None = None
-        self._settings = settings or LanguageModelSettings()
-
-        if base_url:
-            assert not provider, "Cannot provide base_url and a provider"
-
-            # try to get custom provider if exists, all custom providers
-            # use an OpenAI client
-            if ModelProviderRegistry().get(f"custom:{base_url}"):
-                self._provider = ModelProviderRegistry().get(f"custom:{base_url}")
-            else:
-                self._provider = ModelProviderRegistry().register_custom(
-                    base_url, api_key
-                )
-
-        if provider:
-            if isinstance(provider, str):
-                self._provider = ModelProviderRegistry().get(provider)
-
-                if not self._provider:
-                    raise ValueError(f"Unknown provider: {provider}")
-
-            elif isinstance(provider, ModelProvider):
-                self._provider = provider
-            else:
-                raise ValueError(f"Invalid provider: {provider}")
-
-        else:
-            self._provider = ModelProviderRegistry().infer_from_model_name(
-                model=self._model,
-                kind="language_model",
-            )
-
-            if not self._provider:
-                # this will fallback to the LiteLLM client
-                self._provider = ModelProvider(name="unknown")
-
-    def __str__(self):
-        from ..._internal._beautification import _pretty_print_model
-
-        return _pretty_print_model(self, "language_model")
-
-    def __rich__(self):
-        from ..._internal._beautification import _rich_pretty_print_model
-
-        return _rich_pretty_print_model(self, "language_model")
-
-    @property
-    def model(self) -> LanguageModelName | str:
-        """Get the model name for this language model."""
-        return self._model
-
-    @property
-    def settings(self) -> LanguageModelSettings:
-        """Get the settings for this language model."""
-        return self._settings
-
-    def get_client(self) -> ModelClient[T]:
-        """Get the inferred / associated model client for this language model.
-
-        This requires the `_provider` attribute to be set as a ModelProvider
-        object."""
-
-        if not self._provider:
-            raise ValueError("Cannot get client without a provider")
-
-        if not self._client:
-            if "openai" in self._provider.supported_clients:
-                self._client = OpenAIModelClient(
-                    base_url=self._provider.base_url,
-                    api_key=self._provider.get_api_key(),
-                )
-            else:
-                self._client = LiteLLMModelClient(
-                    base_url=self._provider.base_url,
-                    api_key=self._provider.get_api_key(),
-                )
-
-        return self._client
+        super().__init__(
+            model=model,
+            provider=provider,
+            base_url=base_url,
+            api_key=api_key,
+            settings=settings,
+        )
 
     async def _arun_stream(
         self, params: Dict[str, Any]
@@ -169,7 +101,7 @@ class LanguageModel:
             ):
                 yield LanguageModelResponse(
                     raw=chunk,
-                    content=chunk.choices[0].message.content,
+                    content=chunk.choices[0].delta.content,
                 )
 
     async def _arun_non_stream(
@@ -203,8 +135,12 @@ class LanguageModel:
         self,
         messages: Iterable[ChatCompletionMessageParam] | str,
         *,
-        type: Type[T] = str,
+        type: Type[T] | Schema[T] = str,
         instructions: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        exclude: set[str] | None = None,
+        key: str | None = None,
         tools: Iterable[ChatCompletionToolParam] | None = None,
         stream: bool = False,
         instructor_mode: Mode | None = None,
@@ -221,6 +157,16 @@ class LanguageModel:
             The type of the response to generate.
         instructions : str | None
             The instructions to send to the language model.
+        title : str | None
+            The title of the schema to use for the response.
+        description : str | None
+            The description of the schema to use for the response.
+        exclude : set[str] | None
+            The fields to exclude from the schema to use for the response.
+        key : str | None
+            For types such as int, Literal, etc. Instructor assigns the key of the field to use
+            the name `content`. You can override this value for these simple type cases
+            by providing a custom key.
         tools : Iterable[ChatCompletionToolParam] | None
             The tools to use for the language model.
         stream : bool
@@ -243,15 +189,31 @@ class LanguageModel:
         if instructions:
             messages.insert(0, {"role": "system", "content": instructions})
 
-        merged_settings = (
-            self.settings
-            if settings is None
-            else LanguageModelSettings(**{**asdict(self.settings), **asdict(settings)})
-        )
-        # Filter out None values from settings to avoid passing None params to API
-        merged_settings_dict = {
-            k: v for k, v in asdict(merged_settings).items() if v is not None
-        }
+        try:
+            # Merge settings with defaults
+            if settings is None:
+                merged_settings = self.settings
+            else:
+                # Get base settings as dict
+                base_settings_dict = asdict(self.settings) if self.settings else {}
+                # Get override settings as dict
+                settings_dict = asdict(settings) if settings else {}
+                # Merge the two dicts, with settings_dict taking precedence
+                merged_dict = {**base_settings_dict, **settings_dict}
+                # Create new LanguageModelSettings instance from merged dict
+                merged_settings = LanguageModelSettings(**merged_dict)
+
+            # Filter out None values to avoid passing None params to API
+            merged_settings_dict = (
+                {k: v for k, v in merged_settings.__dict__.items() if v is not None}
+                if merged_settings
+                else {}
+            )
+        except Exception as e:
+            raise ModelDefinitionError(
+                f"Error merging settings: {e}",
+                model=self._model,
+            ) from e
 
         if tools:
             if type is not str:
@@ -262,6 +224,16 @@ class LanguageModel:
             merged_settings_dict["tools"] = tools
 
         if type is not str:
+            # !! check for schema
+            if isinstance(type, Schema):
+                type = type.pydantic_model
+
+            # build response object
+            if any([title, description, exclude]):
+                type = Schema(
+                    type, title=title, description=description, exclude=exclude
+                ).pydantic_model
+
             params = {
                 "model": self._provider.clean_model_name(self._model),
                 "messages": messages,
@@ -286,8 +258,11 @@ class LanguageModel:
         self,
         messages: Iterable[ChatCompletionMessageParam] | str,
         *,
-        type: Type[T] = str,
+        type: Type[T] | Schema[T] = str,
         instructions: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        exclude: set[str] | None = None,
         tools: Iterable[ChatCompletionToolParam] | None = None,
         stream: bool = False,
         instructor_mode: Mode | None = None,
@@ -330,6 +305,9 @@ class LanguageModel:
                         messages=messages,
                         type=type,
                         instructions=instructions,
+                        title=title,
+                        description=description,
+                        exclude=exclude,
                         tools=tools,
                         stream=stream,
                         instructor_mode=instructor_mode,
@@ -344,9 +322,340 @@ class LanguageModel:
                     messages=messages,
                     type=type,
                     instructions=instructions,
+                    title=title,
+                    description=description,
+                    exclude=exclude,
                     tools=tools,
                     stream=stream,
                     instructor_mode=instructor_mode,
                     settings=settings,
                 )
             )
+
+
+async def arun_llm(
+    messages: str | Iterable[ChatCompletionMessageParam],
+    model: LanguageModelName | str = "openai/gpt-4o-mini",
+    type: Type[T] | Schema[T] = str,
+    *,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    instructions: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    exclude: set[str] | None = None,
+    tools: Iterable[ChatCompletionToolParam] | None = None,
+    instructor_mode: Mode | None = None,
+    max_tokens: int | None = None,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    top_logprobs: int | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    tool_choice: Literal["auto", "required", "none"] | str | None = None,
+    parallel_tool_calls: bool | None = None,
+    stream: bool = False,
+) -> LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]:
+    """Asynchronously run a language model with a given set of messages, a response
+    type, and optional instructions, tools, and settings.
+
+    Parameters
+    ----------
+    messages : str | Iterable[ChatCompletionMessageParam]
+        The messages to send to the language model. This can be a string, or an iterable of ChatCompletionMessageParam.
+    model : LanguageModelName | str
+        The model name to use. This should use the provider name prefix if applicable. (ex: "openai/gpt-4o-mini")
+    type : Type[T] | Schema[T]
+        The type of the response to generate.
+    provider : ModelProviderName | ModelProvider | None
+        The provider name or instance. If not provided, the provider will be inferred from the model name.
+    base_url : str | None
+        Custom base URL for the model provider. Cannot be used with provider parameter.
+    api_key : str | None
+        API key for the model provider. If not provided, will use environment variable.
+    instructions : str | None
+        Additional instructions to guide the model's response.
+    title : str | None
+        Title for the structured output schema.
+    description : str | None
+        Description for the structured output schema.
+    exclude : set[str] | None
+        Set of field names to exclude from the structured output.
+    tools : Iterable[ChatCompletionToolParam] | None
+        Tools available for the model to call.
+    instructor_mode : Mode | None
+        Instructor mode for structured output generation.
+    max_tokens : int | None
+        Maximum number of tokens to generate.
+    temperature : float | None
+        Sampling temperature (0.0 to 2.0).
+    top_p : float | None
+        Nucleus sampling parameter.
+    top_logprobs : int | None
+        Number of most likely tokens to return at each position.
+    frequency_penalty : float | None
+        Penalty for token frequency (-2.0 to 2.0).
+    presence_penalty : float | None
+        Penalty for token presence (-2.0 to 2.0).
+    tool_choice : Literal["auto", "required", "none"] | str | None
+        Strategy for tool selection.
+    parallel_tool_calls : bool | None
+        Whether to allow parallel tool calls.
+    stream : bool
+        Whether to stream the response.
+
+
+    Returns
+    -------
+    LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]
+        The response from the language model.
+    """
+    return await LanguageModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=LanguageModelSettings(
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_logprobs=top_logprobs,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            tool_choice=tool_choice,
+            parallel_tool_calls=parallel_tool_calls,
+        ),
+    ).arun(
+        messages=messages,
+        type=type,
+        instructions=instructions,
+        title=title,
+        description=description,
+        exclude=exclude,
+        tools=tools,
+        stream=stream,
+        instructor_mode=instructor_mode,
+    )
+
+
+def run_llm(
+    messages: str | Iterable[ChatCompletionMessageParam],
+    model: LanguageModelName | str = "openai/gpt-4o-mini",
+    type: Type[T] | Schema[T] = str,
+    *,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    instructions: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    exclude: set[str] | None = None,
+    tools: Iterable[ChatCompletionToolParam] | None = None,
+    instructor_mode: Mode | None = None,
+    max_tokens: int | None = None,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    top_logprobs: int | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    tool_choice: Literal["auto", "required", "none"] | str | None = None,
+    parallel_tool_calls: bool | None = None,
+    stream: bool = False,
+) -> LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]:
+    """Run a language model with a given set of messages, a response
+    type, and optional instructions, tools, and settings.
+
+    Parameters
+    ----------
+    messages : str | Iterable[ChatCompletionMessageParam]
+        The messages to send to the language model. This can be a string, or an iterable of ChatCompletionMessageParam.
+    model : LanguageModelName | str
+        The model name to use. This should use the provider name prefix if applicable. (ex: "openai/gpt-4o-mini")
+    type : Type[T] | Schema[T]
+        The type of the response to generate.
+    provider : ModelProviderName | ModelProvider | None
+        The provider name or instance. If not provided, the provider will be inferred from the model name.
+    base_url : str | None
+        Custom base URL for the model provider. Cannot be used with provider parameter.
+    api_key : str | None
+        API key for the model provider. If not provided, will use environment variable.
+    instructions : str | None
+        Additional instructions to guide the model's response.
+    title : str | None
+        Title for the structured output schema.
+    description : str | None
+        Description for the structured output schema.
+    exclude : set[str] | None
+        Set of field names to exclude from the structured output.
+    tools : Iterable[ChatCompletionToolParam] | None
+        Tools available for the model to call.
+    instructor_mode : Mode | None
+        Instructor mode for structured output generation.
+    max_tokens : int | None
+        Maximum number of tokens to generate.
+    temperature : float | None
+        Sampling temperature (0.0 to 2.0).
+    top_p : float | None
+        Nucleus sampling parameter.
+    top_logprobs : int | None
+        Number of most likely tokens to return at each position.
+    frequency_penalty : float | None
+        Penalty for token frequency (-2.0 to 2.0).
+    presence_penalty : float | None
+        Penalty for token presence (-2.0 to 2.0).
+    tool_choice : Literal["auto", "required", "none"] | str | None
+        Strategy for tool selection.
+    parallel_tool_calls : bool | None
+        Whether to allow parallel tool calls.
+    stream : bool
+        Whether to stream the response.
+
+    Returns
+    -------
+    LanguageModelResponse[T] | AsyncIterator[LanguageModelResponse[T]]
+        The response from the language model.
+    """
+    return LanguageModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=LanguageModelSettings(
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_logprobs=top_logprobs,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            tool_choice=tool_choice,
+            parallel_tool_calls=parallel_tool_calls,
+        ),
+    ).run(
+        messages=messages,
+        type=type,
+        instructions=instructions,
+        title=title,
+        description=description,
+        exclude=exclude,
+        tools=tools,
+        stream=stream,
+        instructor_mode=instructor_mode,
+    )
+
+
+def llm(
+    type: Type[T] | Schema[T],
+    model: LanguageModelName | str = "openai/gpt-4o-mini",
+    *,
+    instructions: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    exclude: set[str] | None = None,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    max_tokens: int | None = None,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    top_logprobs: int | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    tool_choice: Literal["auto", "required", "none"] | str | None = None,
+    parallel_tool_calls: bool | None = None,
+) -> LanguageModel[T]:
+    """Create a language model locked to a specific response type.
+
+    !!! note
+    This function requires the response type T to be provided.
+
+    Parameters
+    ----------
+    type : Type[T] | Schema[T]
+        The type of the response to generate.
+    model : LanguageModelName | str
+        The model name to use.
+    provider : ModelProviderName | ModelProvider | None
+        The provider name or instance.
+    instructions : str | None
+        Additional instructions to guide the model's response.
+    title : str | None
+        Title for the structured output schema.
+    description : str | None
+        Description for the structured output schema.
+    exclude : set[str] | None
+        Set of field names to exclude from the structured output.
+    base_url : str | None
+        Custom base URL for the provider.
+    api_key : str | None
+        API key for the provider.
+    settings : LanguageModelSettings | None
+        Default settings for the language model.
+    max_tokens : int | None
+        Maximum number of tokens to generate.
+    temperature : float | None
+        Sampling temperature (0.0 to 2.0).
+    top_p : float | None
+        Nucleus sampling parameter.
+    top_logprobs : int | None
+        Number of most likely tokens to return at each position.
+    frequency_penalty : float | None
+        Penalty for token frequency (-2.0 to 2.0).
+    presence_penalty : float | None
+        Penalty for token presence (-2.0 to 2.0).
+    tool_choice : Literal["auto", "required", "none"] | str | None
+        Strategy for tool selection.
+    parallel_tool_calls : bool | None
+        Whether to allow parallel tool calls.
+
+    Returns
+    -------
+    LanguageModel[T]
+        A LanguageModel instance with run and arun methods pre-bound to the specified type.
+
+    Examples
+    --------
+        ```python
+        >>> my_llm = llm(int, model="openai/gpt-4o-mini")
+        >>> response = my_llm.run("What is 2 + 2?")
+        >>> print(response.content)
+        ```
+
+        ```bash title="Output"
+        4
+        ```
+    """
+    model_instance: LanguageModel[T] = LanguageModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=LanguageModelSettings(
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_logprobs=top_logprobs,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            tool_choice=tool_choice,
+            parallel_tool_calls=parallel_tool_calls,
+        ),
+    )
+    # Bind the type to run and arun methods
+    model_instance.run = functools.partial(
+        model_instance.run,
+        instructions=instructions,
+        type=type,
+        title=title,
+        description=description,
+        exclude=exclude,
+    )
+    model_instance.arun = functools.partial(
+        model_instance.arun,
+        instructions=instructions,
+        type=type,
+        title=title,
+        description=description,
+        exclude=exclude,
+    )
+    return model_instance

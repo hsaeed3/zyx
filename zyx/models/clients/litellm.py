@@ -6,16 +6,9 @@ import logging
 from collections.abc import AsyncIterator
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import (
-    Any,
-    List,
-    Type,
-    TypeVar,
-)
+from typing import Any, List, Type, TypeVar
 
-from instructor import from_litellm, AsyncInstructor, Mode
-
-from pydantic import BaseModel
+from instructor import AsyncInstructor, Mode, from_litellm
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -24,9 +17,10 @@ from openai.types.chat import (
 from openai.types.create_embedding_response import (
     CreateEmbeddingResponse as EmbeddingModelResponse,
 )
+from pydantic import BaseModel
 
+from ...core.exceptions import ModelClientError
 from . import ModelClient, StructuredOutput
-
 
 _logger = logging.getLogger(__name__)
 
@@ -173,13 +167,20 @@ class LiteLLMModelClient(ModelClient):
                     f"LiteLLMModelClient: Streaming chat completion with model {model}."
                 )
 
-                async for chunk in await LiteLLMHelper.get().acompletion(
-                    stream=True, **params
-                ):
-                    yield self.parse_litellm_response(
-                        chunk,
-                        stream=True,
-                    )
+                try:
+                    async for chunk in await LiteLLMHelper.get().acompletion(
+                        stream=True, **params
+                    ):
+                        yield self.parse_litellm_response(
+                            chunk,
+                            stream=True,
+                        )
+                except Exception as e:
+                    raise ModelClientError(
+                        f"Error generating chat completion: {e}",
+                        client=self.name,
+                        model=model,
+                    ) from e
 
             return await _stream_wrapper()
 
@@ -188,10 +189,17 @@ class LiteLLMModelClient(ModelClient):
                 f"LiteLLMModelClient: Generating chat completion with model {model}."
             )
 
-            return self.parse_litellm_response(
-                await LiteLLMHelper.get().acompletion(**params),
-                stream=False,
-            )
+            try:
+                return self.parse_litellm_response(
+                    await LiteLLMHelper.get().acompletion(**params),
+                    stream=False,
+                )
+            except Exception as e:
+                raise ModelClientError(
+                    f"Error generating chat completion: {e}",
+                    client=self.name,
+                    model=model,
+                ) from e
 
     async def structured_output(
         self,
@@ -250,17 +258,24 @@ class LiteLLMModelClient(ModelClient):
                 f"LiteLLMModelClient: Streaming structured output of type {response_model.__name__} with model {model} with instructor mode {instructor_client.mode}."
             )
 
-            async for chunk in await instructor_client.create_partial(
-                **params,
-            ):
-                yield StructuredOutput(
-                    output=chunk,
-                    raw=self.parse_litellm_response(
-                        raw_response,
-                        stream=True,
-                    ),
-                    instructor_mode=instructor_client.mode,
-                )
+            try:
+                async for chunk in await instructor_client.create_partial(
+                    **params,
+                ):
+                    yield StructuredOutput(
+                        output=chunk,
+                        raw=self.parse_litellm_response(
+                            raw_response,
+                            stream=True,
+                        ),
+                        instructor_mode=instructor_client.mode,
+                    )
+            except Exception as e:
+                raise ModelClientError(
+                    f"Error generating structured output: {e}",
+                    client=self.name,
+                    model=model,
+                ) from e
 
         if stream:
             return await _stream_closure()
@@ -273,14 +288,22 @@ class LiteLLMModelClient(ModelClient):
             response = await instructor_client.create(
                 **params,
             )
-            return StructuredOutput(
-                output=response,
-                raw=self.parse_litellm_response(
-                    raw_response,
-                    stream=False,
-                ),
-                instructor_mode=instructor_client.mode,
-            )
+
+            try:
+                return StructuredOutput(
+                    output=response,
+                    raw=self.parse_litellm_response(
+                        raw_response,
+                        stream=False,
+                    ),
+                    instructor_mode=instructor_client.mode,
+                )
+            except Exception as e:
+                raise ModelClientError(
+                    f"Error generating structured output: {e}",
+                    client=self.name,
+                    model=model,
+                ) from e
 
     async def embedding(
         self,

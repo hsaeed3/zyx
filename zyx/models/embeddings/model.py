@@ -2,44 +2,46 @@
 
 from __future__ import annotations
 
-import logging
 import asyncio
+import logging
 from collections.abc import Iterable
-from typing import (
-    TypeVar,
-)
 
 from openai.types.create_embedding_response import (
     CreateEmbeddingResponse as EmbeddingModelResponse,
 )
 
-from ..providers import (
-    ModelProvider,
-    ModelProviderName,
-    ModelProviderRegistry,
-)
-from ..clients import ModelClient
-from ..clients.openai import OpenAIModelClient
-from ..clients.litellm import LiteLLMModelClient
-from .types import (
-    EmbeddingModelName,
-    EmbeddingEncodingFormat,
-)
+from ..definition import ModelDefinition
+from ..providers import ModelProvider, ModelProviderName
+from .types import EmbeddingEncodingFormat, EmbeddingModelName, EmbeddingModelSettings
 
 __all__ = [
     "EmbeddingModel",
+    "arun_embed",
+    "run_embed",
+    "embedder",
 ]
 
 
 _logger = logging.getLogger(__name__)
 
 
-T = TypeVar("T")
-
-
-class EmbeddingModel:
+class EmbeddingModel(ModelDefinition):
     """A simple, unified interface around embedding model provider clients,
     (OpenAI, LiteLLM) for generating embeddings."""
+
+    @property
+    def kind(self) -> str:
+        return "embedding_model"
+
+    @property
+    def model(self) -> EmbeddingModelName | str:
+        """Get the model name for this embedding model."""
+        return self._model
+
+    @property
+    def settings(self) -> EmbeddingModelSettings:
+        """Get the settings for this embedding model."""
+        return self._settings
 
     def __init__(
         self,
@@ -58,111 +60,29 @@ class EmbeddingModel:
 
         NOTE: A `LanguageModel` instance does not run tools.
         """
-        self._model = model
-        self._client: ModelClient[T] | None = None
-        self._provider: ModelProvider | None = None
-
         if not dimensions:
             # try auto infer, else we leave as None
-            if self._model.startswith("openai/") or self._model.startswith(
-                "text-embedding-"
-            ):
-                self._dimensions = 1536
+            if model.startswith("openai/") or model.startswith("text-embedding-"):
+                dimensions = 1536
 
             else:
-                self._dimensions = None
+                dimensions = None
         else:
-            self._dimensions = dimensions
+            dimensions = dimensions
 
-        self._encoding_format = encoding_format if encoding_format else None
-        self._user = user if user else None
+        settings = EmbeddingModelSettings(
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+            user=user,
+        )
 
-        if base_url:
-            assert not provider, "Cannot provide base_url and a provider"
-
-            # try to get custom provider if exists, all custom providers
-            # use an OpenAI client
-            if ModelProviderRegistry().get(f"custom:{base_url}"):
-                self._provider = ModelProviderRegistry().get(f"custom:{base_url}")
-            else:
-                self._provider = ModelProviderRegistry().register_custom(
-                    base_url, api_key
-                )
-
-        if provider:
-            if isinstance(provider, str):
-                self._provider = ModelProviderRegistry().get(provider)
-
-                if not self._provider:
-                    raise ValueError(f"Unknown provider: {provider}")
-
-            elif isinstance(provider, ModelProvider):
-                self._provider = provider
-            else:
-                raise ValueError(f"Invalid provider: {provider}")
-
-        else:
-            self._provider = ModelProviderRegistry().infer_from_model_name(
-                model=self._model,
-                kind="embedding_model",
-            )
-
-            if not self._provider:
-                # this will fallback to the LiteLLM client
-                self._provider = ModelProvider(name="unknown")
-
-    def __str__(self):
-        from ..._internal._beautification import _pretty_print_model
-
-        return _pretty_print_model(self, "embedding_model")
-
-    def __rich__(self):
-        from ..._internal._beautification import _rich_pretty_print_model
-
-        return _rich_pretty_print_model(self, "embedding_model")
-
-    @property
-    def model(self) -> EmbeddingModelName | str:
-        """Get the model name for this embedding model."""
-        return self._model
-
-    @property
-    def dimensions(self) -> int | None:
-        """Get the dimensions for this embedding model."""
-        return self._dimensions
-
-    @property
-    def encoding_format(self) -> EmbeddingEncodingFormat | None:
-        """Get the encoding format for this embedding model."""
-        return self._encoding_format
-
-    @property
-    def user(self) -> str | None:
-        """Get the user for this embedding model."""
-        return self._user
-
-    def get_client(self) -> ModelClient[T]:
-        """Get the inferred / associated model client for this language model.
-
-        This requires the `_provider` attribute to be set as a ModelProvider
-        object."""
-
-        if not self._provider:
-            raise ValueError("Cannot get client without a provider")
-
-        if not self._client:
-            if "openai" in self._provider.supported_clients:
-                self._client = OpenAIModelClient(
-                    base_url=self._provider.base_url,
-                    api_key=self._provider.get_api_key(),
-                )
-            else:
-                self._client = LiteLLMModelClient(
-                    base_url=self._provider.base_url,
-                    api_key=self._provider.get_api_key(),
-                )
-
-        return self._client
+        super().__init__(
+            model=model,
+            provider=provider,
+            base_url=base_url,
+            api_key=api_key,
+            settings=settings,
+        )
 
     async def arun(
         self,
@@ -172,7 +92,7 @@ class EmbeddingModel:
         encoding_format: EmbeddingEncodingFormat | None = None,
         user: str | None = None,
     ) -> EmbeddingModelResponse:
-        """Asyncronously run an embedding model with a given input, and optional dimensions, encoding format, and user.
+        """Asynchronously run an embedding model with a given input.
 
         Parameters
         ----------
@@ -182,6 +102,12 @@ class EmbeddingModel:
             The dimensions to generate embeddings for.
         encoding_format : EmbeddingEncodingFormat | None
         user : str | None
+            The user to generate embeddings for.
+
+        Returns
+        -------
+        EmbeddingModelResponse
+            The response from the embedding model.
         """
         if not self._provider:
             raise ValueError("Cannot run model without a provider")
@@ -192,19 +118,23 @@ class EmbeddingModel:
         }
 
         # Use provided dimensions or fall back to instance dimensions
-        final_dimensions = dimensions if dimensions is not None else self._dimensions
+        final_dimensions = (
+            dimensions if dimensions is not None else self.settings.dimensions
+        )
         if final_dimensions is not None:
             params["dimensions"] = final_dimensions
 
         # Use provided encoding_format or fall back to instance encoding_format
         final_encoding_format = (
-            encoding_format if encoding_format is not None else self._encoding_format
+            encoding_format
+            if encoding_format is not None
+            else self.settings.encoding_format
         )
         if final_encoding_format is not None:
             params["encoding_format"] = final_encoding_format
 
         # Use provided user or fall back to instance user
-        final_user = user if user is not None else self._user
+        final_user = user if user is not None else self.settings.user
         if final_user is not None:
             params["user"] = final_user
 
@@ -218,7 +148,23 @@ class EmbeddingModel:
         encoding_format: EmbeddingEncodingFormat | None = None,
         user: str | None = None,
     ) -> EmbeddingModelResponse:
-        """Run an embedding model with a given input, and optional dimensions, encoding format, and user."""
+        """Run an embedding model with a given input.
+
+        Parameters
+        ----------
+        input : str | Iterable[str]
+            The input to generate embeddings for.
+        dimensions : int | None
+            The dimensions to generate embeddings for.
+        encoding_format : EmbeddingEncodingFormat | None
+        user : str | None
+            The user to generate embeddings for.
+
+        Returns
+        -------
+        EmbeddingModelResponse
+            The response from the embedding model.
+        """
         try:
             loop = asyncio.get_running_loop()
             # If we're already in an event loop, create a task
@@ -245,3 +191,154 @@ class EmbeddingModel:
                     user=user,
                 )
             )
+
+
+async def arun_embed(
+    input: str | Iterable[str],
+    model: EmbeddingModelName | str = "openai/text-embedding-3-small",
+    *,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    dimensions: int | None = None,
+    encoding_format: EmbeddingEncodingFormat | None = None,
+    user: str | None = None,
+) -> EmbeddingModelResponse:
+    """Asynchronously run an embedding model with a given input.
+
+    Parameters
+    ----------
+    input : str | Iterable[str]
+        The input to generate embeddings for.
+    model : EmbeddingModelName | str
+        The model to use for generating embeddings.
+    provider: ModelProviderName | ModelProvider | None
+        The provider to use for generating embeddings.
+    base_url: str | None
+        The base URL to use for generating embeddings.
+    api_key: str | None
+        The API key to use for generating embeddings.
+    dimensions : int | None
+        The dimensions to generate embeddings for.
+    encoding_format : EmbeddingEncodingFormat | None
+        The encoding format to use for generating embeddings.
+    user : str | None
+        The user to generate embeddings for.
+
+    Returns
+    -------
+    EmbeddingModelResponse
+        The response from the embedding model.
+    """
+    return await EmbeddingModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=EmbeddingModelSettings(
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+            user=user,
+        ),
+    ).arun(input=input)
+
+
+def run_embed(
+    input: str | Iterable[str],
+    model: EmbeddingModelName | str = "openai/text-embedding-3-small",
+    *,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    dimensions: int | None = None,
+    encoding_format: EmbeddingEncodingFormat | None = None,
+    user: str | None = None,
+) -> EmbeddingModelResponse:
+    """Asynchronously run an embedding model with a given input.
+
+    Parameters
+    ----------
+    input : str | Iterable[str]
+        The input to generate embeddings for.
+    model : EmbeddingModelName | str
+        The model to use for generating embeddings.
+    provider: ModelProviderName | ModelProvider | None
+        The provider to use for generating embeddings.
+    base_url: str | None
+        The base URL to use for generating embeddings.
+    api_key: str | None
+        The API key to use for generating embeddings.
+    dimensions : int | None
+        The dimensions to generate embeddings for.
+    encoding_format : EmbeddingEncodingFormat | None
+        The encoding format to use for generating embeddings.
+    user : str | None
+        The user to generate embeddings for.
+
+    Returns
+    -------
+    EmbeddingModelResponse
+        The response from the embedding model.
+    """
+    return EmbeddingModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=EmbeddingModelSettings(
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+            user=user,
+        ),
+    ).run(input=input)
+
+
+def embedder(
+    model: EmbeddingModelName | str = "openai/text-embedding-3-small",
+    *,
+    provider: ModelProviderName | ModelProvider | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    dimensions: int | None = None,
+    encoding_format: EmbeddingEncodingFormat | None = None,
+    user: str | None = None,
+) -> EmbeddingModel:
+    """Function factory method for creating an embedding model.
+
+    This is genuinely one of those this doesnt need to be here methods,
+    but its nice and consistent with everything else and consistency
+    is key!
+
+    Parameters
+    ----------
+    model : EmbeddingModelName | str
+        The model to use for generating embeddings.
+    provider: ModelProviderName | ModelProvider | None
+        The provider to use for generating embeddings.
+    base_url: str | None
+        The base URL to use for generating embeddings.
+    api_key: str | None
+        The API key to use for generating embeddings.
+    dimensions : int | None
+        The dimensions to generate embeddings for.
+    encoding_format : EmbeddingEncodingFormat | None
+        The encoding format to use for generating embeddings.
+    user : str | None
+        The user to generate embeddings for.
+
+    Returns
+    -------
+    EmbeddingModel
+        An EmbeddingModel instance with run and arun methods pre-bound to the specified settings.
+    """
+    return EmbeddingModel(
+        model=model,
+        provider=provider,
+        base_url=base_url,
+        api_key=api_key,
+        settings=EmbeddingModelSettings(
+            dimensions=dimensions,
+            encoding_format=encoding_format,
+            user=user,
+        ),
+    )

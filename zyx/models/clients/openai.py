@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncIterator
 import os
-from typing import Any, List, Dict, Type, TypeVar, overload
-
-from instructor import from_openai, AsyncInstructor, Mode
+from collections.abc import AsyncIterator
+from typing import Any, Dict, List, Type, TypeVar, overload
 
 from httpx import AsyncClient
+from instructor import AsyncInstructor, Mode, from_openai
 from openai import AsyncOpenAI
 from openai.types.chat import (
     ChatCompletion,
@@ -20,13 +19,13 @@ from openai.types.completion_create_params import (
     CompletionCreateParamsNonStreaming,
     CompletionCreateParamsStreaming,
 )
-from openai.types.embedding_create_params import EmbeddingCreateParams
 from openai.types.create_embedding_response import (
     CreateEmbeddingResponse as EmbeddingModelResponse,
 )
+from openai.types.embedding_create_params import EmbeddingCreateParams
 
+from ...core.exceptions import ModelClientError
 from . import ModelClient, StructuredOutput
-
 
 _logger = logging.getLogger(__name__)
 
@@ -92,6 +91,10 @@ class OpenAIModelClient(ModelClient):
 
             self._base_client = openai_client
 
+            _logger.debug(
+                f"OpenAIModelClient: Using provided OpenAI client for base URL {openai_client.base_url}."
+            )
+
         if not base_url:
             base_url = "https://api.openai.com/v1"
             if not api_key:
@@ -101,12 +104,21 @@ class OpenAIModelClient(ModelClient):
             global _CACHED_OPENAI_CLIENTS
             if base_url in _CACHED_OPENAI_CLIENTS:
                 self._base_client = _CACHED_OPENAI_CLIENTS[base_url]
+
+                _logger.debug(
+                    f"OpenAIModelClient: Using cached OpenAI client for base URL {base_url}."
+                )
             else:
                 self._base_client = AsyncOpenAI(
                     base_url=base_url,
                     api_key=api_key,
                     http_client=http_client or shared_async_httpx_client(),
                 )
+
+                _logger.debug(
+                    f"OpenAIModelClient: Created new OpenAI client for base URL {base_url}."
+                )
+
                 _CACHED_OPENAI_CLIENTS[base_url] = self._base_client
 
     @property
@@ -167,7 +179,15 @@ class OpenAIModelClient(ModelClient):
             f"OpenAIModelClient: Generating chat completion with model {model}."
             f"Stream: {stream}"
         )
-        return await self._base_client.chat.completions.create(**params)
+
+        try:
+            return await self._base_client.chat.completions.create(**params)
+        except Exception as e:
+            raise ModelClientError(
+                f"Error generating chat completion: {e}",
+                client=self.name,
+                model=model,
+            ) from e
 
     async def structured_output(
         self,
@@ -229,11 +249,18 @@ class OpenAIModelClient(ModelClient):
             async for chunk in await instructor_client.create_partial(
                 **params,
             ):
-                yield StructuredOutput(
-                    output=chunk,
-                    raw=raw_response,
-                    instructor_mode=instructor_client.mode,
-                )
+                try:
+                    yield StructuredOutput(
+                        output=chunk,
+                        raw=raw_response,
+                        instructor_mode=instructor_client.mode,
+                    )
+                except Exception as e:
+                    raise ModelClientError(
+                        f"Error generating structured output: {e}",
+                        client=self.name,
+                        model=model,
+                    ) from e
 
         if stream:
             return await _stream_closure()
@@ -246,11 +273,19 @@ class OpenAIModelClient(ModelClient):
             response = await instructor_client.create(
                 **params,
             )
-            return StructuredOutput(
-                output=response,
-                raw=raw_response,
-                instructor_mode=instructor_client.mode,
-            )
+
+            try:
+                return StructuredOutput(
+                    output=response,
+                    raw=raw_response,
+                    instructor_mode=instructor_client.mode,
+                )
+            except Exception as e:
+                raise ModelClientError(
+                    f"Error generating structured output: {e}",
+                    client=self.name,
+                    model=model,
+                ) from e
 
     async def embedding(
         self,
@@ -276,4 +311,11 @@ class OpenAIModelClient(ModelClient):
             """
         )
 
-        return await self._base_client.embeddings.create(**params)
+        try:
+            return await self._base_client.embeddings.create(**params)
+        except Exception as e:
+            raise ModelClientError(
+                f"Error generating embeddings: {e}",
+                client=self.name,
+                model=model,
+            ) from e
