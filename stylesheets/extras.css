@@ -142,6 +142,13 @@
   color: var(--tx2);
 }
 
+/* Blockquotes: > text */
+[data-md-color-scheme="zyx-gray"] blockquote {
+  font-size: 0.9em;
+  color: var(--tx3);
+  opacity: 0.85;
+}
+
 /* --- Pygments Syntax Highlighting: One Dark Pro Theme --------- */
 /* This section styles all Pygments tokens to match One Dark Pro. */
 /* All `!important` flags have been removed.                      */
@@ -198,4 +205,186 @@
   .err, .ge, .gr { color: #f00; font-weight: bold; } /* Errors */
   .gd { color: var(--odp-red); } /* Generic delete */
   .gi { color: var(--odp-green); } /* Generic insert */
+}
+
+/* ========== Animated Link Styles ========== */
+/* Blue links with animated underline on hover */
+.md-content a:not(.md-button):not([class*="md-header"]):not([class*="md-nav"]) {
+  color: #4cc9f0;
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
+  background-image: linear-gradient(#4cc9f0, #4cc9f0);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 2px;
+  transition: background-size 0.3s ease, color 0.2s ease;
+}
+
+.md-content a:not(.md-button):not([class*="md-header"]):not([class*="md-nav"]):hover {
+  color: #10a37f;
+  background-size: 100% 2px;
+  background-image: linear-gradient(#10a37f, #10a37f);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .md-content a:not(.md-button) {
+    transition: color 0.2s ease;
+  }
+}
+
+/* ========== ZYX Glitch Effect ========== */
+/* Wrapper for glitch effect on "zyx" text */
+.zyx-glitch {
+  position: relative;
+  display: inline-block;
+  color: var(--zyx-acc-0, #10a37f);
+  font-weight: 600;
+  cursor: default;
+  user-select: none;
+}
+
+/* Glitch layers - hidden by default */
+.zyx-glitch::before,
+.zyx-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Only animate on hover */
+.zyx-glitch:hover::before {
+  color: #4cc9f0;
+  animation: zyx-glitch-1 0.6s infinite linear;
+  opacity: 0.8;
+  z-index: -1;
+}
+
+.zyx-glitch:hover::after {
+  color: #c678dd;
+  animation: zyx-glitch-2 0.6s infinite linear;
+  opacity: 0.8;
+  z-index: -2;
+}
+
+/* Glitch animation 1 - left/right shifts with clip */
+@keyframes zyx-glitch-1 {
+  0% {
+    clip-path: inset(40% 0 61% 0);
+    transform: translate(-2px, 0);
+  }
+  10% {
+    clip-path: inset(92% 0 1% 0);
+    transform: translate(2px, 0);
+  }
+  20% {
+    clip-path: inset(43% 0 1% 0);
+    transform: translate(-2px, 0);
+  }
+  30% {
+    clip-path: inset(25% 0 58% 0);
+    transform: translate(3px, 0);
+  }
+  40% {
+    clip-path: inset(54% 0 7% 0);
+    transform: translate(-1px, 0);
+  }
+  50% {
+    clip-path: inset(58% 0 43% 0);
+    transform: translate(2px, 0);
+  }
+  60% {
+    clip-path: inset(84% 0 6% 0);
+    transform: translate(-2px, 0);
+  }
+  70% {
+    clip-path: inset(17% 0 56% 0);
+    transform: translate(1px, 0);
+  }
+  80% {
+    clip-path: inset(63% 0 11% 0);
+    transform: translate(-3px, 0);
+  }
+  90% {
+    clip-path: inset(22% 0 67% 0);
+    transform: translate(2px, 0);
+  }
+  100% {
+    clip-path: inset(53% 0 26% 0);
+    transform: translate(-1px, 0);
+  }
+}
+
+/* Glitch animation 2 - opposite shifts with different clip */
+@keyframes zyx-glitch-2 {
+  0% {
+    clip-path: inset(65% 0 15% 0);
+    transform: translate(2px, 0);
+  }
+  10% {
+    clip-path: inset(13% 0 80% 0);
+    transform: translate(-3px, 0);
+  }
+  20% {
+    clip-path: inset(71% 0 15% 0);
+    transform: translate(2px, 0);
+  }
+  30% {
+    clip-path: inset(34% 0 42% 0);
+    transform: translate(-2px, 0);
+  }
+  40% {
+    clip-path: inset(2% 0 80% 0);
+    transform: translate(3px, 0);
+  }
+  50% {
+    clip-path: inset(47% 0 34% 0);
+    transform: translate(-1px, 0);
+  }
+  60% {
+    clip-path: inset(81% 0 9% 0);
+    transform: translate(2px, 0);
+  }
+  70% {
+    clip-path: inset(39% 0 47% 0);
+    transform: translate(-2px, 0);
+  }
+  80% {
+    clip-path: inset(14% 0 73% 0);
+    transform: translate(1px, 0);
+  }
+  90% {
+    clip-path: inset(69% 0 2% 0);
+    transform: translate(-3px, 0);
+  }
+  100% {
+    clip-path: inset(28% 0 63% 0);
+    transform: translate(2px, 0);
+  }
+}
+
+/* Add subtle glow on hover */
+.zyx-glitch:hover {
+  text-shadow: 
+    0 0 8px color-mix(in oklab, var(--zyx-acc-0, #10a37f) 30%, transparent),
+    0 0 12px color-mix(in oklab, #4cc9f0 15%, transparent);
+}
+
+/* Disable glitch effect for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .zyx-glitch:hover::before,
+  .zyx-glitch:hover::after {
+    animation: none;
+    opacity: 0;
+  }
+  
+  .zyx-glitch:hover {
+    text-shadow: none;
+  }
 }
