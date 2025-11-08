@@ -1,10 +1,10 @@
-"""zyx._internal.logging"""
+"""zyx._lib._logging"""
 
 import logging
 import sys
 from typing import Optional
 
-from rich import traceback, get_console
+from rich import get_console, traceback
 
 traceback.install(console=get_console(), width=120, extra_lines=3)
 

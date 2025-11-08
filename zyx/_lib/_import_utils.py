@@ -1,21 +1,12 @@
-"""zyx.core.utils._import_utils"""
+"""zyx._lib._import_utils"""
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Tuple,
-    FrozenSet,
-    OrderedDict,
-    TYPE_CHECKING,
-)
-from importlib import import_module
-import inspect
 import ast
 import hashlib
+import inspect
+from importlib import import_module
+from typing import Any, Callable, Dict, FrozenSet, List, OrderedDict, Tuple
 
 from ._logging import _get_logger
 
@@ -27,9 +18,6 @@ _get_logger()
 __all__ = (
     "type_checking_getattr_fn",
     "type_checking_dir_fn",
-    "GetAttrFunctionError",
-    "GetAttrFunctionWarning",
-    "TYPE_CHECKING",
 )
 
 
