@@ -2,37 +2,57 @@
 
 from typing import TYPE_CHECKING
 
-from ._lib import _import_utils
-
-# NOTE:
-# this is a 'maybe?' design choice for now,
-# all top level exports are **all** functions,
-# class level imports will be module to module.
+from ._internal import _import_utils
 
 if TYPE_CHECKING:
-    # --- core
-    from .core.schemas.schema import to_schema
-    from .core.memory.memory import mem, rag, arag
+    from .core.interfaces.bits import Bit, to_bit
+    from .core.interfaces.maker import Maker as maker
+    from .core.interfaces.maker import aedit, amake, edit, make
+    from .core.interfaces.stuff import Stuff, to_stuff
+    from .core.interfaces.things import Thing, to_thing
+    from .core.models.embeddings.model import (
+        ChonkieEmbeddingModel as chonkie_embedder,
+    )
+    from .core.models.embeddings.model import EmbeddingModel as embedder
+    from .core.models.language.model import LanguageModel as llm
+    from .core.processing.schemas.openai import (
+        to_openai_schema as to_openai_schema,
+    )
+    from .core.processing.schemas.pydantic import to_pydantic_model
+    from .core.processing.schemas.schema import to_schema as schema
+    from .core.processing.text.text import to_text as text
 
-    # --- models
-    from .models.embeddings.model import arun_embed, embedder, run_embed
-    from .models.language.model import arun_llm, llm, run_llm
 
-
-__all__ = [
-    # --- core
-    # zyx.core.schemas.schema
-    "to_schema",
-    # --- models
-    # zyx.models.language.model
+__all__ = (
+    # zyx.core.interfaces.bits
+    "Bit",
+    "to_bit",
+    # zyx.core.interfaces.things
+    "Thing",
+    "to_thing",
+    # zyx.core.interfaces.maker
+    "maker",
+    "aedit",
+    "edit",
+    "amake",
+    "make",
+    # zyx.core.interfaces.stuff
+    "Stuff",
+    "to_stuff",
+    # zyx.core.models.language.model
     "llm",
-    "run_llm",
-    "arun_llm",
-    # zyx.models.embeddings.model
+    # zyx.core.models.embeddings.model
     "embedder",
-    "run_embed",
-    "arun_embed",
-]
+    "chonkie_embedder",
+    # zyx.core.processing.schemas.schema
+    "schema",
+    # zyx.core.processing.schemas.openai
+    "to_openai_schema",
+    # zyx.core.processing.schemas.pydantic
+    "to_pydantic_model",
+    # zyx.core.processing.text.text
+    "text",
+)
 
 
 __getattr__ = _import_utils.type_checking_getattr_fn(__all__)
