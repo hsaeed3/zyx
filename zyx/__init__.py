@@ -10,14 +10,9 @@ if TYPE_CHECKING:
     from .core.interfaces.maker import aedit, amake, edit, make
     from .core.interfaces.stuff import Stuff, to_stuff
     from .core.interfaces.things import Thing, to_thing
-    from .core.models.embeddings.model import (
-        ChonkieEmbeddingModel as chonkie_embedder,
-    )
-    from .core.models.embeddings.model import EmbeddingModel as embedder
-    from .core.models.language.model import LanguageModel as llm
-    from .core.processing.schemas.openai import (
-        to_openai_schema as to_openai_schema,
-    )
+    from .core.models.embeddings.model import ChonkieEmbeddingModel, EmbeddingModel
+    from .core.models.language.model import LanguageModel
+    from .core.processing.schemas.openai import to_openai_schema
     from .core.processing.schemas.pydantic import to_pydantic_model
     from .core.processing.schemas.schema import to_schema as schema
     from .core.processing.text.text import to_text as text
@@ -40,10 +35,10 @@ __all__ = (
     "Stuff",
     "to_stuff",
     # zyx.core.models.language.model
-    "llm",
+    "LanguageModel",
     # zyx.core.models.embeddings.model
-    "embedder",
-    "chonkie_embedder",
+    "EmbeddingModel",
+    "ChonkieEmbeddingModel",
     # zyx.core.processing.schemas.schema
     "schema",
     # zyx.core.processing.schemas.openai
