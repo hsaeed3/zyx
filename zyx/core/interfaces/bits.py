@@ -21,6 +21,7 @@ from typing import (
 from httpx import URL
 from openai.types.embedding import Embedding
 
+from ..._internal._exceptions import BitError
 from ..models.embeddings.model import (
     ChonkieEmbeddingModel,
     EmbeddingModel,
@@ -29,6 +30,7 @@ from ..models.embeddings.model import (
 from ..models.language.model import LanguageModel, LanguageModelName
 from ..models.language.types import LanguageModelResponse
 from ..processing.text.text import Text, TextChunk
+from .operators import Operators
 
 if TYPE_CHECKING:
     from chonkie.chunker.base import BaseChunker
@@ -106,7 +108,7 @@ class BitQueryResponse(Generic[R]):
         ).rich()
 
 
-class Bit(Generic[T]):
+class Bit(Operators[str], Generic[T]):
     """A 'bit' is a representation of any content that can be queried by a language model or represented as text.
 
     Bits provide a unified interface for working with different types of content (strings, files, URLs)
@@ -178,6 +180,9 @@ class Bit(Generic[T]):
         ) = "openai/text-embedding-3-small",
         chunker: BaseChunker | None = None,
         is_template: bool | None = None,
+        language_model: LanguageModelName
+        | LanguageModel
+        | str = "openai/gpt-4o-mini",
     ):
         """Initialize a 'Bit' instance from a content."""
 
@@ -195,6 +200,12 @@ class Bit(Generic[T]):
             chunker=chunker,
             is_template=is_template,
         )
+        
+        # Initialize language model for LLM operations
+        if isinstance(language_model, str):
+            self._model = LanguageModel(language_model)
+        else:
+            self._model = language_model
 
     def _to_string(self) -> str:
         """Convert the content of this bit to a string."""
@@ -488,6 +499,26 @@ class Bit(Generic[T]):
                 )
             )
 
+    def _get_content_for_llm(self) -> str | None:
+        """Get the content formatted for LLM operations.
+        
+        Returns
+        -------
+        str | None
+            The content as a string, or None if no content.
+        """
+        return self._content if self._content else None
+
+    def _get_model_for_llm(self) -> LanguageModel:
+        """Get the language model for LLM operations.
+        
+        Returns
+        -------
+        LanguageModel
+            The language model to use.
+        """
+        return self._model
+
     def __str__(self) -> str:
         return self.content
 
@@ -534,6 +565,9 @@ def to_bit(
     ) = "openai/text-embedding-3-small",
     chunker: BaseChunker | None = None,
     is_template: bool | None = None,
+    language_model: LanguageModelName
+    | LanguageModel
+    | str = "openai/gpt-4o-mini",
 ) -> Bit[T]:
     """Create a new 'bit' from a source of content. A bit a representation of any content that can be
     queried by a language model or represented as text.
@@ -552,6 +586,8 @@ def to_bit(
         The chunker to use.
     is_template: bool | None
         Whether the content is a template. If None, it will auto infer.
+    language_model: LanguageModelName | LanguageModel | str
+        The language model to use for LLM-powered operations (comparisons, queries, etc.).
 
     Returns
     -------
@@ -565,4 +601,5 @@ def to_bit(
         embedding_model=embedding_model,
         chunker=chunker,
         is_template=is_template,
+        language_model=language_model,
     )

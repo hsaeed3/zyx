@@ -20,6 +20,7 @@ from ..._internal._exceptions import GuardrailError, ThingError
 from ..models.language.model import LanguageModel, LanguageModelName
 from ..models.language.types import LanguageModelResponse
 from ..processing.schemas.schema import P, Schema
+from .operators import Operators
 
 if TYPE_CHECKING:
     from instructor import Mode
@@ -31,7 +32,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 
-class Thing(Generic[T]):
+class Thing(Operators[T], Generic[T]):
     """A 'thing' is a mutable, type-aware container that can generate, edit,
     and query its content using language models.
 
@@ -150,7 +151,7 @@ class Thing(Generic[T]):
     ) -> None:
         """Initialize a Thing with a type or initial value and optional configuration."""
         initial_value: T | None = None
-
+        
         # Determine if we got a Schema, Type, or Value
         if isinstance(t, Schema):
             # It's a Schema
@@ -192,7 +193,7 @@ class Thing(Generic[T]):
         self._validators: List[Callable[[T], T]] = []
         self._guardrails: List[Dict[str, Any]] = []
         self._instructions = instructions
-
+        
         # Initialize content (this will apply validators if any)
         self._content: T | None = None
         if initial_value is not None:
@@ -337,9 +338,8 @@ class Thing(Generic[T]):
         >>> print(thing.content)
         4
         """
-        from pydantic import BaseModel
-
         from .maker import Maker
+        from pydantic import BaseModel
 
         # Build messages with content if requested
         if include_content and self._content is not None:
@@ -347,12 +347,12 @@ class Thing(Generic[T]):
                 content_str = self._content.model_dump_json(indent=2)
             else:
                 content_str = str(self._content)
-
+            
             content_message = {
                 "role": "system",
                 "content": f"Current content:\n{content_str}",
             }
-
+            
             if messages is None:
                 messages = [content_message]
             else:
@@ -694,6 +694,55 @@ class Thing(Generic[T]):
                 )
             )
 
+    def _get_content_for_llm(self) -> str | None:
+        """Get the content formatted for LLM operations.
+        
+        Returns
+        -------
+        str | None
+            The content as a string, or None if no content.
+        """
+        if self._content is None:
+            return None
+            
+        from pydantic import BaseModel
+
+        if isinstance(self._content, BaseModel):
+            return self._content.model_dump_json(indent=2)
+        else:
+            return str(self._content)
+
+    def _get_model_for_llm(self) -> LanguageModel:
+        """Get the language model for LLM operations.
+        
+        Returns
+        -------
+        LanguageModel
+            The language model to use.
+        """
+        return self._model
+
+    def _create_new_instance(self, content: T) -> Thing[T]:
+        """Create a new Thing instance with the given content.
+        
+        Parameters
+        ----------
+        content : T
+            The content for the new instance.
+            
+        Returns
+        -------
+        Thing[T]
+            A new Thing instance with the given content.
+        """
+        new_thing = Thing(
+            self._schema,
+            model=self._model,
+            instructions=self._instructions,
+        )
+        new_thing._content = content
+        return new_thing
+
     def __str__(self) -> str:
         """String representation shows the content."""
         return str(self._content) if self._content is not None else "None"
@@ -711,281 +760,12 @@ class Thing(Generic[T]):
         return f"Thing(type={type_name}, content={content_repr})"
 
     # ============================================================================
-    # Natural Language Operators (Dunder Methods)
+    # Natural Language Operators - Add/Subtract (Thing-specific)
     # ============================================================================
-    # These methods enable LLM-powered evaluation of operators using natural
-    # language semantics. When you compare, combine, or test a Thing, the LLM
-    # interprets the operation based on the content and context.
+    # These operations are only available for Things since they are mutable.
+    # Bits are immutable and don't support these operations.
 
-    async def _llm_compare(self, other: Any, operation: str) -> bool:
-        """Internal method to perform LLM-based comparisons.
-
-        Parameters
-        ----------
-        other : Any
-            The value to compare against.
-        operation : str
-            The comparison operation in natural language (e.g., "equal to", "greater than").
-
-        Returns
-        -------
-        bool
-            Result of the comparison.
-        """
-        if self._content is None:
-            # None comparisons use Python semantics
-            if operation == "equal to":
-                return other is None
-            elif operation == "not equal to":
-                return other is not None
-            else:
-                return False
-
-        from pydantic import BaseModel
-
-        # Format the content
-        if isinstance(self._content, BaseModel):
-            content_str = self._content.model_dump_json(indent=2)
-        else:
-            content_str = str(self._content)
-
-        # Format the comparison value
-        if isinstance(other, Thing):
-            if other._content is None:
-                other_str = "None"
-            elif isinstance(other._content, BaseModel):
-                other_str = other._content.model_dump_json(indent=2)
-            else:
-                other_str = str(other._content)
-        else:
-            other_str = str(other)
-
-        # Build the prompt for comparison
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are evaluating a comparison operation. "
-                    "Analyze the content and determine if the comparison is true or false. "
-                    "Consider semantic meaning, not just literal string matching. "
-                    "For example, 'I don't like that guy' could be considered negative sentiment, "
-                    "and '5' could be less than '10' numerically."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Content: {content_str}\n\n"
-                    f"Is the content {operation} '{other_str}'?\n\n"
-                    f"Answer with only 'true' or 'false'."
-                ),
-            },
-        ]
-
-        response = await self._model.arun(
-            messages=messages,
-            type=bool,
-        )
-
-        return response.content if response.content is not None else False
-
-    def __eq__(self, other: Any) -> bool:
-        """Natural language equality comparison.
-
-        Uses LLM to determine if this thing's content is semantically equal to
-        the comparison value. This goes beyond literal equality to understand
-        meaning and context.
-
-        Parameters
-        ----------
-        other : Any
-            Value to compare against (can be another Thing, a string, or any type).
-
-        Returns
-        -------
-        bool
-            True if semantically equal, False otherwise.
-
-        Examples
-        --------
-        >>> sentiment = thing("I love this!")
-        >>> sentiment == "positive"  # LLM evaluates: True
-        True
-
-        >>> answer = thing(42)
-        >>> answer == "the answer to life"  # LLM understands context: True
-        True
-
-        >>> name = thing("Alice")
-        >>> name == "alice"  # Case-insensitive semantic match: True
-        True
-        """
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._llm_compare(other, "equal to"),
-                )
-                return future.result()
-        except RuntimeError:
-            return asyncio.run(self._llm_compare(other, "equal to"))
-
-    def __ne__(self, other: Any) -> bool:
-        """Natural language inequality comparison.
-
-        Returns
-        -------
-        bool
-            True if semantically not equal, False otherwise.
-
-        Examples
-        --------
-        >>> sentiment = thing("I hate this!")
-        >>> sentiment != "positive"  # LLM evaluates: True
-        True
-        """
-        return not self.__eq__(other)
-
-    def __lt__(self, other: Any) -> bool:
-        """Natural language less-than comparison.
-
-        Uses LLM to determine if this thing's content is semantically less than
-        the comparison value. Works with numbers, dates, rankings, and more.
-
-        Parameters
-        ----------
-        other : Any
-            Value to compare against.
-
-        Returns
-        -------
-        bool
-            True if semantically less than, False otherwise.
-
-        Examples
-        --------
-        >>> priority = thing("low")
-        >>> priority < "high"  # LLM understands ranking: True
-        True
-
-        >>> age = thing("25 years old")
-        >>> age < 30  # LLM parses and compares: True
-        True
-        """
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._llm_compare(other, "less than"),
-                )
-                return future.result()
-        except RuntimeError:
-            return asyncio.run(self._llm_compare(other, "less than"))
-
-    def __le__(self, other: Any) -> bool:
-        """Natural language less-than-or-equal comparison.
-
-        Returns
-        -------
-        bool
-            True if semantically less than or equal, False otherwise.
-
-        Examples
-        --------
-        >>> score = thing("B+")
-        >>> score <= "A"  # LLM understands grading: True
-        True
-        """
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._llm_compare(other, "less than or equal to"),
-                )
-                return future.result()
-        except RuntimeError:
-            return asyncio.run(
-                self._llm_compare(other, "less than or equal to")
-            )
-
-    def __gt__(self, other: Any) -> bool:
-        """Natural language greater-than comparison.
-
-        Uses LLM to determine if this thing's content is semantically greater than
-        the comparison value.
-
-        Parameters
-        ----------
-        other : Any
-            Value to compare against.
-
-        Returns
-        -------
-        bool
-            True if semantically greater than, False otherwise.
-
-        Examples
-        --------
-        >>> priority = thing("critical")
-        >>> priority > "low"  # LLM understands severity: True
-        True
-
-        >>> temp = thing("hot")
-        >>> temp > "cold"  # LLM understands temperature: True
-        True
-        """
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._llm_compare(other, "greater than"),
-                )
-                return future.result()
-        except RuntimeError:
-            return asyncio.run(self._llm_compare(other, "greater than"))
-
-    def __ge__(self, other: Any) -> bool:
-        """Natural language greater-than-or-equal comparison.
-
-        Returns
-        -------
-        bool
-            True if semantically greater than or equal, False otherwise.
-
-        Examples
-        --------
-        >>> rating = thing("excellent")
-        >>> rating >= "good"  # LLM understands quality scale: True
-        True
-        """
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._llm_compare(other, "greater than or equal to"),
-                )
-                return future.result()
-        except RuntimeError:
-            return asyncio.run(
-                self._llm_compare(other, "greater than or equal to")
-            )
-
-    async def _llm_operation(self, other: Any, operation: str) -> T:
+    async def _llm_operation(self, other: Any, operation: str, result_type: type) -> T:
         """Internal method to perform LLM-based operations.
 
         Parameters
@@ -993,36 +773,30 @@ class Thing(Generic[T]):
         other : Any
             The value to combine with.
         operation : str
-            The operation in natural language (e.g., "combine with", "subtract").
+            The operation in natural language (e.g., "add", "subtract").
+        result_type : type
+            The expected type of the result.
 
         Returns
         -------
         T
             Result of the operation with the same type as this thing.
         """
-        if self._content is None:
+        content_str = self._get_content_for_llm()
+        
+        if content_str is None:
             raise ThingError(
                 f"Cannot perform {operation} operation: thing has no content"
             )
 
-        from pydantic import BaseModel
-
-        # Format the content
-        if isinstance(self._content, BaseModel):
-            content_str = self._content.model_dump_json(indent=2)
-        else:
-            content_str = str(self._content)
-
         # Format the other value
-        if isinstance(other, Thing):
-            if other._content is None:
+        if hasattr(other, '_get_content_for_llm'):
+            other_content = other._get_content_for_llm()
+            if other_content is None:
                 raise ThingError(
-                    f"Cannot perform {operation} operation: other thing has no content"
+                    f"Cannot perform {operation} operation: other value has no content"
                 )
-            if isinstance(other._content, BaseModel):
-                other_str = other._content.model_dump_json(indent=2)
-            else:
-                other_str = str(other._content)
+            other_str = other_content
         else:
             other_str = str(other)
 
@@ -1048,9 +822,10 @@ class Thing(Generic[T]):
             },
         ]
 
-        response = await self._model.arun(
+        model = self._get_model_for_llm()
+        response = await model.arun(
             messages=messages,
-            type=self._schema.source,
+            type=result_type,
         )
 
         if response.content is None:
@@ -1092,6 +867,9 @@ class Thing(Generic[T]):
         >>> updated = task + "add deadline: tomorrow"
         >>> # LLM adds deadline field to the object
         """
+        if self._content is None:
+            raise ThingError("Cannot perform add operation: thing has no content")
+            
         try:
             loop = asyncio.get_running_loop()
             import concurrent.futures
@@ -1099,20 +877,13 @@ class Thing(Generic[T]):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(
                     asyncio.run,
-                    self._llm_operation(other, "add"),
+                    self._llm_operation(other, "add", self._schema.source),
                 )
                 result = future.result()
         except RuntimeError:
-            result = asyncio.run(self._llm_operation(other, "add"))
+            result = asyncio.run(self._llm_operation(other, "add", self._schema.source))
 
-        # Create a new Thing with the result
-        new_thing = Thing(
-            self._schema,
-            model=self._model,
-            instructions=self._instructions,
-        )
-        new_thing._content = result
-        return new_thing
+        return self._create_new_instance(result)
 
     def __sub__(self, other: Any) -> Thing[T]:
         """Natural language subtraction/removal.
@@ -1146,6 +917,9 @@ class Thing(Generic[T]):
         >>> filtered = tags - "java"
         >>> # LLM removes "java" from the list
         """
+        if self._content is None:
+            raise ThingError("Cannot perform subtract operation: thing has no content")
+            
         try:
             loop = asyncio.get_running_loop()
             import concurrent.futures
@@ -1153,179 +927,13 @@ class Thing(Generic[T]):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(
                     asyncio.run,
-                    self._llm_operation(other, "subtract"),
+                    self._llm_operation(other, "subtract", self._schema.source),
                 )
                 result = future.result()
         except RuntimeError:
-            result = asyncio.run(self._llm_operation(other, "subtract"))
+            result = asyncio.run(self._llm_operation(other, "subtract", self._schema.source))
 
-        # Create a new Thing with the result
-        new_thing = Thing(
-            self._schema,
-            model=self._model,
-            instructions=self._instructions,
-        )
-        new_thing._content = result
-        return new_thing
-
-    def __bool__(self) -> bool:
-        """Natural language boolean evaluation.
-
-        Evaluates the "truthiness" of this thing's content using LLM interpretation.
-        Goes beyond Python's default truthiness to understand semantic meaning.
-
-        Returns
-        -------
-        bool
-            True if semantically truthy, False otherwise.
-
-        Examples
-        --------
-        >>> sentiment = thing("I love this!")
-        >>> bool(sentiment)  # Positive sentiment
-        True
-
-        >>> answer = thing("no")
-        >>> bool(answer)  # Negative response
-        False
-
-        >>> status = thing("active")
-        >>> bool(status)  # Active state
-        True
-
-        >>> empty = thing("nothing")
-        >>> bool(empty)  # Semantic emptiness
-        False
-        """
-        if self._content is None:
-            return False
-
-        from pydantic import BaseModel
-
-        # Format the content
-        if isinstance(self._content, BaseModel):
-            content_str = self._content.model_dump_json(indent=2)
-        else:
-            content_str = str(self._content)
-
-        # Build the prompt
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are evaluating the truthiness of content. "
-                    "Determine if the content represents a true/positive/active/yes state "
-                    "or a false/negative/inactive/no state. "
-                    "Consider semantic meaning: positive sentiment is true, "
-                    "negative sentiment is false, affirmative responses are true, "
-                    "empty/null/none concepts are false, etc."
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"Content: {content_str}\n\nIs this content truthy? Answer with only 'true' or 'false'.",
-            },
-        ]
-
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._model.arun(messages=messages, type=bool),
-                )
-                response = future.result()
-        except RuntimeError:
-            response = asyncio.run(
-                self._model.arun(messages=messages, type=bool)
-            )
-
-        return response.content if response.content is not None else False
-
-    def __contains__(self, item: Any) -> bool:
-        """Natural language containment check.
-
-        Checks if the given item is semantically contained within this thing's content.
-        The LLM interprets containment based on context (substring, element, concept, etc.).
-
-        Parameters
-        ----------
-        item : Any
-            Item to check for containment.
-
-        Returns
-        -------
-        bool
-            True if item is semantically contained, False otherwise.
-
-        Examples
-        --------
-        >>> text = thing("The quick brown fox")
-        >>> "fox" in text  # Substring containment
-        True
-
-        >>> topics = thing(["AI", "Machine Learning", "Neural Networks"])
-        >>> "deep learning" in topics  # Semantic concept containment
-        True
-
-        >>> description = thing("This is about programming")
-        >>> "coding" in description  # Synonym/concept containment
-        True
-        """
-        if self._content is None:
-            return False
-
-        from pydantic import BaseModel
-
-        # Format the content
-        if isinstance(self._content, BaseModel):
-            content_str = self._content.model_dump_json(indent=2)
-        else:
-            content_str = str(self._content)
-
-        # Format the item
-        item_str = str(item)
-
-        # Build the prompt
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are checking if an item is contained within content. "
-                    "Consider semantic containment: exact matches, substrings, "
-                    "list/array elements, object fields, or conceptually related items. "
-                    "For example, if content mentions 'programming', it contains 'coding'. "
-                    "If content is a list with 'machine learning', it contains related concepts."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Content: {content_str}\n\n"
-                    f"Does the content contain '{item_str}'? "
-                    f"Answer with only 'true' or 'false'."
-                ),
-            },
-        ]
-
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    self._model.arun(messages=messages, type=bool),
-                )
-                response = future.result()
-        except RuntimeError:
-            response = asyncio.run(
-                self._model.arun(messages=messages, type=bool)
-            )
-
-        return response.content if response.content is not None else False
+        return self._create_new_instance(result)
 
 
 def to_thing(
@@ -1342,7 +950,7 @@ def to_thing(
 ) -> Thing[T]:
     """Create a new Thing with the given type or initial value.
 
-    A Thing is a mutable, type-aware container that can generate, edit,
+    A Thing is wa mutable, type-aware container that can generate, edit,
     and query its content using language models.
 
     Parameters

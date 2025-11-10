@@ -20,6 +20,7 @@ __all__ = (
     # ------- CORE.INTERFACES --------
     "MakerError",
     "ThingError",
+    "BitError",
     "GuardrailError",
     "StuffError",
 )
@@ -165,6 +166,16 @@ class ThingError(ZYXError):
     """Exception raised when a thing operation fails.
 
     This exception is used for errors during thing operations,
+    such as invalid parameters or generation failures.
+    """
+
+    pass
+
+
+class BitError(ZYXError):
+    """Exception raised when a bit operation fails.
+
+    This exception is used for errors during bit operations,
     such as invalid parameters or generation failures.
     """
 
