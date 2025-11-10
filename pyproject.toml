@@ -20,7 +20,7 @@ description = "ZYX"
 authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "chonkie>=1.4.0",
     "duckdb>=1.4.1",
@@ -55,3 +55,8 @@ dev = [
     "mkdocs-material-extensions",
     "mkdocstrings[python]",
 ]
+
+
+[tool.ruff]
+line-length = 75
+
