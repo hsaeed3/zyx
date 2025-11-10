@@ -1,6 +1,6 @@
 import pytest
 import os
-from zyx.models import providers
+from zyx.core.models import providers
 
 
 # Test infer_from_model_name for language models
