@@ -43,6 +43,7 @@ xai = ["xai-sdk>=0.2.0 ; python_version >= '3.10'", "python-dotenv>=1.0.0"]
 
 [dependency-groups]
 dev = [
+    "pre-commit",
     "logfire",
     "black",
     # SORT!
