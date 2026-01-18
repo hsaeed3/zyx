@@ -1,20 +1,12 @@
 # --------------------------------------------------------------
-# Dev Additions
+# ADDITIONS
 # --------------------------------------------------------------
 
-# Cursor IDE .cursorrules prompt file
-.cursorrules
+# Extra Dev Files (Personal Dev Addition)
+.dev/
 
 # Ruff Cache
 .ruff_cache/
-
-# Sandbox
-sandbox/
-
-# Dev
-.dev/
-
-.DS_Store
 
 # --------------------------------------------------------------
 # GITHUB DEFAULT PYTHON .GITIGNORE
