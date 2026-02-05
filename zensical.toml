@@ -11,7 +11,33 @@ Copyright &copy; 2026 Hammad Saeed
 extra_css = ["stylesheets/extras.css"]
 
 nav = [
-    {"Introduction" = "index.md"},
+    {"Getting Started" = [
+        {"Introduction" = "index.md"},
+        {"Installation" = "getting-started/installation.md"}
+    ]},
+    {"Core Concepts" = [
+        {"Semantic Operations" = "core-concepts/semantic-operations.md"},
+        {"Context & Prompting" = "core-concepts/context.md"},
+        {"Attachments" = "core-concepts/attachments.md"},
+        {"Tool Use" = "core-concepts/tool-use.md"},
+    ]},
+    {"Context" = [
+        {"Prompting" = "context/prompting.md"},
+        {"Context Spans" = "context/spans.md"},
+        {"Memory" = "context/memory.md"},
+    ]},
+    {"Attachments" = [
+        {"Resources" = "attachments/resources.md"},
+        {"Snippets" = "attachments/snippets.md"},
+    ]},
+    {"Semantic Operations" = [
+        {"Make" = "semantic-operations/make.md"},
+        {"Run" = "semantic-operations/run.md"},
+        {"Edit" = "semantic-operations/edit.md"},
+        {"Query" = "semantic-operations/query.md"},
+        {"Evaluate" = "semantic-operations/evaluate.md"},
+        {"Parse" = "semantic-operations/parse.md"},
+    ]},
 ]
 
 # ----------------------------------------------------------------------------
@@ -31,13 +57,13 @@ features = [
     "content.tooltips",
     "header.autohide",
     "navigation.footer",
-    "navigation.indexes",
     "navigation.instant",
     "navigation.instant.prefetch",
     "navigation.instant.progress",
     "navigation.path",
     "navigation.prune",
     "navigation.top",
+    "navigation.sections",
     "navigation.tracking",
     "search.highlight",
     "toc.follow",
@@ -100,7 +126,7 @@ alternate_style = true
 
 [project.markdown_extensions.attr_list]
 [project.markdown_extensions.pymdownx.emoji]
-emoji_index = "zensical.extensions.emoji.twemoji" # (1)!
+emoji_index = "zensical.extensions.emoji.twemoji"
 emoji_generator = "zensical.extensions.emoji.to_svg"
 [project.markdown_extensions.md_in_html]
 
