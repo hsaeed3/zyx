@@ -22,24 +22,11 @@ readme = "readme.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.11"
 dependencies = [
-    "instructor>=1.14.4",
-    "typing-inspect>=0.9.0",
+    "markitdown>=0.1.4",
+    "openai>=2.16.0",
+    "pydantic-ai-slim>=1.48.0",
+    "toonify>=1.5.1",
 ]
-
-[project.optional-dependencies]
-google-genai = ["google-genai>=1.5.0","jsonref<2.0.0,>=1.1.0"]
-anthropic = ["anthropic==0.71.0", "xmltodict>=0.13,<1.1"]
-groq = ["groq>=0.4.2,<0.34.0"]
-cohere = ["cohere<6.0.0,>=5.1.8"]
-vertexai = ["google-cloud-aiplatform<2.0.0,>=1.53.0", "jsonref<2.0.0,>=1.1.0"]
-cerebras_cloud_sdk = ["cerebras-cloud-sdk<2.0.0,>=1.5.0"]
-fireworks-ai = ["fireworks-ai<1.0.0,>=0.15.4"]
-writer = ["writer-sdk<3.0.0,>=2.2.0"]
-bedrock = ["boto3<2.0.0,>=1.34.0"]
-mistral = ["mistralai<2.0.0,>=1.5.1"]
-perplexity = ["openai>=2.0.0,<3.0.0"]
-litellm = ["litellm<2.0.0,>=1.35.31"]
-xai = ["xai-sdk>=0.2.0 ; python_version >= '3.10'", "python-dotenv>=1.0.0"]
 
 [dependency-groups]
 dev = [
