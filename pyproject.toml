@@ -49,8 +49,12 @@ dev = [
     # docs (zensical is a project by the mkdocs-material team, that
     # aims to be the successor to mkdocs-material and mkdocs itself)
     "zensical",
+    "mkdocstrings-python"
 ]
 
 
 [tool.ruff]
-line-length = 75
+line-length = 85
+
+[tool.ruff.format]
+line-ending = "auto"
