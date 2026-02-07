@@ -37,10 +37,10 @@ You can install the library through `PyPI` using your favorite package manager.
     === "Install All Providers at Once"
 
         To install all of `pydantic-ai`'s supported providers, simply install the full package along with `ZYX`:
-    
+
         ```bash
         pip install zyx pydantic-ai
-        ``` 
+        ```
 
     === "Install Specific Providers"
 

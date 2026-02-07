@@ -1,4 +1,9 @@
-"""⚡️ zyx"""
+"""zyx"""
 
-from .core.context import context as context
-from .gen.make import amake as amake, make as make
+from .operations.make import make, amake
+
+
+__all__ = (
+    "make",
+    "amake",
+)

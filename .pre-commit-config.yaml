@@ -20,6 +20,7 @@ repos:
         args: [--fix, --unsafe-fixes]
       - id: ruff-format
         name: Run Formatter (Ruff)
+        args: [--config, pyproject.toml]
 
   - repo: local
     hooks:
