@@ -22,4 +22,3 @@ icon: lucide/book
     ::: zyx.operations.make.amake
         handler: python
     :::
-
