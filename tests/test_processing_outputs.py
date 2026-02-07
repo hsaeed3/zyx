@@ -81,7 +81,7 @@ def test_caching():
     result2 = normalize_output_type(str)
     assert result1 is result2
     print("✓ Caching works for primitives")
-    
+
     result1 = normalize_output_type(Person)
     result2 = normalize_output_type(Person)
     assert result1 is result2
@@ -89,8 +89,4 @@ def test_caching():
 
 
 if __name__ == "__main__":
-    pytest.main(
-        ["-s", __file__]
-    )
-
-
+    pytest.main(["-s", __file__])

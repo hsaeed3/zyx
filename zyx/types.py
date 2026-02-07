@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Type,
-    TypeAlias,
-    TypeVar,
-    Union
-)
+from typing import Any, Callable, Dict, Type, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel
 from pydantic_ai.agent import Agent
@@ -43,17 +35,17 @@ DepsType = TypeVar("DepsType")
 """Alias for `deps` within `pydantic_ai`'s RunContext"""
 
 
-TargetParam : TypeAlias = Union[
+TargetParam: TypeAlias = Union[
     Output,
     Type[Output],
 ]
 """
-The output 'target' type or value that should be generated/modified by a 
+The output 'target' type or value that should be generated/modified by a
 semantic operation.
 """
 
 
-ModelParam : TypeAlias = Union[
+ModelParam: TypeAlias = Union[
     str,
     Agent[DepsType, Output],
     _pydantic_ai_models.KnownModelName,
@@ -61,7 +53,7 @@ ModelParam : TypeAlias = Union[
 ]
 
 
-ContextParam : TypeAlias = Union[
+ContextParam: TypeAlias = Union[
     str,
     Dict[str, Any],
     BaseModel,
@@ -78,7 +70,7 @@ Accepts:
 """
 
 
-ToolParam : TypeAlias = Union[
+ToolParam: TypeAlias = Union[
     Callable[..., Any],
     _pydantic_ai_tools.Tool,
     _pydantic_ai_tools.AbstractBuiltinTool,

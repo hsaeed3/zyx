@@ -27,7 +27,7 @@ class InvalidTargetError(ZYXError):
 
     def __init__(
         self,
-        target : type,
+        target: type,
     ) -> None:
         super().__init__(
             (
@@ -44,11 +44,11 @@ class InvalidModelError(ZYXError):
 
     def __init__(
         self,
-        model : Any | None = None,
+        model: Any | None = None,
     ) -> None:
         if not model:
             super().__init__(
-                f"Did not recieve a valid model to create an agent from.\n"
+                "Did not recieve a valid model to create an agent from.\n"
                 "A model can be provided as a string, a `pydantic_ai.Model` object, or a `pydantic_ai.Agent` object."
             )
 
@@ -66,9 +66,9 @@ class AgentRunError(ZYXError):
 
     def __init__(
         self,
-        operation_kind : str,
-        agent : Agent,
-        error : Exception,
+        operation_kind: str,
+        agent: Agent,
+        error: Exception,
     ) -> None:
         super().__init__(
             f"An error occurred while running the Pydantic AI agent for semantic operation: {operation_kind}\n"
