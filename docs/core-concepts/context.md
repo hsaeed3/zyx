@@ -13,4 +13,4 @@ This section covers the basics of context management and prompting techniques us
 
 - **Prompts**: Instructions or questions given to the language model.
 - **Messages**: Conversational history or exchanges that inform the model's responses.
-- **'_Snippets_' of Data**: Relevant pieces of information such as images, documents and other data types that can be used to enrich the model's understanding. 
+- **'_Snippets_' of Data**: Relevant pieces of information such as images, documents and other data types that can be used to enrich the model's understanding.
