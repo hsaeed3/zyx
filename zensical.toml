@@ -91,10 +91,6 @@ scheme = "slate"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 
-[project.theme.font]
-text = "Quicksand"
-code = "Google Sans Code"
-
 [project.theme.icon]
 logo = "lucide/smile"
 repo = "lucide/smile"
