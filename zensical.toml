@@ -134,9 +134,6 @@ custom_checkbox = true
 
 [project.markdown_extensions.tables]
 
-[project.plugins.mkdocstrings.handlers.python]
-inventories = ["https://docs.python.org/3/objects.inv"]
-
 [project.plugins.mkdocstrings.handlers.python.options]
 docstring_style = "google"
 inherited_members = true
