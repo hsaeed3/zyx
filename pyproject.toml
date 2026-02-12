@@ -24,9 +24,14 @@ requires-python = ">=3.11"
 dependencies = [
     "markitdown>=0.1.4",
     "openai>=2.16.0",
-    "pydantic-ai-slim>=1.48.0",
+    "pydantic-ai-slim>=1.58.0",
     "toonify>=1.6.0",
 ]
+
+[project.optional-dependencies]
+ai = ["pydantic-ai"]
+code = ["pydantic-monty"]
+chroma = ["chromadb"]
 
 [dependency-groups]
 dev = [
@@ -56,7 +61,7 @@ dev = [
 
 [tool.uv.build-backend]
 source-exclude = ["docs*", "tests*"]
-wheel-exclude = ["docs*"] 
+wheel-exclude = ["docs*"]
 
 [tool.ruff]
 line-length = 79
