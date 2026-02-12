@@ -1,7 +1,6 @@
 # zyx
 
-`zyx` is a fundamentally different (and much more fun may I add), way to interact with language and
-embedding models to define and iterate through workflows, agents, and more.
+ZYX is a simplicity-first library wrapped on top of Pydantic AI and heavily inspired by Marvin. It aims to provide a simple, stdlib-like interface for working with language models, without loss of control as well as flexibility that more complex frameworks provide.
 
 ## Installation
 
