@@ -1,4 +1,11 @@
-"""zyx._confidence"""
+"""zyx._confidence
+
+NOTE: This is a re-implementation of the ideas provided by Ruthvik Bandari's
+pull request implementing confidence scoring in `instructor`. You can view
+the original pull request here:
+
+[PR](https://github.com/567-labs/instructor/pull/1968)
+"""
 
 from __future__ import annotations
 
