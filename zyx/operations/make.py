@@ -2,234 +2,330 @@
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Dict,
-    List,
-    Tuple,
+import random
+from typing import List, Literal, TypeVar, overload
+
+from .._aliases import (
+    PydanticAIInstructions,
+    PydanticAIModelSettings,
+    PydanticAIUsageLimits,
 )
-
-from pydantic_ai.agent import Agent
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.usage import UsageLimits
-
-from ..exceptions import (
-    InvalidTargetError,
-    AgentRunError,
+from .._graph import (
+    SemanticGraph,
+    SemanticGraphDeps,
+    SemanticGraphState,
+    SemanticGraphRequestTemplate,
+    SemanticGenerateNode,
+    SemanticStreamNode,
 )
-from ..utils import core
-from ..processing.outputs import normalize_output_type
-from ..results import Result
-from ..types import (
-    DepsType,
-    Output,
-    InstructionsParam,
-    ModelParam,
-    ContextParam,
-    TargetParam,
-    ToolParam,
-)
-
-__all__ = (
-    "make",
-    "amake",
-)
+from ..result import Result
+from ..stream import Stream
+from .._types import ModelParam, TargetParam, ContextType, ToolType
 
 
-def _prepare_make_request(params: Dict[str, Any]) -> Tuple[Agent, Dict[str, Any]]:
+Deps = TypeVar("Deps")
+Output = TypeVar("Output")
+
+
+_DISTILLATION_KEYWORDS: list[str] = [
+    "concise",
+    "succinct",
+    "evocative",
+    "original",
+    "minimal",
+    "minimalist",
+    "uncommon",
+    "unusual",
+    "abstract",
+    "abstractive",
+    "poetic",
+    "lyrical",
+    "philosophical",
+    "deep",
+    "thoughtful",
+    "profound",
+    "inspiring",
+    "motivational",
+    "educational",
+    "enlightening",
+    "explanatory",
+    "analytical",
+    "critical",
+    "evaluative",
+    "judgemental",
+    "biased",
+    "subjective",
+    "opinionated",
+    "creative",
+    "imaginative",
+    "curious",
+    "insightful",
+    "distinctive",
+    "descriptive",
+    "innovative",
+    "strange",
+    "objective",
+    "reflective",
+]
+
+
+def prepare_make_graph(
+    deps: SemanticGraphDeps[Deps, Output],
+    state: SemanticGraphState[Output],
+    randomize: bool = False,
+    stream: bool = False,
+) -> SemanticGraph[Output]:
     """
-    Takes in a dictionary of parameters used to invoke the `make` or `amake` operations,
-    and returns tuple containing a `pydantic_ai.Agent` object and
-    a dictionary of parameters compatible with the agent's run or run_stream methods.
+    Prepares a `SemanticGraph` Graph for the `make` operation, depending on
+    it's set configuration.
     """
-    request_params: Dict[str, Any] = {}
 
-    model = params.get("model", None)
-    model_settings = params.get("model_settings", None)
-
-    agent = core.prepare_agent(
-        model=model,
-        model_settings=model_settings,
-        deps_type=type(params.get("deps", None))
-        if params.get("deps", None)
-        else None,
+    randomization_system_prompt = (
+        f"Ensure your final response is {random.choice(_DISTILLATION_KEYWORDS)} and {random.choice(_DISTILLATION_KEYWORDS)}."
+        "Although you are free to be creative, try to be as realistic as possible to the given response schema."
+        "Your goal is uncommon responses that are believable. Never use the first 2-3 ideas that come to mind."
     )
 
-    request_params = core.prepare_context(
-        context=params.get("context", None),
-        instructions=params.get("instructions", None),
-    )
+    if state.output.normalized == str:
+        if not deps.message_history and not deps.instructions:
+            raise ValueError(
+                "Using `make()` with `target=str` requires providing either `context` or `instructions`. Please provide"
+                "one of these parameters."
+            )
 
-    parsed_tools = core.prepare_tools(params.get("tools", None))
-    if parsed_tools.get("toolsets", None):
-        request_params["toolsets"] = parsed_tools.get("toolsets")
-    if parsed_tools.get("builtin_tools", None):
-        request_params["builtin_tools"] = parsed_tools.get("builtin_tools")
-
-    if params.get("deps", None):
-        request_params["deps"] = params.get("deps")
-
-    if params.get("usage_limits", None):
-        request_params["usage_limits"] = params.get("usage_limits")
-
-    try:
-        request_params["output_type"] = normalize_output_type(
-            params.get("target", None)
+    if not deps.message_history and not deps.instructions:
+        request = SemanticGraphRequestTemplate(
+            system_prompt_additions=randomization_system_prompt,
+            native_output=False if deps.toolsets else True,
         )
-    except Exception as e:
-        raise InvalidTargetError(
-            "Recieved an invalid target type/object to generate a result for.\n"
-            f"The target type/object {params.get('target', None).__name__} is not yet supported."  # type: ignore
-        ) from e
+        if not deps.agent.model_settings:
+            deps.agent.model_settings = {"temperature": 0.7}
+    else:
+        request = SemanticGraphRequestTemplate(
+            system_prompt_additions=randomization_system_prompt
+            if randomize
+            else None,
+            native_output=False if deps.toolsets else True,
+        )
+        if randomize and not deps.agent.model_settings:
+            deps.agent.model_settings = {"temperature": 0.7}
 
-    return (agent, request_params)
+    if stream:
+        nodes = [SemanticStreamNode]
+        start_node = SemanticStreamNode(request=request)
+    else:
+        nodes = [SemanticGenerateNode]
+        start_node = SemanticGenerateNode(request=request)
+    return SemanticGraph(nodes=nodes, start=start_node, state=state, deps=deps)
 
 
-def make(
-    context: ContextParam | List[ContextParam],
-    target: TargetParam = str,
+@overload
+async def amake(
+    target: TargetParam[Output] = ...,
+    context: ContextType | List[ContextType] | None = ...,
     *,
-    model: ModelParam = "openai:gpt-4o-mini",
-    model_settings: ModelSettings | None = None,
-    instructions: InstructionsParam | None = None,
-    tools: ToolParam | List[ToolParam] | None = None,
-    deps: DepsType | None = None,
-    usage_limits: UsageLimits | None = None,
-    **kwargs: Any,
-) -> Result[Output]:
-    """Generate ('make') a result in a `target` type using an LLM or Agent.
+    randomize: bool = ...,
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[True],
+) -> Stream[Output]: ...
 
-    Examples:
 
-        from zyx import make
-
-        response = make(
-            context = "What is 2+2?",
-            target = int
-        )
-
-        print(response.output)
-
-    Args:
-        context (ContextParam | List[ContextParam]): The context to use for the semantic operation.
-        target (TargetParam, optional): The target type to generate a result for. Defaults to str.
-        model (ModelParam, optional): The model to use for the semantic operation. Defaults to "openai:gpt-4o-mini".
-        model_settings (ModelSettings | None, optional): The model settings to use for the semantic operation. Defaults to None.
-        instructions (InstructionsParam | None, optional): The instructions to use for the semantic operation. Defaults to None.
-        tools (ToolParam | List[ToolParam] | None, optional): The tools to use for the semantic operation. Defaults to None.
-        deps (DepsType | None, optional): The dependencies to use for the semantic operation. Defaults to None.
-        usage_limits (UsageLimits | None, optional): The usage limits to use for the semantic operation. Defaults to None.
-        **kwargs (Any): Additional keyword arguments to pass to the semantic operation.
-
-    Returns:
-        Result[Output]: A `Result` object containing the output of the semantic operation.
-
-    Raises:
-        InvalidTargetError: If the target type is not supported.
-        AgentRunError: If an error occurs while running the agent.
-    """
-    params = {
-        "context": context,
-        "target": target,
-        "model": model,
-        "model_settings": model_settings,
-        "instructions": instructions,
-        "tools": tools,
-        "usage_limits": usage_limits,
-        "deps": deps,
-        **kwargs,
-    }
-
-    agent, request_params = _prepare_make_request(params=params)
-
-    try:
-        result = agent.run_sync(**request_params)
-    except Exception as e:
-        raise AgentRunError(operation_kind="make", agent=agent, error=e) from e
-
-    return Result(
-        kind="make",
-        output=result.output,
-        raw=result,
-        models=[
-            agent.model if isinstance(agent.model, str) else agent.model.model_name
-        ],  # type: ignore
-    )
+@overload
+async def amake(
+    target: TargetParam[Output] = ...,
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    randomize: bool = ...,
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[Output]: ...
 
 
 async def amake(
-    context: ContextParam | List[ContextParam],
-    target: TargetParam = str,
+    target: TargetParam[Output] = str,  # type: ignore[assignment]
+    context: ContextType | List[ContextType] | None = None,
     *,
+    randomize: bool = False,
+    confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
-    model_settings: ModelSettings | None = None,
-    instructions: InstructionsParam | None = None,
-    tools: ToolParam | List[ToolParam] | None = None,
-    deps: DepsType | None = None,
-    usage_limits: UsageLimits | None = None,
-    **kwargs: Any,
-) -> Result[Output]:
-    """Asynchronously generate ('make') a result in a `target` type using an LLM or Agent.
-
-    Examples:
-
-        import asyncio
-        from zyx import amake
-
-        async def example():
-            response = await amake(
-                context = "What is 2+2?",
-                target = int
-            )
-            print(response.output)
-
-        asyncio.run(example())
+    model_settings: PydanticAIModelSettings | None = None,
+    instructions: PydanticAIInstructions | None = None,
+    tools: ToolType | List[ToolType] | None = None,
+    deps: Deps | None = None,
+    usage_limits: PydanticAIUsageLimits | None = None,
+    stream: bool = False,
+) -> Result[Output] | Stream[Output]:
+    """Asynchronously generate ('make') a value of the provided `target` type using
+    a model or Pydantic AI agent.
 
     Args:
-        context (ContextParam | List[ContextParam]): The context to use for the semantic operation.
-        target (TargetParam, optional): The target type to generate a result for. Defaults to str.
-        model (ModelParam, optional): The model to use for the semantic operation. Defaults to "openai:gpt-4o-mini".
-        model_settings (ModelSettings | None, optional): The model settings to use for the semantic operation. Defaults to None.
-        instructions (InstructionsParam | None, optional): The instructions to use for the semantic operation. Defaults to None.
-        tools (ToolParam | List[ToolParam] | None, optional): The tools to use for the semantic operation. Defaults to None.
-        deps (DepsType | None, optional): The dependencies to use for the semantic operation. Defaults to None.
-        usage_limits (UsageLimits | None, optional): The usage limits to use for the semantic operation. Defaults to None.
-        **kwargs (Any): Additional keyword arguments to pass to the semantic operation.
+        target : TargetParam[Output] = str
+            The target type or value to generate.
+        context : ContextType | List[ContextType] | None = None
+            The context to use for the operation.
+        randomize : bool = False
+            Injects a simple randomization instruction for more diverse outputs. This is automatically
+            added if no context or instructions are provided.
+        confidence : bool = False
+            Whether to include confidence scores in the result of the operation. This is currently only
+            supported for OpenAI or OpenAI-like models.
+        model : ModelParam = "openai:gpt-4o-mini"
+            The model to use for the operation. This can be a string, Pydantic AI model,
+            or Pydantic AI agent.
+        model_settings : PydanticAIModelSettings | None = None
+            The model settings to use for the operation.
+        instructions : PydanticAIInstructions | None = None
+            The instructions to use for the operation.
+        tools : ToolType | List[ToolType] | None = None
+            The tools to use for the operation.
+        deps : Deps | None = None
+            Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
+            tools and instructions.
+        usage_limits : PydanticAIUsageLimits | None = None
+            The usage limits to use for the operation.
+        stream : bool = False
+            Whether to stream the output of the operation.
 
     Returns:
-        Result[Output]: A `Result` object containing the output of the semantic operation.
-
-    Raises:
-        InvalidTargetError: If the target type is not supported.
-        AgentRunError: If an error occurs while running the agent.
+        Result[Output] | Stream[Output]
+            The result or stream of the operation.
     """
-
-    params = {
-        "context": context,
-        "target": target,
-        "model": model,
-        "model_settings": model_settings,
-        "instructions": instructions,
-        "tools": tools,
-        "usage_limits": usage_limits,
-        "deps": deps,
-    }
-
-    agent, request_params = _prepare_make_request(params=params)
-
-    try:
-        result = await agent.run(
-            **request_params,
-            **kwargs,
-        )
-    except Exception as e:
-        raise AgentRunError(operation_kind="make", agent=agent, error=e) from e
-
-    return Result(
-        kind="make",
-        output=result.output,
-        raw=result,
-        models=[
-            agent.model if isinstance(agent.model, str) else agent.model.model_name
-        ],  # type: ignore
+    graph_deps = SemanticGraphDeps.prepare(
+        model=model,
+        model_settings=model_settings,
+        context=context,
+        instructions=instructions,  # type: ignore[arg-type]
+        tools=tools,
+        confidence=confidence,
+        target=target,
+        deps=deps,
+        usage_limits=usage_limits,
     )
+    state = SemanticGraphState.prepare(deps=graph_deps)
+
+    graph = prepare_make_graph(
+        deps=graph_deps, state=state, randomize=randomize, stream=stream
+    )
+
+    if stream:
+        return await graph.stream()
+    else:
+        return await graph.run()
+
+
+@overload
+def make(
+    target: TargetParam[Output] = ...,
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    randomize: bool = ...,
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[True],
+) -> Stream[Output]: ...
+
+
+@overload
+def make(
+    target: TargetParam[Output] = ...,
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    randomize: bool = ...,
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[Output]: ...
+
+
+def make(
+    target: TargetParam[Output] = str,  # type: ignore[assignment]
+    context: ContextType | List[ContextType] | None = None,
+    *,
+    randomize: bool = False,
+    confidence: bool = False,
+    model: ModelParam = "openai:gpt-4o-mini",
+    model_settings: PydanticAIModelSettings | None = None,
+    instructions: PydanticAIInstructions | None = None,
+    tools: ToolType | List[ToolType] | None = None,
+    deps: Deps | None = None,
+    usage_limits: PydanticAIUsageLimits | None = None,
+    stream: bool = False,
+) -> Result[Output] | Stream[Output]:
+    """Generate ('make') a value of the provided `target` type using
+    a model or Pydantic AI agent.
+
+    Args:
+        target : TargetParam[Output] = str
+            The target type or value to generate.
+        context : ContextType | List[ContextType] | None = None
+            The context to use for the operation.
+        model : ModelParam = "openai:gpt-4o-mini"
+            The model to use for the operation. This can be a string, Pydantic AI model,
+            or Pydantic AI agent.
+        randomize : bool = False
+            Injects a simple randomization instruction for more diverse outputs. This is automatically
+            added if no context or instructions are provided.
+        confidence : bool = False
+            Whether to include confidence scores in the result of the operation. This is currently only
+            supported for OpenAI or OpenAI-like models.
+        model_settings : PydanticAIModelSettings | None = None
+            The model settings to use for the operation.
+        instructions : PydanticAIInstructions | None = None
+            The instructions to use for the operation.
+        tools : ToolType | List[ToolType] | None = None
+            The tools to use for the operation.
+        deps : Deps | None = None
+            Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
+            tools and instructions.
+        usage_limits : PydanticAIUsageLimits | None = None
+            The usage limits to use for the operation.
+        stream : bool = False
+            Whether to stream the output of the operation.
+
+    Returns:
+        Result[Output] | Stream[Output]
+            The result or stream of the operation.
+    """
+    graph_deps = SemanticGraphDeps.prepare(
+        model=model,
+        model_settings=model_settings,
+        context=context,
+        instructions=instructions,  # type: ignore[arg-type]
+        tools=tools,
+        confidence=confidence,
+        target=target,
+        deps=deps,
+        usage_limits=usage_limits,
+    )
+    state = SemanticGraphState.prepare(deps=graph_deps)
+
+    graph = prepare_make_graph(
+        deps=graph_deps, state=state, randomize=randomize, stream=stream
+    )
+
+    if stream:
+        return graph.stream_sync()
+    else:
+        return graph.run_sync()
