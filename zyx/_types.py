@@ -32,6 +32,7 @@ from ._aliases import (
 )
 from .context import Context
 from .snippets import Snippet
+from .resources.abstract import AbstractResource
 from .targets import Target
 
 
@@ -121,6 +122,7 @@ ToolType: TypeAlias = Union[
     PydanticAITool,
     PydanticAIBuiltinTool,
     PydanticAIToolset,
+    AbstractResource,
 ]
 """
 Accepted formats in which a single item within the `tools` parameter of a semantic operation
@@ -133,4 +135,19 @@ including:
 - PydanticAI Tools
 - PydanticAI Builtin Tools
 - PydanticAI Toolsets
+- `zyx` Resources
+"""
+
+
+AttachmentType: TypeAlias = Union[
+    AbstractResource,
+    Snippet,
+]
+"""
+Accepted formats in which a single item within the `attachments` parameter of a semantic operation
+can be passed in as. All attachments support passing in RunContext dependencies.
+
+An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
+where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
+are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
 """

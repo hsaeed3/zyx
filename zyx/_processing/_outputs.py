@@ -369,7 +369,7 @@ def _make_field_optional(
 
         # Make the entire field Optional
         tmp_field.annotation = (
-            Optional[generic_base[modified_args]] if generic_base else None
+            Optional[generic_base[modified_args]] if generic_base else None  # type: ignore[valid-type]
         )
         tmp_field.default = None
         tmp_field.default_factory = None
@@ -385,7 +385,7 @@ def _make_field_optional(
                 partial_model = partial_output_model(
                     annotation, make_optional=True
                 )
-                tmp_field.annotation = Optional[partial_model]
+                tmp_field.annotation = Optional[partial_model]  # type: ignore[valid-type]
             finally:
                 _processing_models.discard(annotation)
 
@@ -474,6 +474,7 @@ def partial_output_model(
 def selection_output_model(
     options: list | type,
     name: str | None = None,
+    multi_select: bool = False,
     literal: bool = False,
     reason: bool = False,
 ) -> Type[BaseModel]:
@@ -523,19 +524,32 @@ def selection_output_model(
     doc_choices = "\nChoices:\n" + "\n".join(
         f"- {repr(choice)}" for choice in choices
     )
-    doc = (
-        f"Structured selection model. Select by index from given options.\n"
-        f"{doc_choices}\n"
-        "Fields:\n"
-        "- index: (int or Literal) the index of the selected option."
-        + (
-            "\n- reason: (str, optional) explanation for the selection."
-            if reason
-            else ""
+    if multi_select:
+        doc = (
+            f"Structured selection model. Select one or more indices from given options.\n"
+            f"{doc_choices}\n"
+            "Fields:\n"
+            "- indices: (list[int] or list[Literal]) the indices/values of the selected options."
+            + (
+                "\n- reason: (str, optional) explanation for the selections."
+                if reason
+                else ""
+            )
         )
-    )
+    else:
+        doc = (
+            f"Structured selection model. Select by index from given options.\n"
+            f"{doc_choices}\n"
+            "Fields:\n"
+            "- index: (int or Literal) the index of the selected option."
+            + (
+                "\n- reason: (str, optional) explanation for the selection."
+                if reason
+                else ""
+            )
+        )
 
-    # Select the field type for the 'index'
+    # Select the field type for the 'index' or 'indices'
     # Literal mode: only if enabled and all choices are the same primitive type
     literal_type = None
     if (
@@ -547,18 +561,40 @@ def selection_output_model(
         )
     ):
         literal_type = Literal[tuple(choices)]  # type: ignore[literal-required]
-        index_field = (
-            literal_type,
-            Field(..., description="Selected option value (literal)"),
-        )
+        if multi_select:
+            index_field = (
+                list[literal_type],
+                Field(
+                    ...,
+                    description="Selected option values (list of literals)",
+                ),
+            )
+        else:
+            index_field = (
+                literal_type,
+                Field(..., description="Selected option value (literal)"),
+            )
     else:
-        index_field = (
-            int,
-            Field(..., description="Selected option index (integer)"),
-        )
+        if multi_select:
+            index_field = (
+                list[int],
+                Field(
+                    ...,
+                    description="Selected option indices (list of integers)",
+                ),
+            )
+        else:
+            index_field = (
+                int,
+                Field(..., description="Selected option index (integer)"),
+            )
 
     # Add optional reason if required
-    fields = {"index": index_field}
+    if multi_select:
+        fields = {"indices": index_field}
+    else:
+        fields = {"index": index_field}
+
     if reason:
         fields["reason"] = (
             str | None,
@@ -637,8 +673,8 @@ def sparse_output_model(
     )
 
 
-def split_output_model(
-    model: Type[BaseModel],
+def split_output_model_by_fields(
+    model: Type[BaseModel] | BaseModel | Any,
 ) -> dict[str, Type[BaseModel]]:
     """Splits a BaseModel into separate models for each field, with field content
     normalized to a "content" attribute.
@@ -689,3 +725,82 @@ def split_output_model(
         result[field_name] = split_model
 
     return result
+
+
+def split_output_model(
+    model: Type[BaseModel],
+    fields: list[str],
+    partial: bool = True,
+) -> Type[BaseModel]:
+    """Splits a BaseModel into a new model containing only the specified fields.
+
+    Args:
+        model: The BaseModel class to split.
+        fields: List of field names to include in the new model.
+        partial: If True, makes all fields optional. If False, preserves original
+                 field optionality.
+
+    Returns:
+        A new BaseModel class containing only the specified fields.
+
+    Raises:
+        TypeError: If model is not a BaseModel type.
+        ValueError: If any field name doesn't exist in the source model.
+
+    Example:
+        ```python
+        class User(BaseModel):
+            name: str
+            age: int
+            email: str
+
+        SplitUser = split_output_model(User, ["name", "email"], partial=True)
+        # SplitUser fields: name: Optional[str], email: Optional[str]
+        ```
+    """
+    if not isinstance(model, type) or not issubclass(model, BaseModel):
+        raise TypeError(f"Expected a BaseModel type, got {model}")
+
+    # Validate that all fields exist
+    model_fields = set(model.model_fields.keys())
+    invalid_fields = [f for f in fields if f not in model_fields]
+    if invalid_fields:
+        raise ValueError(
+            f"Fields {invalid_fields} do not exist in model {model.__name__}. "
+            f"Available fields: {sorted(model_fields)}"
+        )
+
+    # Process each selected field
+    processed_fields: dict[str, tuple[Any, Any]] = {}
+    for field_name in fields:
+        field_info = model.model_fields[field_name]
+
+        if partial:
+            # Make field optional using the same logic as partial_output_model
+            annotation, field = _make_field_optional(
+                field_info, make_optional=True
+            )
+        else:
+            # Preserve original field optionality but process nested models
+            annotation, field = _make_field_optional(
+                field_info, make_optional=False
+            )
+
+        processed_fields[field_name] = (annotation, field)
+
+    # Generate name for split model
+    model_name = f"Split{model.__name__}"
+
+    # Create the split model
+    split_model = create_model(
+        model_name,
+        __base__=model,
+        __module__=model.__module__,
+        **processed_fields,
+    )  # type: ignore[call-overload]
+
+    # Store reference to original model
+    split_model._original_model = model
+    split_model._selected_fields = fields
+
+    return split_model
