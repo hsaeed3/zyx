@@ -184,18 +184,18 @@ def expr(
     """Create an Expressions instance for semantic expression evaluation.
 
     Args:
-        source: The source value to evaluate expressions against.
-        context: Optional context or conversation history.
-        model: The model to use for evaluation (default: "openai:gpt-4o-mini").
-        model_settings: Model settings (e.g., temperature).
-        attachments: Attachments provided to the agent.
-        instructions: Additional instructions/hints for the model.
-        tools: List of tools available to the model.
-        deps: Optional dependencies for this operation.
-        usage_limits: Usage limits (token/request) configuration.
+        source (SourceParam | None): The source value to evaluate expressions against. Defaults to None.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history. Defaults to None.
+        model (ModelParam): The model to use for evaluation. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings (e.g., temperature). Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
 
     Returns:
-        An Expressions instance that can be used for semantic expression evaluation.
+        Expressions: An Expressions instance that can be used for semantic expression evaluation.
 
     Example:
         ```python

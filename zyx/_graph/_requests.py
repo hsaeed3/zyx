@@ -181,6 +181,7 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                     MultimodalContentMediaType.TEXT,
                     MultimodalContentMediaType.HTML,
                     MultimodalContentMediaType.DOCUMENT,
+                    MultimodalContentMediaType.UNKNOWN,
                 )
 
                 content = (

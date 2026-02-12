@@ -180,41 +180,28 @@ async def amake(
     a model or Pydantic AI agent.
 
     Args:
-        target : TargetParam[Output] = str
-            The target type or value to generate.
-        context : ContextType | List[ContextType] | None = None
-            The context to use for the operation.
-        randomize : bool = False
-            Injects a simple randomization instruction for more diverse outputs. This is automatically
-            added if no context or instructions are provided.
-        confidence : bool = False
-            Whether to include confidence scores in the result of the operation. This is currently only
-            supported for OpenAI or OpenAI-like models.
-        model : ModelParam = "openai:gpt-4o-mini"
-            The model to use for the operation. This can be a string, Pydantic AI model,
-            or Pydantic AI agent.
-        model_settings : PydanticAIModelSettings | None = None
-            The model settings to use for the operation.
-        attachments : AttachmentType | List[AttachmentType] | None = None
-            A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+        target (TargetParam[Output]): The target type or value to generate. Defaults to str.
+        context (ContextType | List[ContextType] | None): The context to use for the operation. Defaults to None.
+        randomize (bool): Injects a simple randomization instruction for more diverse outputs. This is automatically
+            added if no context or instructions are provided. Defaults to False.
+        confidence (bool): Whether to include confidence scores in the result of the operation. This is currently only
+            supported for OpenAI or OpenAI-like models. Defaults to False.
+        model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
+            or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
             where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
-            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
-        instructions : PydanticAIInstructions | None = None
-            The instructions to use for the operation.
-        tools : ToolType | List[ToolType] | None = None
-            The tools to use for the operation.
-        deps : Deps | None = None
-            Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
-            tools and instructions.
-        usage_limits : PydanticAIUsageLimits | None = None
-            The usage limits to use for the operation.
-        stream : bool = False
-            Whether to stream the output of the operation.
+            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts. Defaults to None.
+        instructions (PydanticAIInstructions | None): The instructions to use for the operation. Defaults to None.
+        tools (ToolType | List[ToolType] | None): The tools to use for the operation. Defaults to None.
+        deps (Deps | None): Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
+            tools and instructions. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): The usage limits to use for the operation. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
-        Result[Output] | Stream[Output]
-            The result or stream of the operation.
+        Result[Output] | Stream[Output]: The result or stream of the operation.
     """
     graph_deps = SemanticGraphDeps.prepare(
         model=model,
@@ -295,41 +282,28 @@ def make(
     a model or Pydantic AI agent.
 
     Args:
-        target : TargetParam[Output] = str
-            The target type or value to generate.
-        context : ContextType | List[ContextType] | None = None
-            The context to use for the operation.
-        randomize : bool = False
-            Injects a simple randomization instruction for more diverse outputs. This is automatically
-            added if no context or instructions are provided.
-        confidence : bool = False
-            Whether to include confidence scores in the result of the operation. This is currently only
-            supported for OpenAI or OpenAI-like models.
-        model : ModelParam = "openai:gpt-4o-mini"
-            The model to use for the operation. This can be a string, Pydantic AI model,
-            or Pydantic AI agent.
-        model_settings : PydanticAIModelSettings | None = None
-            The model settings to use for the operation.
-        attachments : AttachmentType | List[AttachmentType] | None = None
-            A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+        target (TargetParam[Output]): The target type or value to generate. Defaults to str.
+        context (ContextType | List[ContextType] | None): The context to use for the operation. Defaults to None.
+        randomize (bool): Injects a simple randomization instruction for more diverse outputs. This is automatically
+            added if no context or instructions are provided. Defaults to False.
+        confidence (bool): Whether to include confidence scores in the result of the operation. This is currently only
+            supported for OpenAI or OpenAI-like models. Defaults to False.
+        model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
+            or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
             where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
-            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
-        instructions : PydanticAIInstructions | None = None
-            The instructions to use for the operation.
-        tools : ToolType | List[ToolType] | None = None
-            The tools to use for the operation.
-        deps : Deps | None = None
-            Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
-            tools and instructions.
-        usage_limits : PydanticAIUsageLimits | None = None
-            The usage limits to use for the operation.
-        stream : bool = False
-            Whether to stream the output of the operation.
+            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts. Defaults to None.
+        instructions (PydanticAIInstructions | None): The instructions to use for the operation. Defaults to None.
+        tools (ToolType | List[ToolType] | None): The tools to use for the operation. Defaults to None.
+        deps (Deps | None): Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
+            tools and instructions. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): The usage limits to use for the operation. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
-        Result[Output] | Stream[Output]
-            The result or stream of the operation.
+        Result[Output] | Stream[Output]: The result or stream of the operation.
     """
     graph_deps = SemanticGraphDeps.prepare(
         model=model,

@@ -599,6 +599,28 @@ async def aedit(
     usage_limits: PydanticAIUsageLimits | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
+    """Asynchronously edit a target value using a model or Pydantic AI agent.
+
+    Args:
+        target (TargetParam[Output]): The target value or type to edit.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
+        selective (bool): When True, perform selective edits. Defaults to True.
+        iterative (bool): When True, perform iterative edits. Requires plan=True. Defaults to False.
+        plan (bool): When True, create an edit plan first. Defaults to False.
+        merge (bool): When True, merge edits with existing values. Requires selective=True or plan=True. Defaults to False.
+        confidence (bool): When True, enables log-probability based confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
+
+    Returns:
+        Result[Output] | Stream[Output]: Edited result or stream of outputs, depending on `stream`.
+    """
     from ...targets import Target as TargetClass
 
     _target = target
@@ -713,6 +735,28 @@ def edit(
     usage_limits: PydanticAIUsageLimits | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
+    """Synchronously edit a target value using a model or Pydantic AI agent.
+
+    Args:
+        target (TargetParam[Output]): The target value or type to edit.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
+        selective (bool): When True, perform selective edits. Defaults to True.
+        iterative (bool): When True, perform iterative edits. Requires plan=True. Defaults to False.
+        plan (bool): When True, create an edit plan first. Defaults to False.
+        merge (bool): When True, merge edits with existing values. Requires selective=True or plan=True. Defaults to False.
+        confidence (bool): When True, enables log-probability based confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
+
+    Returns:
+        Result[Output] | Stream[Output]: Edited result or stream of outputs, depending on `stream`.
+    """
     from ...targets import Target as TargetClass
 
     _target = target

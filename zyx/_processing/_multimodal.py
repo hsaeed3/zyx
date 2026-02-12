@@ -199,6 +199,10 @@ class MultimodalContentMediaType(Enum):
             if mime_type.startswith("text/"):
                 return cls.TEXT  # type: ignore
 
+        if origin == MultimodalContentOrigin.URL and not suffix and not mime_type:
+            # Default unknown URLs to text to avoid treating common web pages as UNKNOWN.
+            return cls.TEXT  # type: ignore
+
         return cls.UNKNOWN  # type: ignore
 
 
@@ -328,6 +332,7 @@ def render_multimodal_source_as_text(
         MultimodalContentMediaType.TEXT,
         MultimodalContentMediaType.HTML,
         MultimodalContentMediaType.DOCUMENT,
+        MultimodalContentMediaType.UNKNOWN
     ):
         if origin == MultimodalContentOrigin.STRING and isinstance(
             source, str

@@ -25,11 +25,11 @@ The following cards illustrate the different semantic operations provided by `ZY
 
     [More Info](../semantic-operations/make.md){ data-preview }
 
-- :lucide-goal: **Run**
+- :lucide-goal: **Select**
 
-    Let an LLM/agent run until it has completed a **condition** and return a **target** value.
+    Perform a LLM-based selection of one or more options.
 
-    [More Info](../semantic-operations/run.md){ data-preview }
+    [More Info](../semantic-operations/select.md){ data-preview }
 
 - :lucide-pencil-line: **Edit**
 
@@ -54,6 +54,13 @@ The following cards illustrate the different semantic operations provided by `ZY
     Parse a **source** object or value into a **target** result.
 
     [More Info](../semantic-operations/parse.md){ data-preview }
+
+- :lucide-check: **Validate**
+
+    Parse a **source** object or value into a **target** result, as well as validating
+    the result against a set of constraints.
+
+    [More Info](../semantic-operations/validate.md){ data-preview }
 
 </div>
 

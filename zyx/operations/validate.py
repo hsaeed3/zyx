@@ -160,37 +160,24 @@ async def avalidate(
     """Asynchronously parse a source into a target type, then validate the result against constraints.
 
     Args:
-        source : SourceParam
-            The value to parse and validate.
-        target : TargetParam[Output]
-            The type or schema to parse into.
-        context : ContextType | List[ContextType] | None
-            Optional context or conversation history.
-        constraints : List[str] | None
-            List of constraint strings to validate against.
-        raise_on_error : bool
-            If True (default), raise AssertionError if validation fails.
-            If False, return a ValidationResult with any violations.
-        confidence : bool
-            If True, includes confidence scoring.
-        model : ModelParam
-            The model to use for parsing/validation.
-        model_settings : PydanticAIModelSettings | None
-            Model settings to use for the operation.
-        instructions : PydanticAIInstructions | None
-            Additional instructions for the model.
-        attachments : AttachmentType | List[AttachmentType] | None
-            Attachments to provide to the model.
-        tools : ToolType | List[ToolType] | None
-            Tools available to the model.
-        deps : Deps | None
-            Optional RunContext dependencies.
-        usage_limits : PydanticAIUsageLimits | None
-            Usage limits for the model call.
+        source (SourceParam): The value to parse and validate.
+        target (TargetParam[Output]): The type or schema to parse into. Defaults to str.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history. Defaults to None.
+        constraints (List[str] | None): List of constraint strings to validate against. Defaults to None.
+        raise_on_error (bool): If True (default), raise AssertionError if validation fails.
+            If False, return a ValidationResult with any violations. Defaults to True.
+        confidence (bool): If True, includes confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for parsing/validation. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to use for the operation. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions for the model. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments to provide to the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): Tools available to the model. Defaults to None.
+        deps (Deps | None): Optional RunContext dependencies. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits for the model call. Defaults to None.
 
     Returns:
-        Result[Output] if raise_on_error is True and validation passes.
-        ValidationResult[Output] if raise_on_error is False (always includes violations).
+        Result[Output] | ValidationResult[Output]: Result[Output] if raise_on_error is True and validation passes.
+            ValidationResult[Output] if raise_on_error is False (always includes violations).
     """
     from ..targets import Target
 
@@ -281,40 +268,27 @@ def validate(
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
 ) -> Result[Output] | ValidationResult[Output]:
-    """Parse a source into a target type, then validate the result against constraints.
+    """Synchronously parse a source into a target type, then validate the result against constraints.
 
     Args:
-        source : SourceParam
-            The value to parse and validate.
-        target : TargetParam[Output]
-            The type or schema to parse into.
-        context : ContextType | List[ContextType] | None
-            Optional context or conversation history.
-        constraints : List[str] | None
-            List of constraint strings to validate against.
-        raise_on_error : bool
-            If True (default), raise AssertionError if validation fails.
-            If False, return a ValidationResult with any violations.
-        confidence : bool
-            If True, includes confidence scoring.
-        model : ModelParam
-            The model to use for parsing/validation.
-        model_settings : PydanticAIModelSettings | None
-            Model settings to use for the operation.
-        instructions : PydanticAIInstructions | None
-            Additional instructions for the model.
-        attachments : AttachmentType | List[AttachmentType] | None
-            Attachments to provide to the model.
-        tools : ToolType | List[ToolType] | None
-            Tools available to the model.
-        deps : Deps | None
-            Optional RunContext dependencies.
-        usage_limits : PydanticAIUsageLimits | None
-            Usage limits for the model call.
+        source (SourceParam): The value to parse and validate.
+        target (TargetParam[Output]): The type or schema to parse into. Defaults to str.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history. Defaults to None.
+        constraints (List[str] | None): List of constraint strings to validate against. Defaults to None.
+        raise_on_error (bool): If True (default), raise AssertionError if validation fails.
+            If False, return a ValidationResult with any violations. Defaults to True.
+        confidence (bool): If True, includes confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for parsing/validation. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to use for the operation. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions for the model. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments to provide to the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): Tools available to the model. Defaults to None.
+        deps (Deps | None): Optional RunContext dependencies. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits for the model call. Defaults to None.
 
     Returns:
-        Result[Output] if raise_on_error is True and validation passes.
-        ValidationResult[Output] if raise_on_error is False (always includes violations).
+        Result[Output] | ValidationResult[Output]: Result[Output] if raise_on_error is True and validation passes.
+            ValidationResult[Output] if raise_on_error is False (always includes violations).
     """
     from ..targets import Target
 

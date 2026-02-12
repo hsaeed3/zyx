@@ -31,13 +31,16 @@ nav = [
     ]},
     {"Semantic Operations" = [
         {"Make" = "semantic-operations/make.md"},
-        {"Run" = "semantic-operations/run.md"},
+        {"Select" = "semantic-operations/select.md"},
         {"Edit" = "semantic-operations/edit.md"},
         {"Query" = "semantic-operations/query.md"},
-        {"Evaluate" = "semantic-operations/evaluate.md"},
+        {"Expressions" = "semantic-operations/expressions.md"},
         {"Parse" = "semantic-operations/parse.md"},
+        {"Validate" = "semantic-operations/validate.md"},
     ]},
-    {"API Reference" = "api-reference.md"}
+    {"API Reference" = [
+        {"API Reference" = "api-reference.md"},
+    ]}
 ]
 
 # ----------------------------------------------------------------------------

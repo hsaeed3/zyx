@@ -153,34 +153,21 @@ async def aparse(
     """Asynchronously parse a source into a target type using a model or Pydantic AI agent.
 
     Args:
-        source : SourceParam
-            The source value to parse from.
-        target : TargetParam[Output]
-            The target type, schema, or agent to parse into.
-        context : ContextType | List[ContextType] | None
-            Optional context or conversation history for the operation.
-        confidence : bool = False
-            When True, enables log-probability based confidence scoring (if supported by the model).
-        model : ModelParam = "openai:gpt-4o-mini"
-            The model to use for parsing. Can be a string, Pydantic AI model, or agent.
-        model_settings : PydanticAIModelSettings | None = None
-            Model settings to pass to the operation (e.g., temperature).
-        attachments : AttachmentType | List[AttachmentType] | None = None
-            Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent.
-        instructions : PydanticAIInstructions | None = None
-            Additional instructions/hints for the model.
-        tools : ToolType | List[ToolType] | None = None
-            List of tools available to the model.
-        deps : Deps | None = None
-            Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation.
-        usage_limits : PydanticAIUsageLimits | None = None
-            Usage limits (token/request) configuration.
-        stream : bool = False
-            Whether to stream the output of the operation.
+        source (SourceParam): The source value to parse from.
+        target (TargetParam[Output]): The target type, schema, or agent to parse into. Defaults to str.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
+        confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
+        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
-        Result[Output] | Stream[Output]
-            Parsed result or stream of parsed outputs, depending on `stream`.
+        Result[Output] | Stream[Output]: Parsed result or stream of parsed outputs, depending on `stream`.
     """
     from ..targets import Target
 
@@ -269,37 +256,24 @@ def parse(
     usage_limits: PydanticAIUsageLimits | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
-    """Asynchronously parse a source into a target type using a model or Pydantic AI agent.
+    """Synchronously parse a source into a target type using a model or Pydantic AI agent.
 
     Args:
-        source : SourceParam
-            The source value to parse from.
-        target : TargetParam[Output]
-            The target type, schema, or agent to parse into.
-        context : ContextType | List[ContextType] | None
-            Optional context or conversation history for the operation.
-        confidence : bool = False
-            When True, enables log-probability based confidence scoring (if supported by the model).
-        model : ModelParam = "openai:gpt-4o-mini"
-            The model to use for parsing. Can be a string, Pydantic AI model, or agent.
-        model_settings : PydanticAIModelSettings | None = None
-            Model settings to pass to the operation (e.g., temperature).
-        attachments : AttachmentType | List[AttachmentType] | None = None
-            Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent.
-        instructions : PydanticAIInstructions | None = None
-            Additional instructions/hints for the model.
-        tools : ToolType | List[ToolType] | None = None
-            List of tools available to the model.
-        deps : Deps | None = None
-            Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation.
-        usage_limits : PydanticAIUsageLimits | None = None
-            Usage limits (token/request) configuration.
-        stream : bool = False
-            Whether to stream the output of the operation.
+        source (SourceParam): The source value to parse from.
+        target (TargetParam[Output]): The target type, schema, or agent to parse into. Defaults to str.
+        context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
+        confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
+        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
-        Result[Output] | Stream[Output]
-            Parsed result or stream of parsed outputs, depending on `stream`.
+        Result[Output] | Stream[Output]: Parsed result or stream of parsed outputs, depending on `stream`.
     """
     from ..targets import Target
 

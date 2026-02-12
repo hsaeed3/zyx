@@ -311,27 +311,30 @@ async def aselect(
     """Asynchronously select one or more options from the given `target`.
 
     Args:
-        target: The options to select from. Can be:
+        target (Any | List[Any]): The options to select from. Can be:
             - A list of values or types
             - A Literal[...] type
             - An Enum subclass
             - A Union[..., ...] type
-        context: Optional additional context or conversation history.
-        multi_select: When True, return a list of selected objects; otherwise
-            return a single selected object.
-        literal: When True and supported by the options, use Literal[...] for
-            the selection field instead of indices.
-        include_reason: Reserved flag to include a textual reason field in the
-            intermediate structured output (not exposed in the final result).
-        confidence: When True, enable log-probability based confidence scoring.
-        model, model_settings, instructions, tools, deps, usage_limits:
-            Standard semantic operation parameters.
-        stream: When True, return a stream wrapper that exposes the underlying
-            model stream and remaps the final result to the selected object(s).
+        context (ContextType | List[ContextType] | None): Optional additional context or conversation history. Defaults to None.
+        multi_select (bool): When True, return a list of selected objects; otherwise
+            return a single selected object. Defaults to False.
+        literal (bool): When True and supported by the options, use Literal[...] for
+            the selection field instead of indices. Defaults to False.
+        include_reason (bool): Reserved flag to include a textual reason field in the
+            intermediate structured output (not exposed in the final result). Defaults to False.
+        confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for selection. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): When True, return a stream wrapper that exposes the underlying
+            model stream and remaps the final result to the selected object(s). Defaults to False.
 
     Returns:
-        Result[Output] | _SelectionStreamWrapper
-            A `Result` whose `output` is either the selected object or a list
+        Result[Output] | _SelectionStreamWrapper: A `Result` whose `output` is either the selected object or a list
             of selected objects, or a streaming wrapper with the same final
             semantics.
     """
@@ -442,7 +445,33 @@ def select(
 ) -> Result[Output] | _SelectionStreamWrapper:
     """Synchronously select one or more options from the given `target`.
 
-    See `aselect` for full parameter documentation.
+    Args:
+        target (Any | List[Any]): The options to select from. Can be:
+            - A list of values or types
+            - A Literal[...] type
+            - An Enum subclass
+            - A Union[..., ...] type
+        context (ContextType | List[ContextType] | None): Optional additional context or conversation history. Defaults to None.
+        multi_select (bool): When True, return a list of selected objects; otherwise
+            return a single selected object. Defaults to False.
+        literal (bool): When True and supported by the options, use Literal[...] for
+            the selection field instead of indices. Defaults to False.
+        include_reason (bool): Reserved flag to include a textual reason field in the
+            intermediate structured output (not exposed in the final result). Defaults to False.
+        confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
+        model (ModelParam): The model to use for selection. Defaults to "openai:gpt-4o-mini".
+        model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
+        instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
+        tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
+        deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
+        usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        stream (bool): When True, return a stream wrapper that exposes the underlying
+            model stream and remaps the final result to the selected object(s). Defaults to False.
+
+    Returns:
+        Result[Output] | _SelectionStreamWrapper: A `Result` whose `output` is either the selected object or a list
+            of selected objects, or a streaming wrapper with the same final
+            semantics.
     """
     # Build the structured selection model for these options.
     selection_model = selection_output_model(
