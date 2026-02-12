@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import re
+import inspect
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Pattern,
-    TYPE_CHECKING,
 )
 
 from pydantic import TypeAdapter
+from pydantic_ai import RunContext
 from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
@@ -385,3 +388,82 @@ def parse_context_to_pydantic_ai_messages(
                 else:
                     raise ValueError(f"Invalid message item: {item}")
         return compact_pydantic_ai_messages(messages)
+
+
+@dataclass
+class _RunContext:
+    """
+    Internal class used to pass `deps` to functions that represent instructions.
+    """
+
+    deps: Any | None = None
+
+
+def parse_instructions_as_system_prompt_parts(
+    instructions: str | Callable | List[str | Callable],
+    deps: Any | None = None,
+    compact: bool = False,
+) -> List[SystemPromptPart]:
+    """
+    Parses a given `instructions` parameter, that can contain a single or list
+    of strings, or functions that optionally accept `pydantic_ai.RunContext[Deps]`
+    dependencies.
+    """
+    if not instructions:
+        return []
+
+    if isinstance(instructions, SystemPromptPart):
+        return [instructions]
+    if not isinstance(instructions, list):
+        instructions = [instructions]
+
+    parts: List[str] = []
+
+    for instruction in instructions:
+        if inspect.isfunction(instruction):
+            signature = inspect.signature(instruction)
+            params = signature.parameters
+            should_pass_deps = False
+
+            if params:
+                first_param = next(iter(params.values()))
+                if first_param.annotation is not inspect._empty:
+                    if deps is not None and (
+                        first_param.annotation is not inspect._empty
+                        and (
+                            first_param.annotation == RunContext
+                            or (
+                                hasattr(first_param.annotation, "__origin__")
+                                and first_param.annotation.__origin__
+                                == RunContext
+                            )
+                        )
+                    ):
+                        should_pass_deps = True
+                    elif len(params) == 1:
+                        should_pass_deps = True
+
+            try:
+                resolved = instruction(
+                    _RunContext(deps=deps) if should_pass_deps else None
+                )
+            except Exception:
+                resolved = instruction(
+                    _RunContext(deps=deps) if deps is not None else None
+                )
+
+            if not resolved:
+                pass
+            else:
+                parts.append(str(resolved))
+
+        elif isinstance(instruction, str):
+            parts.append(instruction)
+        else:
+            raise ValueError(f"Invalid instruction: {instruction}")
+
+    if compact:
+        prompt = "\n\n".join(parts)
+        return [SystemPromptPart(content=prompt)]
+    else:
+        return [SystemPromptPart(content=part) for part in parts]

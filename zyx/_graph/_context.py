@@ -3,21 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import inspect
-from typing import Any, Dict, List, Generic, Type, Self, TypeVar
+from typing import Any, Dict, List, Generic, Type, TypeVar
 
-from pydantic_graph import GraphRunContext
 
 from .._aliases import (
     PydanticAIAgent,
     PydanticAIAgentResult,
     PydanticAIAgentStream,
     PydanticAIInstructions,
-    PydanticAIModel,
-    PydanticAIModelSettings,
     PydanticAIMessage,
-    PydanticAIBuiltinTool,
-    PydanticAITool,
     PydanticAIToolset,
     PydanticAIUsage,
     PydanticAIUsageLimits,
@@ -50,7 +44,7 @@ class SemanticGraphRequestTemplate(Generic[Output]):
     """A template string that is used **after** the result of a node is completed, when the
     node's context is added to the message history of an agent run. This allows complex multi
     step requests to be templated in a cleaner manner within the message history.
-    
+
     This string should contain a single `{prompt}` variable placeholder."""
 
     agent_result_template: str | None = None
@@ -65,7 +59,7 @@ class SemanticGraphRequestTemplate(Generic[Output]):
     """Any operation-specific toolsets that can be included within the request."""
 
     include_source_context: bool = True
-    """Whether to include context about a given `source` within the system prompt of a 
+    """Whether to include context about a given `source` within the system prompt of a
     request. (If one is provided)"""
 
     include_output_context: bool = False
@@ -102,7 +96,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """Whether to include confidence scores in the `Result` of a semantic operation."""
 
     message_history: List[PydanticAIMessage] = field(default_factory=list)
-    """Parsed message history from the `context` and `instructions` parameters of a 
+    """Parsed message history from the `context` and `instructions` parameters of a
     semantic operation, in the `pydantic_ai.ModelMessage` format."""
 
     instructions: PydanticAIInstructions | None = None
@@ -121,7 +115,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     through `pydantic_ai.RunContext`."""
 
     usage_limits: PydanticAIUsageLimits | None = None
-    """The usage limits to set for a single agent run within the execution of a 
+    """The usage limits to set for a single agent run within the execution of a
     semantic operation's graph."""
 
 
@@ -152,7 +146,7 @@ class SemanticGraphState(Generic[Output]):
 
     stream_field_mappings: List[Dict[str, Any]] = field(default_factory=list)
     """Metadata about which fields each stream should update.
-    
+
     Each entry contains:
     - stream_index: Index into self.streams
     - fields: List of field names to update, or None for all fields

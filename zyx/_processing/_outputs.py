@@ -542,7 +542,7 @@ def selection_output_model(
         literal
         and choices
         and all(
-            type(c) == type(choices[0]) and type(c) in (int, str, float, bool)
+            type(c) is type(choices[0]) and type(c) in (int, str, float, bool)
             for c in choices
         )
     ):

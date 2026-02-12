@@ -370,9 +370,9 @@ class OutputBuilder(Generic[Output]):
                         if field_value is not None:
                             update_dict[field_name] = field_value
 
-                    self._partial = self._partial.model_copy( # type: ignore
+                    self._partial = self._partial.model_copy(  # type: ignore
                         update=update_dict
-                    ) 
+                    )
 
             # Full object streaming
             else:
