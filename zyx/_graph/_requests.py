@@ -11,6 +11,7 @@ from .._processing._toon import object_as_toon_text
 from .._processing._messages import (
     parse_instructions_as_system_prompt_parts,
 )
+from .._processing._multimodal import MultimodalContentMediaType
 from .._aliases import (
     PydanticAIModelRequest,
     PydanticAIMessage,
@@ -18,6 +19,7 @@ from .._aliases import (
     PydanticAISystemPromptPart,
 )
 from .._utils._outputs import OutputBuilder
+from ..resources.abstract import AbstractResource
 from ..snippets import Snippet
 from ._context import (
     SemanticGraphContext,
@@ -119,26 +121,81 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 )
             )
 
-        # If source info should be included, generate it now
-        if self.include_source_context and ctx.deps.source is not None:
-            if isinstance(ctx.deps.source, Snippet):
-                system_parts.append(
-                    PydanticAISystemPromptPart(
-                        content=_render_source_attachment_context(
-                            description=ctx.deps.source.description,
+        # Attachments
+        if getattr(ctx.deps, "attachments", None):
+            for attachment in ctx.deps.attachments:  # type: ignore
+                if isinstance(attachment, Snippet):
+                    system_parts.append(
+                        PydanticAISystemPromptPart(
+                            content=_render_attachment_context(
+                                name="Snippet",
+                                description=attachment.description,
+                                state=None,
+                            )
                         )
                     )
-                )
-                # Also inject the Snippet's message, if not already included
-                snippet_message = ctx.deps.source.message
-                if snippet_message not in message_history:
-                    message_history.insert(0, snippet_message)
+
+                    if attachment.message not in message_history:
+                        message_history.insert(0, attachment.message)
+                elif isinstance(attachment, AbstractResource):
+                    system_parts.append(
+                        PydanticAISystemPromptPart(
+                            content=_render_attachment_context(
+                                name=attachment.name,
+                                description=attachment.get_description(),
+                                state=attachment.get_state_description(),
+                            )
+                        )
+                    )
+                else:
+                    system_parts.append(
+                        PydanticAISystemPromptPart(
+                            content=_render_attachment_context(
+                                name="Attachment",
+                                description=str(attachment),
+                                state=None,
+                            )
+                        )
+                    )
+
+        if self.include_source_context and ctx.deps.source is not None:
+            if isinstance(ctx.deps.source, AbstractResource):
+                if ctx.deps.source.__class__.__name__ != "File":
+                    raise ValueError(
+                        f"Invalid Resource passed as `source` parameter: {ctx.deps.source.__class__.__name__}. "
+                        "Currently only `File` resources can be used as the `source` of a semantic operation."
+                    )
+                snippet = Snippet(source=ctx.deps.source.path)
+            elif isinstance(ctx.deps.source, Snippet):
+                snippet = ctx.deps.source
             else:
                 system_parts.append(
                     PydanticAISystemPromptPart(
                         content=_render_source_context(ctx.deps.source)
                     )
                 )
+                snippet = None
+
+            if snippet is not None:
+                is_text_based = snippet._media_type in (
+                    MultimodalContentMediaType.TEXT,
+                    MultimodalContentMediaType.HTML,
+                    MultimodalContentMediaType.DOCUMENT,
+                )
+
+                content = (
+                    snippet.text if is_text_based else snippet.description
+                )
+                system_parts.append(
+                    PydanticAISystemPromptPart(
+                        content=_render_source_attachment_context(content)
+                    )
+                )
+
+                if not is_text_based:
+                    snippet_message = snippet.message
+                    if snippet_message not in message_history:
+                        message_history.insert(0, snippet_message)
 
         # Output context
         if (
@@ -197,6 +254,11 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 name=ctx.deps.target.name,
                 description=ctx.deps.target.description,
             )
+            if (
+                ctx.deps.target._field_hooks
+                or ctx.deps.target._prebuilt_hooks.get("complete", [])
+            ):
+                output_type = None
 
         params = {
             "message_history": message_history,
@@ -242,9 +304,24 @@ def _render_source_context(source: Any | Type[Any]) -> str:
     return f"\n\n[PRIMARY INPUT]\n\n{body}\n\n[END PRIMARY INPUT]\n"
 
 
-def _render_source_attachment_context(description: str) -> str:
+def _render_source_attachment_context(content: str) -> str:
     """Generates system prompt context for a source attachment (e.g. Snippet).
 
-    Only the attachment description appears between the markers.
+    For text-based content, the full text appears between the markers.
+    For non-text content (images/audio/video), only the description appears.
     """
-    return f"\n\n[PRIMARY INPUT]\n\n{description}\n\n[END PRIMARY INPUT]\n"
+    return f"\n\n[PRIMARY INPUT]\n\n{content}\n\n[END PRIMARY INPUT]\n"
+
+
+def _render_attachment_context(
+    name: str | None,
+    description: str,
+    state: str | None,
+) -> str:
+    title = name or "Attachment"
+    body = f"\n\n[ATTACHMENT: {title}]\n"
+    body += f"Description:\n{description}\n"
+    if state:
+        body += f"\nState:\n{state}\n"
+    body += "[END ATTACHMENT]\n"
+    return body
