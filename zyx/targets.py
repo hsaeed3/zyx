@@ -17,9 +17,21 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from ._types import ModelParam
+    from .operations.validate import ValidationResult
+    from ._aliases import (
+        PydanticAIInstructions,
+        PydanticAIModelSettings,
+        PydanticAIUsageLimits,
+    )
+    from ._types import (
+        SourceParam,
+        ModelParam,
+        ContextType,
+        ToolType
+    )
 
 
+Deps = TypeVar("Deps")
 Output = TypeVar("Output")
 
 
@@ -105,6 +117,195 @@ class Target(Generic[Output]):
             return fn
 
         return decorator
+
+    def validate(
+        self,
+        source : SourceParam,
+        *,
+        context : ContextType | List[ContextType] | None = None,
+        constraints : List[str] | None = None,
+        raise_on_error : bool = True,
+        model : ModelParam | None = None,
+        model_settings : PydanticAIModelSettings | None = None,
+        instructions : PydanticAIInstructions | None = None,
+        tools : ToolType | List[ToolType] | None = None,
+        deps : Deps | None = None,
+        usage_limits : PydanticAIUsageLimits | None = None,
+    ) -> Output | ValidationResult[Output]:
+        """
+        Validate a given input `source` against the constraints (or any additional
+        constraints) defined on this target, using a `pydantic_ai` model or agent.
+
+        Args:
+            source : SourceParam
+                The source value to validate against the constraints.
+            context : ContextType | List[ContextType] | None = None
+                Additional context or conversation history to use for the validation.
+            constraints : List[str] | None = None
+                Optional list of constraints the parsed value must satisfy (used by parse/aparse).
+            raise_on_error : bool = True
+                If `True`, raise an error if the constraints are not satisfied.
+            model : ModelParam | None = None
+                The model or agent to use for the validation.
+            model_settings : PydanticAIModelSettings | None = None
+                Model settings to use for the validation.
+            instructions : PydanticAIInstructions | None = None
+                Specific instructions for the model to follow when validating this target.
+            tools : ToolType | List[ToolType] | None = None
+                Tools to use for the validation.
+            deps : Deps | None = None
+
+        Returns:
+            Output | ValidationResult[Output]
+                The validated output or a `ValidationResult` object if `raise_on_error` is `False`.
+        """
+        from .operations.validate import validate, ValidationResult
+
+        if not model and not self.model:
+            raise ValueError(
+                "No model/default model provided for validation. Please either set the `model` attribute on"
+                "this target or provide a model to the `validate` method."
+            )
+        _model = model if model is not None else self.model
+
+        output = validate(
+            source=source,
+            target=self,
+            context=context,
+            constraints=constraints,
+            raise_on_error=raise_on_error,
+            model=_model, # type: ignore[arg-type]
+            model_settings=model_settings,
+            instructions=instructions,
+            tools=tools,
+            deps=deps,
+            usage_limits=usage_limits,
+        )
+        if isinstance(output, ValidationResult):
+            return output # type: ignore[return-value]
+        return output.output # type: ignore[return-value]
+
+    async def avalidate(
+        self,
+        source : SourceParam,
+        *,
+        context : ContextType | List[ContextType] | None = None,
+        constraints : List[str] | None = None,
+        raise_on_error : bool = True,
+        model : ModelParam | None = None,
+        model_settings : PydanticAIModelSettings | None = None,
+        instructions : PydanticAIInstructions | None = None,
+        tools : ToolType | List[ToolType] | None = None,
+        deps : Deps | None = None,
+        usage_limits : PydanticAIUsageLimits | None = None,
+    ) -> Output | ValidationResult[Output]:
+        """
+        Validate a given input `source` against the constraints (or any additional
+        constraints) defined on this target, using a `pydantic_ai` model or agent.
+
+        Args:
+            source : SourceParam
+                The source value to validate against the constraints.
+            context : ContextType | List[ContextType] | None = None
+                Additional context or conversation history to use for the validation.
+            constraints : List[str] | None = None
+                Optional list of constraints the parsed value must satisfy (used by parse/aparse).
+            raise_on_error : bool = True
+                If `True`, raise an error if the constraints are not satisfied.
+            model : ModelParam | None = None
+                The model or agent to use for the validation.
+            model_settings : PydanticAIModelSettings | None = None
+                Model settings to use for the validation.
+            instructions : PydanticAIInstructions | None = None
+                Specific instructions for the model to follow when validating this target.
+            tools : ToolType | List[ToolType] | None = None
+                Tools to use for the validation.
+            deps : Deps | None = None
+
+        Returns:
+            Output | ValidationResult[Output]
+                The validated output or a `ValidationResult` object if `raise_on_error` is `False`.
+        """
+        from .operations.validate import avalidate, ValidationResult
+
+        if not model and not self.model:
+            raise ValueError(
+                "No model/default model provided for validation. Please either set the `model` attribute on"
+                "this target or provide a model to the `validate` method."
+            )
+        _model = model if model is not None else self.model
+
+        output = await avalidate(
+            source=source,
+            target=self,
+            context=context,
+            constraints=constraints,
+            raise_on_error=raise_on_error,
+            model=_model, # type: ignore[arg-type]
+            model_settings=model_settings,
+            instructions=instructions,
+            tools=tools,
+            deps=deps,
+            usage_limits=usage_limits,
+        )
+        if isinstance(output, ValidationResult):
+            return output # type: ignore[return-value]
+        return output.output # type: ignore[return-value]
+
+    def __call__(
+        self,
+        source : SourceParam,
+        *,
+        context : ContextType | List[ContextType] | None = None,
+        constraints : List[str] | None = None,
+        raise_on_error : bool = True,
+        model : ModelParam | None = None,
+        model_settings : PydanticAIModelSettings | None = None,
+        instructions : PydanticAIInstructions | None = None,
+        tools : ToolType | List[ToolType] | None = None,
+        deps : Deps | None = None,
+        usage_limits : PydanticAIUsageLimits | None = None,
+    ) -> Output | ValidationResult[Output]:
+        """
+        Validate a given input `source` against the constraints (or any additional
+        constraints) defined on this target, using a `pydantic_ai` model or agent.
+        
+        Args:
+            source : SourceParam
+                The source value to validate against the constraints.
+            context : ContextType | List[ContextType] | None = None
+                Additional context or conversation history to use for the validation.
+            constraints : List[str] | None = None
+                Optional list of constraints the parsed value must satisfy (used by parse/aparse).
+            raise_on_error : bool = True
+                If `True`, raise an error if the constraints are not satisfied.
+            model : ModelParam | None = None
+                The model or agent to use for the validation.
+            model_settings : PydanticAIModelSettings | None = None
+                Model settings to use for the validation.
+            instructions : PydanticAIInstructions | None = None
+                Specific instructions for the model to follow when validating this target.
+            tools : ToolType | List[ToolType] | None = None
+                Tools to use for the validation.
+            deps : Deps | None = None
+                Additional dependencies to use for the validation.
+
+        Returns:
+            Output | ValidationResult[Output]
+                The validated output or a `ValidationResult` object if `raise_on_error` is `False`.
+        """
+        return self.validate(
+            source=source,
+            context=context,
+            constraints=constraints,
+            raise_on_error=raise_on_error,
+            model=model,
+            model_settings=model_settings,
+            instructions=instructions,
+            tools=tools,
+            deps=deps,
+            usage_limits=usage_limits,
+        )
 
 
 def target(
