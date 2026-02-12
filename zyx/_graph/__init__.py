@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 from dataclasses import dataclass
-from typing import Any, Generic, Sequence, Type, TypeVar
+from typing import Any, Callable, Generic, Sequence, Type, TypeVar
 
 from pydantic_graph import End, Graph, GraphRun
+
+from pydantic_ai import _output as _pydantic_ai_output
+from pydantic_ai import _utils as _pydantic_ai_utils
+from pydantic_ai.exceptions import ModelRetry
 
 from ._context import (
     SemanticGraphDeps,
@@ -19,6 +24,7 @@ from ._nodes import (
     SemanticStreamNode,
 )
 from ._requests import SemanticGraphRequestTemplate
+from ..targets import Target
 from ..result import Result
 from ..stream import Stream
 
@@ -147,12 +153,20 @@ class SemanticGraph(Generic[Output]):
         """Execute the graph to completion and return the final result."""
         graph = self.prepare_graph()
 
-        if self._start and self._state and self._deps:
-            result = await graph.run(
-                start_node=self._start,  # type: ignore
-                state=self._state,  # type: ignore
-                deps=self._deps,  # type: ignore
-            )
+        cleanup = _install_target_hooks(self._deps)
+
+        try:
+            if self._start and self._state and self._deps:
+                result = await graph.run(
+                    start_node=self._start,  # type: ignore
+                    state=self._state,  # type: ignore
+                    deps=self._deps,  # type: ignore
+                )
+        except Exception as e:
+            _run_error_hooks(self._deps, e)
+            raise
+        finally:
+            cleanup()
 
         res = Result(
             result.output,
@@ -165,12 +179,21 @@ class SemanticGraph(Generic[Output]):
         """Execute the graph to completion and return the final result."""
         graph = self.prepare_graph()
 
-        if self._start and self._state and self._deps:
-            result = graph.run_sync(
-                start_node=self._start,  # type: ignore
-                state=self._state,  # type: ignore
-                deps=self._deps,  # type: ignore
-            )
+        cleanup = _install_target_hooks(self._deps)
+
+        try:
+            if self._start and self._state and self._deps:
+                result = graph.run_sync(
+                    start_node=self._start,  # type: ignore
+                    state=self._state,  # type: ignore
+                    deps=self._deps,  # type: ignore
+                )
+        except Exception as e:
+            _run_error_hooks(self._deps, e)
+            raise
+        finally:
+            cleanup()
+
         res = Result(
             result.output,
             raw=result.state.agent_runs,  # type: ignore[attr-defined]
@@ -196,12 +219,20 @@ class SemanticGraph(Generic[Output]):
         """
         graph = self.prepare_graph()
 
-        if self._start and self._state and self._deps:
-            await graph.run(
-                start_node=self._start,  # type: ignore
-                state=self._state,  # type: ignore
-                deps=self._deps,  # type: ignore
-            )
+        cleanup = _install_target_hooks(self._deps)
+
+        try:
+            if self._start and self._state and self._deps:
+                await graph.run(
+                    start_node=self._start,  # type: ignore
+                    state=self._state,  # type: ignore
+                    deps=self._deps,  # type: ignore
+                )
+        except Exception as e:
+            _run_error_hooks(self._deps, e)
+            raise
+        finally:
+            cleanup()
 
         return Stream(
             _builder=self._state.output,
@@ -225,3 +256,146 @@ class SemanticGraph(Generic[Output]):
         """
         loop = _get_event_loop()
         return loop.run_until_complete(self.stream(exclude_none=exclude_none))
+
+
+def _install_target_hooks(
+    deps: SemanticGraphDeps[Any, Any],
+) -> Callable[[], None]:
+    target = deps.target
+    if not isinstance(target, Target):
+        return lambda: None
+
+    validators = _build_target_output_validators(target)
+    if not validators:
+        return lambda: None
+
+    agent = deps.agent
+    start = len(agent._output_validators)
+    agent._output_validators.extend(validators)
+
+    def _cleanup() -> None:
+        del agent._output_validators[start:]
+
+    return _cleanup
+
+
+def _build_target_output_validators(
+    target: Target[Any],
+) -> list[_pydantic_ai_output.OutputValidator[Any, Any]]:
+    field_hooks = target._field_hooks
+    complete_hooks = target._prebuilt_hooks.get("complete", [])
+
+    if not field_hooks and not complete_hooks:
+        return []
+
+    async def _validator(ctx, data):
+        value = data
+
+        # Field hooks
+        if field_hooks:
+            if hasattr(value, "model_copy"):
+                updates = {}
+                for field, hooks in field_hooks.items():
+                    if field == "__self__":
+                        value, did_update = await _apply_hooks(
+                            hooks, ctx, value, field
+                        )
+                        if not did_update:
+                            value = data
+                        continue
+                    if not hasattr(value, field):
+                        continue
+                    current = getattr(value, field)
+                    if current is None:
+                        continue
+                    updated, did_update = await _apply_hooks(
+                        hooks, ctx, current, field
+                    )
+                    if did_update:
+                        updates[field] = updated
+                if updates:
+                    value = value.model_copy(update=updates)
+            elif isinstance(value, dict):
+                for field, hooks in field_hooks.items():
+                    if field == "__self__":
+                        value, did_update = await _apply_hooks(
+                            hooks, ctx, value, field
+                        )
+                        if not did_update:
+                            value = data
+                        continue
+                    if field not in value or value[field] is None:
+                        continue
+                    updated, did_update = await _apply_hooks(
+                        hooks, ctx, value[field], field
+                    )
+                    if did_update:
+                        value[field] = updated
+            else:
+                if "__self__" in field_hooks:
+                    value, did_update = await _apply_hooks(
+                        field_hooks["__self__"], ctx, value, "__self__"
+                    )
+                    if not did_update:
+                        value = data
+
+        # Complete hooks
+        if complete_hooks:
+            value, did_update = await _apply_hooks(
+                complete_hooks, ctx, value, "__complete__"
+            )
+            if not did_update:
+                value = data
+
+        return value
+
+    return [_pydantic_ai_output.OutputValidator(_validator)]
+
+
+async def _apply_hooks(hooks, ctx, value, field_name: str):
+    current = value
+    did_update = False
+    for fn, retry, update in hooks:
+        try:
+            takes_ctx = len(inspect.signature(fn).parameters) > 1
+            if takes_ctx:
+                args = (ctx, current)
+            else:
+                args = (current,)
+
+            if _pydantic_ai_utils.is_async_callable(fn):
+                next_value = await fn(*args)
+            else:
+                next_value = fn(*args)
+            current = next_value
+            if update:
+                did_update = True
+        except Exception as e:
+            if retry:
+                raise ModelRetry(
+                    f"Target hook failed for '{field_name}': {e}"
+                ) from e
+            raise
+    return current, did_update
+
+
+def _run_error_hooks(
+    deps: SemanticGraphDeps[Any, Any], error: BaseException
+) -> None:
+    target = deps.target
+    if not isinstance(target, Target):
+        return
+
+    hooks = target._prebuilt_hooks.get("error", [])
+    if not hooks:
+        return
+
+    for fn, _retry, _update in hooks:
+        try:
+            takes_ctx = len(inspect.signature(fn).parameters) > 1
+            if takes_ctx:
+                fn(deps)
+            else:
+                fn(deps)
+        except Exception:
+            pass

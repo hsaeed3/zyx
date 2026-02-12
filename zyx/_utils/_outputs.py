@@ -203,11 +203,16 @@ class OutputBuilder(Generic[Output]):
         if isinstance(self.normalized, type) and issubclass(
             self.normalized, BaseModel
         ):
-            adapter = TypeAdapter(self.partial_type)
+            # Accept BaseModel instances by validating from their data
+            if isinstance(updates, BaseModel):
+                validated = self.partial_type.model_validate(
+                    updates.model_dump()
+                )
+            else:
+                validated = self.partial_type.model_validate(updates)
         else:
             adapter = TypeAdapter(self.normalized)
-
-        validated = adapter.validate_python(updates)
+            validated = adapter.validate_python(updates)
 
         # Handle different type scenarios
         if self._is_simple:
@@ -240,7 +245,7 @@ class OutputBuilder(Generic[Output]):
 
     def update_from_pydantic_ai_result(
         self,
-        result: PydanticAIAgentResult,
+        result: PydanticAIAgentResult[Any],
         fields: str | List[str] | None = None,
     ) -> Output:
         """Update the builder's state from a `pydantic_ai` AgentRunResult,
@@ -308,7 +313,7 @@ class OutputBuilder(Generic[Output]):
                     update=output.model_dump(exclude_none=True)
                 )
             else:
-                self._partial = output  # type: ignore
+                self._partial = output
 
             # Track filled fields
             if isinstance(output, BaseModel):
@@ -423,6 +428,20 @@ class OutputBuilder(Generic[Output]):
         if self._partial is None:
             raise ValueError("No output has been produced yet")
 
+        # Normalize BaseModel outputs back to the target model type
+        if isinstance(self.normalized, type) and issubclass(
+            self.normalized, BaseModel
+        ):
+            if isinstance(self._partial, BaseModel) and not isinstance(
+                self._partial, self.normalized
+            ):
+                # Only coerce to the full model when all required fields exist
+                if self.is_complete and not exclude_none:
+                    return self.normalized.model_validate(
+                        self._partial.model_dump(exclude_none=exclude_none)
+                    )  # type: ignore[return-value]
+                return self._partial
+
         # Convert back to original type if needed (dataclass, dict)
         if (
             self._is_value
@@ -436,6 +455,8 @@ class OutputBuilder(Generic[Output]):
             and dataclasses.is_dataclass(type(self.target))
             and isinstance(self._partial, BaseModel)
         ):
+            if not self.is_complete or exclude_none:
+                return self._partial
             dump = self._partial.model_dump(exclude_none=exclude_none)
             return type(self.target)(**dump)  # type: ignore
 

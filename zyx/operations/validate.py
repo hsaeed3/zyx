@@ -26,6 +26,7 @@ from .._types import (
     TargetParam,
     ContextType,
     ToolType,
+    AttachmentType,
 )
 from ..result import Result
 from .parse import aparse, parse
@@ -150,36 +151,46 @@ async def avalidate(
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
+    attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
 ) -> Result[Output] | ValidationResult[Output]:
-    """Parse a source into a target type, then validate against constraints.
-
-    Uses :func:`aparse` to parse, then runs a constraint-validation model call.
-    When ``raise_on_error=True`` (default), raises ``AssertionError`` if any
-    constraint is violated. When ``raise_on_error=False``, returns a
-    :class:`ValidationResult` with the parsed output and violations.
+    """Asynchronously parse a source into a target type, then validate the result against constraints.
 
     Args:
-        source: The source value to parse from.
-        target: The target type to parse into.
-        context: Additional context or conversation history.
-        constraints: List of constraints the parsed value must satisfy.
-        raise_on_error: If ``True``, raise on validation failure; if ``False``,
-            return a :class:`ValidationResult` with violations.
-        confidence: When ``True``, enable log-probability based confidence scoring.
-        model: The model to use for the operation.
-        model_settings: Model settings forwarded to ``pydantic_ai``.
-        instructions: Instructions for the model.
-        tools: Tools available to the model.
-        deps: Forwarded to ``pydantic_ai.RunContext.deps``.
-        usage_limits: Token/request usage limits.
+        source : SourceParam
+            The value to parse and validate.
+        target : TargetParam[Output]
+            The type or schema to parse into.
+        context : ContextType | List[ContextType] | None
+            Optional context or conversation history.
+        constraints : List[str] | None
+            List of constraint strings to validate against.
+        raise_on_error : bool
+            If True (default), raise AssertionError if validation fails.
+            If False, return a ValidationResult with any violations.
+        confidence : bool
+            If True, includes confidence scoring.
+        model : ModelParam
+            The model to use for parsing/validation.
+        model_settings : PydanticAIModelSettings | None
+            Model settings to use for the operation.
+        instructions : PydanticAIInstructions | None
+            Additional instructions for the model.
+        attachments : AttachmentType | List[AttachmentType] | None
+            Attachments to provide to the model.
+        tools : ToolType | List[ToolType] | None
+            Tools available to the model.
+        deps : Deps | None
+            Optional RunContext dependencies.
+        usage_limits : PydanticAIUsageLimits | None
+            Usage limits for the model call.
 
     Returns:
-        Result[Output] when ``raise_on_error=True`` and validation passes;
-        :class:`ValidationResult` when ``raise_on_error=False``.
+        Result[Output] if raise_on_error is True and validation passes.
+        ValidationResult[Output] if raise_on_error is False (always includes violations).
     """
     from ..targets import Target
 
@@ -197,6 +208,7 @@ async def avalidate(
         instructions=instructions,
         tools=tools,
         deps=deps,
+        attachments=attachments,
         usage_limits=usage_limits,
         stream=False,
     )
@@ -212,6 +224,7 @@ async def avalidate(
             instructions=_build_validate_prompt(_constraints, parsed_value),
             tools=None,
             deps=deps,
+            attachments=attachments,
             usage_limits=usage_limits,
         )
         validate_state = SemanticGraphState.prepare(deps=validate_deps)
@@ -262,36 +275,46 @@ def validate(
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
+    attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
 ) -> Result[Output] | ValidationResult[Output]:
-    """Parse a source into a target type, then validate against constraints (sync).
-
-    Uses :func:`parse` to parse, then runs a constraint-validation model call.
-    When ``raise_on_error=True`` (default), raises ``AssertionError`` if any
-    constraint is violated. When ``raise_on_error=False``, returns a
-    :class:`ValidationResult` with the parsed output and violations.
+    """Parse a source into a target type, then validate the result against constraints.
 
     Args:
-        source: The source value to parse from.
-        target: The target type to parse into.
-        context: Additional context or conversation history.
-        constraints: List of constraints the parsed value must satisfy.
-        raise_on_error: If ``True``, raise on validation failure; if ``False``,
-            return a :class:`ValidationResult` with violations.
-        confidence: When ``True``, enable log-probability based confidence scoring.
-        model: The model to use for the operation.
-        model_settings: Model settings forwarded to ``pydantic_ai``.
-        instructions: Instructions for the model.
-        tools: Tools available to the model.
-        deps: Forwarded to ``pydantic_ai.RunContext.deps``.
-        usage_limits: Token/request usage limits.
+        source : SourceParam
+            The value to parse and validate.
+        target : TargetParam[Output]
+            The type or schema to parse into.
+        context : ContextType | List[ContextType] | None
+            Optional context or conversation history.
+        constraints : List[str] | None
+            List of constraint strings to validate against.
+        raise_on_error : bool
+            If True (default), raise AssertionError if validation fails.
+            If False, return a ValidationResult with any violations.
+        confidence : bool
+            If True, includes confidence scoring.
+        model : ModelParam
+            The model to use for parsing/validation.
+        model_settings : PydanticAIModelSettings | None
+            Model settings to use for the operation.
+        instructions : PydanticAIInstructions | None
+            Additional instructions for the model.
+        attachments : AttachmentType | List[AttachmentType] | None
+            Attachments to provide to the model.
+        tools : ToolType | List[ToolType] | None
+            Tools available to the model.
+        deps : Deps | None
+            Optional RunContext dependencies.
+        usage_limits : PydanticAIUsageLimits | None
+            Usage limits for the model call.
 
     Returns:
-        Result[Output] when ``raise_on_error=True`` and validation passes;
-        :class:`ValidationResult` when ``raise_on_error=False``.
+        Result[Output] if raise_on_error is True and validation passes.
+        ValidationResult[Output] if raise_on_error is False (always includes violations).
     """
     from ..targets import Target
 
@@ -306,6 +329,7 @@ def validate(
         confidence=confidence,
         model=model,
         model_settings=model_settings,
+        attachments=attachments,
         instructions=instructions,
         tools=tools,
         deps=deps,
@@ -324,6 +348,7 @@ def validate(
             instructions=_build_validate_prompt(_constraints, parsed_value),
             tools=None,
             deps=deps,
+            attachments=attachments,
             usage_limits=usage_limits,
         )
         validate_state = SemanticGraphState.prepare(deps=validate_deps)

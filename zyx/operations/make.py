@@ -20,7 +20,13 @@ from .._graph import (
 )
 from ..result import Result
 from ..stream import Stream
-from .._types import ModelParam, TargetParam, ContextType, ToolType
+from .._types import (
+    ModelParam,
+    TargetParam,
+    ContextType,
+    ToolType,
+    AttachmentType,
+)
 
 
 Deps = TypeVar("Deps")
@@ -86,7 +92,7 @@ def prepare_make_graph(
         "Your goal is uncommon responses that are believable. Never use the first 2-3 ideas that come to mind."
     )
 
-    if state.output.normalized == str:
+    if state.output.normalized is str:
         if not deps.message_history and not deps.instructions:
             raise ValueError(
                 "Using `make()` with `target=str` requires providing either `context` or `instructions`. Please provide"
@@ -128,6 +134,7 @@ async def amake(
     confidence: bool = ...,
     model: ModelParam = ...,
     model_settings: PydanticAIModelSettings | None = ...,
+    attachments: AttachmentType | List[AttachmentType] | None = ...,
     instructions: PydanticAIInstructions | None = ...,
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
@@ -145,6 +152,7 @@ async def amake(
     confidence: bool = ...,
     model: ModelParam = ...,
     model_settings: PydanticAIModelSettings | None = ...,
+    attachments: AttachmentType | List[AttachmentType] | None = ...,
     instructions: PydanticAIInstructions | None = ...,
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
@@ -161,6 +169,7 @@ async def amake(
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
+    attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
@@ -186,6 +195,11 @@ async def amake(
             or Pydantic AI agent.
         model_settings : PydanticAIModelSettings | None = None
             The model settings to use for the operation.
+        attachments : AttachmentType | List[AttachmentType] | None = None
+            A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+            An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
+            where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
+            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
         instructions : PydanticAIInstructions | None = None
             The instructions to use for the operation.
         tools : ToolType | List[ToolType] | None = None
@@ -212,6 +226,7 @@ async def amake(
         target=target,
         deps=deps,
         usage_limits=usage_limits,
+        attachments=attachments,
     )
     state = SemanticGraphState.prepare(deps=graph_deps)
 
@@ -234,6 +249,7 @@ def make(
     confidence: bool = ...,
     model: ModelParam = ...,
     model_settings: PydanticAIModelSettings | None = ...,
+    attachments: AttachmentType | List[AttachmentType] | None = ...,
     instructions: PydanticAIInstructions | None = ...,
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
@@ -251,6 +267,7 @@ def make(
     confidence: bool = ...,
     model: ModelParam = ...,
     model_settings: PydanticAIModelSettings | None = ...,
+    attachments: AttachmentType | List[AttachmentType] | None = ...,
     instructions: PydanticAIInstructions | None = ...,
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
@@ -267,6 +284,7 @@ def make(
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
+    attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
@@ -281,17 +299,22 @@ def make(
             The target type or value to generate.
         context : ContextType | List[ContextType] | None = None
             The context to use for the operation.
-        model : ModelParam = "openai:gpt-4o-mini"
-            The model to use for the operation. This can be a string, Pydantic AI model,
-            or Pydantic AI agent.
         randomize : bool = False
             Injects a simple randomization instruction for more diverse outputs. This is automatically
             added if no context or instructions are provided.
         confidence : bool = False
             Whether to include confidence scores in the result of the operation. This is currently only
             supported for OpenAI or OpenAI-like models.
+        model : ModelParam = "openai:gpt-4o-mini"
+            The model to use for the operation. This can be a string, Pydantic AI model,
+            or Pydantic AI agent.
         model_settings : PydanticAIModelSettings | None = None
             The model settings to use for the operation.
+        attachments : AttachmentType | List[AttachmentType] | None = None
+            A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+            An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
+            where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
+            are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
         instructions : PydanticAIInstructions | None = None
             The instructions to use for the operation.
         tools : ToolType | List[ToolType] | None = None
@@ -318,6 +341,7 @@ def make(
         target=target,
         deps=deps,
         usage_limits=usage_limits,
+        attachments=attachments,
     )
     state = SemanticGraphState.prepare(deps=graph_deps)
 

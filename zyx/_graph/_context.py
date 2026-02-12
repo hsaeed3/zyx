@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, List, Generic, Self, Type, TypeVar
 from pydantic_graph import GraphRunContext
 
 from pydantic_ai.toolsets import FunctionToolset
+from pydantic_ai.output import NativeOutput
 from pydantic_ai.settings import merge_model_settings
 
 from .._processing._messages import (
@@ -31,7 +32,10 @@ from .._aliases import (
     PydanticAISystemPromptPart,
 )
 from .._utils._outputs import OutputBuilder
+from .._processing._outputs import normalize_output_target
 from ..context import Context
+from ..resources.abstract import AbstractResource
+from ..snippets import Snippet
 from ..targets import Target
 
 
@@ -92,6 +96,14 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """The usage limits to set for a single agent run within the execution of a
     semantic operation's graph."""
 
+    attachments: List[Snippet | AbstractResource] | None = None
+    """A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+
+    An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
+    where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
+    are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
+    """
+
     _context_refs: Context | List[Context] | None = None
     """Reference to any `Context` objects that were found within the `context` parameter
     of a semantic operation."""
@@ -105,6 +117,10 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         source: Any | Type[Any] | None = None,
         target: Type[Output] | Output | None = None,
         confidence: bool = False,
+        attachments: Snippet
+        | AbstractResource
+        | List[Snippet | AbstractResource]
+        | None = None,
         instructions: str | Callable | List[str | Callable] | None = None,
         tools: Any | List[Any] | None = None,
         deps: Deps | None = None,
@@ -125,10 +141,24 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                 )
 
         elif isinstance(model, (PydanticAIModel, str)):
+            output_type = None
+            if isinstance(target, Target):
+                normalized = normalize_output_target(target.target)
+                output_type = NativeOutput(
+                    outputs=normalized,
+                    name=target.name,
+                    description=target.description,
+                )
+
             agent = PydanticAIAgent(
                 model=model,
                 model_settings=model_settings,
                 deps_type=type(deps) if deps is not None else None,
+                **(
+                    {"output_type": output_type}
+                    if output_type is not None
+                    else {}
+                ),
             )  # type: ignore
 
         if not agent:
@@ -182,6 +212,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
 
         function_tools = []
         toolsets = ctx_toolsets
+        attachments_list: List[Any] = []
 
         if tools:
             if not isinstance(tools, list):
@@ -194,6 +225,8 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                     function_tools.append(tool)
                 elif isinstance(tool, PydanticAIToolset):
                     toolsets.append(tool)
+                elif isinstance(tool, AbstractResource):
+                    toolsets.append(tool.get_toolset())
                 else:
                     raise ValueError(
                         f"Invalid tool: {tool}. Accepted formats for tools are:\n"
@@ -205,6 +238,22 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         if function_tools:
             ctx_toolsets.append(FunctionToolset(tools=function_tools))
 
+        if attachments:
+            if not isinstance(attachments, list):
+                attachments = [attachments]
+            for attachment in attachments:
+                if isinstance(attachment, AbstractResource):
+                    attachments_list.append(attachment)
+                    toolsets.append(attachment.get_toolset())
+                elif isinstance(attachment, Snippet):
+                    attachments_list.append(attachment)
+                else:
+                    raise ValueError(
+                        f"Invalid attachment: {attachment}. Accepted formats for attachments are:\n"
+                        "1. A `Snippet`\n"
+                        "2. A `Resource`"
+                    )
+
         return cls(
             agent=agent,
             target=target,
@@ -215,6 +264,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
             toolsets=toolsets,
             deps=deps,
             usage_limits=usage_limits,
+            attachments=attachments_list,
             _context_refs=_context_refs,
         )
 

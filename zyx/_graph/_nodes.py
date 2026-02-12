@@ -15,7 +15,6 @@ from pydantic_graph import (
 from .._aliases import (
     PydanticAIAgentResult,
     PydanticAIAgentStream,
-    PydanticAIUsage,
 )
 from ._context import (
     SemanticGraphDeps,
