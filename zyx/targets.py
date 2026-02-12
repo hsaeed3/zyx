@@ -23,12 +23,7 @@ if TYPE_CHECKING:
         PydanticAIModelSettings,
         PydanticAIUsageLimits,
     )
-    from ._types import (
-        SourceParam,
-        ModelParam,
-        ContextType,
-        ToolType
-    )
+    from ._types import SourceParam, ModelParam, ContextType, ToolType
 
 
 Deps = TypeVar("Deps")
@@ -70,23 +65,28 @@ class Target(Generic[Output]):
     """An optional list of constraints that this target type must adhere to,
     these can be explicitly validated by a model if needed."""
 
-    _field_hooks: Dict[str, Callable[[Any], Any]] = field(
-        init=False, default_factory=dict
+    _field_hooks: Dict[str, List[tuple[Callable[[Any], Any], bool, bool]]] = (
+        field(init=False, default_factory=dict)
     )
     """A dictionary of field hooks that can be used to validate/mutate this target
     as it is being generated/mutated.
 
     You can set a field hook on a target by using the `@on_field` decorator."""
 
-    _prebuilt_hooks: Dict[TargetHook, List[Callable[[Any], Any]]] = field(
-        init=False, default_factory=dict
-    )
+    _prebuilt_hooks: Dict[
+        TargetHook, List[tuple[Callable[[Any], Any], bool, bool]]
+    ] = field(init=False, default_factory=dict)
     """A list of prebuilt hooks that can be used to validate/mutate this target
     based on a certain event or condition.
 
     You can apply a prebuilt hook on a target by using the `@on` decorator."""
 
-    def on_field(self, field: str | None = None):
+    def on_field(
+        self,
+        field: str | None = None,
+        retry: bool = True,
+        update: bool = False,
+    ):
         """
         Decorator to register a 'field hook' on this target. A field hook
         is a function that can be used to validate/mutate a specific field
@@ -98,12 +98,17 @@ class Target(Generic[Output]):
 
         def decorator(fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
             key = field or "__self__"
-            self._field_hooks.setdefault(key, []).append(fn)  # type: ignore
+            self._field_hooks.setdefault(key, []).append((fn, retry, update))
             return fn
 
         return decorator
 
-    def on(self, event: TargetHook):
+    def on(
+        self,
+        event: TargetHook,
+        retry: bool = True,
+        update: bool = False,
+    ):
         """
         Decorator to register a 'prebuilt hook' on this target.
 
@@ -113,24 +118,26 @@ class Target(Generic[Output]):
         """
 
         def decorator(fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
-            self._prebuilt_hooks.setdefault(event, []).append(fn)
+            self._prebuilt_hooks.setdefault(event, []).append(
+                (fn, retry, update)
+            )
             return fn
 
         return decorator
 
     def validate(
         self,
-        source : SourceParam,
+        source: SourceParam,
         *,
-        context : ContextType | List[ContextType] | None = None,
-        constraints : List[str] | None = None,
-        raise_on_error : bool = True,
-        model : ModelParam | None = None,
-        model_settings : PydanticAIModelSettings | None = None,
-        instructions : PydanticAIInstructions | None = None,
-        tools : ToolType | List[ToolType] | None = None,
-        deps : Deps | None = None,
-        usage_limits : PydanticAIUsageLimits | None = None,
+        context: ContextType | List[ContextType] | None = None,
+        constraints: List[str] | None = None,
+        raise_on_error: bool = True,
+        model: ModelParam | None = None,
+        model_settings: PydanticAIModelSettings | None = None,
+        instructions: PydanticAIInstructions | None = None,
+        tools: ToolType | List[ToolType] | None = None,
+        deps: Deps | None = None,
+        usage_limits: PydanticAIUsageLimits | None = None,
     ) -> Output | ValidationResult[Output]:
         """
         Validate a given input `source` against the constraints (or any additional
@@ -174,7 +181,7 @@ class Target(Generic[Output]):
             context=context,
             constraints=constraints,
             raise_on_error=raise_on_error,
-            model=_model, # type: ignore[arg-type]
+            model=_model,  # type: ignore[arg-type]
             model_settings=model_settings,
             instructions=instructions,
             tools=tools,
@@ -182,22 +189,22 @@ class Target(Generic[Output]):
             usage_limits=usage_limits,
         )
         if isinstance(output, ValidationResult):
-            return output # type: ignore[return-value]
-        return output.output # type: ignore[return-value]
+            return output  # type: ignore[return-value]
+        return output.output  # type: ignore[return-value]
 
     async def avalidate(
         self,
-        source : SourceParam,
+        source: SourceParam,
         *,
-        context : ContextType | List[ContextType] | None = None,
-        constraints : List[str] | None = None,
-        raise_on_error : bool = True,
-        model : ModelParam | None = None,
-        model_settings : PydanticAIModelSettings | None = None,
-        instructions : PydanticAIInstructions | None = None,
-        tools : ToolType | List[ToolType] | None = None,
-        deps : Deps | None = None,
-        usage_limits : PydanticAIUsageLimits | None = None,
+        context: ContextType | List[ContextType] | None = None,
+        constraints: List[str] | None = None,
+        raise_on_error: bool = True,
+        model: ModelParam | None = None,
+        model_settings: PydanticAIModelSettings | None = None,
+        instructions: PydanticAIInstructions | None = None,
+        tools: ToolType | List[ToolType] | None = None,
+        deps: Deps | None = None,
+        usage_limits: PydanticAIUsageLimits | None = None,
     ) -> Output | ValidationResult[Output]:
         """
         Validate a given input `source` against the constraints (or any additional
@@ -241,7 +248,7 @@ class Target(Generic[Output]):
             context=context,
             constraints=constraints,
             raise_on_error=raise_on_error,
-            model=_model, # type: ignore[arg-type]
+            model=_model,  # type: ignore[arg-type]
             model_settings=model_settings,
             instructions=instructions,
             tools=tools,
@@ -249,27 +256,27 @@ class Target(Generic[Output]):
             usage_limits=usage_limits,
         )
         if isinstance(output, ValidationResult):
-            return output # type: ignore[return-value]
-        return output.output # type: ignore[return-value]
+            return output  # type: ignore[return-value]
+        return output.output  # type: ignore[return-value]
 
     def __call__(
         self,
-        source : SourceParam,
+        source: SourceParam,
         *,
-        context : ContextType | List[ContextType] | None = None,
-        constraints : List[str] | None = None,
-        raise_on_error : bool = True,
-        model : ModelParam | None = None,
-        model_settings : PydanticAIModelSettings | None = None,
-        instructions : PydanticAIInstructions | None = None,
-        tools : ToolType | List[ToolType] | None = None,
-        deps : Deps | None = None,
-        usage_limits : PydanticAIUsageLimits | None = None,
+        context: ContextType | List[ContextType] | None = None,
+        constraints: List[str] | None = None,
+        raise_on_error: bool = True,
+        model: ModelParam | None = None,
+        model_settings: PydanticAIModelSettings | None = None,
+        instructions: PydanticAIInstructions | None = None,
+        tools: ToolType | List[ToolType] | None = None,
+        deps: Deps | None = None,
+        usage_limits: PydanticAIUsageLimits | None = None,
     ) -> Output | ValidationResult[Output]:
         """
         Validate a given input `source` against the constraints (or any additional
         constraints) defined on this target, using a `pydantic_ai` model or agent.
-        
+
         Args:
             source : SourceParam
                 The source value to validate against the constraints.
