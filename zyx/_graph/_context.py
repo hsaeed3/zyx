@@ -2,72 +2,44 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Generic, Type, TypeVar
+import inspect
+from typing import Any, Callable, Dict, List, Generic, Self, Type, TypeVar
 
+from pydantic_graph import GraphRunContext
 
+from pydantic_ai.toolsets import FunctionToolset
+from pydantic_ai.settings import merge_model_settings
+
+from .._processing._messages import (
+    parse_context_to_pydantic_ai_messages,
+    parse_instructions_as_system_prompt_parts,
+)
 from .._aliases import (
     PydanticAIAgent,
     PydanticAIAgentResult,
     PydanticAIAgentStream,
-    PydanticAIInstructions,
+    PydanticAIModelSettings,
+    PydanticAIModel,
     PydanticAIMessage,
+    PydanticAITool,
+    PydanticAIBuiltinTool,
     PydanticAIToolset,
     PydanticAIUsage,
     PydanticAIUsageLimits,
+    PydanticAISystemPromptPart,
 )
+from .._utils._outputs import OutputBuilder
+from ..context import Context
+from ..targets import Target
+
+
+_logger = logging.getLogger(__name__)
 
 
 Deps = TypeVar("Deps")
 Output = TypeVar("Output")
-
-
-@dataclass
-class SemanticGraphRequestTemplate(Generic[Output]):
-    """
-    Template class used by various steps within a semantic operation's graph, to build
-    the context of a single request.
-    """
-
-    output_type: Type[Output] | None = None
-    """An override to the `output_type` parameter within a single step/agent run within a
-    graph."""
-
-    system_prompt_additions: str | list[str] | None = None
-    """Dynamic instructions that can be applied onto the existing system prompt/instructions
-    within `SemanticGraphDeps`."""
-
-    user_prompt_additions: str | list[str] | None = None
-    """Dynamic user prompt content to append to the message history of a request."""
-
-    user_prompt_template: str | None = None
-    """A template string that is used **after** the result of a node is completed, when the
-    node's context is added to the message history of an agent run. This allows complex multi
-    step requests to be templated in a cleaner manner within the message history.
-
-    This string should contain a single `{prompt}` variable placeholder."""
-
-    agent_result_template: str | None = None
-    """A template string that is used **after** the result of a node is generated, allowing
-    framing of complex or messy agent outputs in a cleaner manner within the message history
-    accumulated throughout a semantic operation's graph.
-
-    This string should contain a single `{result}` variable placeholder, but can contain
-    additional variables based on the operation's own requirements."""
-
-    toolsets: List[PydanticAIToolset] | None = None
-    """Any operation-specific toolsets that can be included within the request."""
-
-    include_source_context: bool = True
-    """Whether to include context about a given `source` within the system prompt of a
-    request. (If one is provided)"""
-
-    include_output_context: bool = False
-    """Whether to provide context about the current state of the output within the system
-    prompt of a request."""
-
-    include_user_toolsets: bool = True
-    """Whether user-provided tools/toolsets should be included within this request."""
 
 
 @dataclass
@@ -85,7 +57,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """The `pydantic_ai.Agent` instance that will be invoked when executing the nodes
     within a semantic operation's graph."""
 
-    target: Type[Output] | Output
+    target: Type[Output] | Output | Target[Output]
     """The target type or value that is treated as the final output of a semantic operation."""
 
     source: Any | Type[Any] | None = None
@@ -99,9 +71,11 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """Parsed message history from the `context` and `instructions` parameters of a
     semantic operation, in the `pydantic_ai.ModelMessage` format."""
 
-    instructions: PydanticAIInstructions | None = None
-    """User-provided instructions that are forwarded to the agent. These instructions are rendered
-    into a single `SystemPromptPart` when being passed to an agent."""
+    instructions: List[PydanticAISystemPromptPart] = field(
+        default_factory=list
+    )
+    """User-provided instructions that are forwarded to the agent, these are parsed into
+    `pydantic_ai.SystemPromptPart` objects when being passed to an agent."""
 
     toolsets: List[PydanticAIToolset] = field(default_factory=list)
     """Unified representation of all user-provided functions, `pydantic_ai` tools, builtin tools
@@ -118,6 +92,132 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """The usage limits to set for a single agent run within the execution of a
     semantic operation's graph."""
 
+    _context_refs: Context | List[Context] | None = None
+    """Reference to any `Context` objects that were found within the `context` parameter
+    of a semantic operation."""
+
+    @classmethod
+    def prepare(
+        cls,
+        model: str | PydanticAIModel | PydanticAIAgent,
+        model_settings: PydanticAIModelSettings | None = None,
+        context: Any | List[Any] | None = None,
+        source: Any | Type[Any] | None = None,
+        target: Type[Output] | Output | None = None,
+        confidence: bool = False,
+        instructions: str | Callable | List[str | Callable] | None = None,
+        tools: Any | List[Any] | None = None,
+        deps: Deps | None = None,
+        usage_limits: PydanticAIUsageLimits | None = None,
+    ) -> Self:
+        """
+        Prepares a new instance of `SemanticGraphDeps` through a standardized set of
+        parameters shared by semantic operations.
+        """
+        agent: PydanticAIAgent | None = None
+
+        if isinstance(model, PydanticAIAgent):
+            agent = model
+            if model_settings is not None:
+                agent.model_settings = merge_model_settings(
+                    base=agent.model_settings,
+                    overrides=model_settings,
+                )
+
+        elif isinstance(model, (PydanticAIModel, str)):
+            agent = PydanticAIAgent(
+                model=model,
+                model_settings=model_settings,
+                deps_type=type(deps) if deps is not None else None,
+            )  # type: ignore
+
+        if not agent:
+            raise ValueError(
+                "Invalid 'runner' (model) provided when preparing semantic operation graph dependencies. Accepted formats for a model are:\n"
+                "1. A string in the `pydantic_ai` model format (e.g. 'openai:gpt-4o-mini', etc.)\n"
+                "2. A `pydantic_ai.models.Model` object\n"
+                "3. A `pydantic_ai.Agent` object\n"
+            )
+
+        if confidence is True:
+            agent = _ensure_confidence_supported_agent(agent)
+
+        _context_refs: list[Context] = []
+
+        if context:
+            ctx_list = context if isinstance(context, list) else [context]
+            _context_refs = [
+                item for item in ctx_list if isinstance(item, Context)
+            ]
+            # Optionally infer deps from the most recent Context, if not yet set
+            if _context_refs:
+                last_ctx = _context_refs[-1]
+                if (
+                    getattr(last_ctx, "deps", None) is not None
+                    and deps is None
+                ):
+                    deps = last_ctx.deps
+
+        instructions_list = []
+        if instructions is not None:
+            # Guarantee list hygiene
+            if not isinstance(instructions, list):
+                instructions_list = [instructions]
+            else:
+                instructions_list = instructions
+
+        rendered_instructions = parse_instructions_as_system_prompt_parts(
+            instructions=instructions_list,
+            deps=deps,
+        )
+        for ctx in _context_refs:
+            rendered_instructions.extend(ctx.render_instructions())
+
+        message_history = parse_context_to_pydantic_ai_messages(context)
+
+        # Also aggregate toolsets from ALL Context objects if present
+        ctx_toolsets = []
+        for ctx in _context_refs:
+            ctx_toolsets.extend(ctx.render_toolsets())
+
+        function_tools = []
+        toolsets = ctx_toolsets
+
+        if tools:
+            if not isinstance(tools, list):
+                tools = [tools]
+
+            for tool in tools:
+                if inspect.isfunction(tool):
+                    function_tools.append(PydanticAITool(function=tool))
+                elif isinstance(tool, (PydanticAIBuiltinTool, PydanticAITool)):
+                    function_tools.append(tool)
+                elif isinstance(tool, PydanticAIToolset):
+                    toolsets.append(tool)
+                else:
+                    raise ValueError(
+                        f"Invalid tool: {tool}. Accepted formats for tools are:\n"
+                        "1. A function\n"
+                        "2. A `pydantic_ai.tools.Tool` object\n"
+                        "3. A `pydantic_ai.toolsets.AbstractToolset` object\n"
+                    )
+
+        if function_tools:
+            ctx_toolsets.append(FunctionToolset(tools=function_tools))
+
+        return cls(
+            agent=agent,
+            target=target,
+            source=source,
+            confidence=confidence,
+            message_history=message_history,
+            instructions=rendered_instructions,
+            toolsets=toolsets,
+            deps=deps,
+            usage_limits=usage_limits,
+            _context_refs=_context_refs,
+        )
+
 
 @dataclass
 class SemanticGraphState(Generic[Output]):
@@ -126,8 +226,9 @@ class SemanticGraphState(Generic[Output]):
     is executed.
     """
 
-    template: SemanticGraphRequestTemplate[Output] | None = None
-    """The operation-provided request template to use for the next node(s)."""
+    output: OutputBuilder[Output]
+    """Builder object that tracks the state of the output `target`'s composition
+    over the execution of a semantic operation's graph."""
 
     agent_runs: List[PydanticAIAgentResult] = field(default_factory=list)
     """Accumulation of all `pydantic_ai.AgentRunResult` objects that have been executed by nodes within
@@ -152,3 +253,68 @@ class SemanticGraphState(Generic[Output]):
     - fields: List of field names to update, or None for all fields
     - update_output: Whether to update the output builder
     """
+
+    @classmethod
+    def prepare(cls, deps: SemanticGraphDeps[Deps, Output]) -> Self:
+        """Prepares a new instance of `SemanticGraphState` using a provided
+        `SemanticGraphDeps` instance."""
+        if isinstance(deps.target, Target):
+            return cls(
+                output=OutputBuilder(target=deps.target.target),
+            )
+        return cls(
+            output=OutputBuilder(target=deps.target),
+        )
+
+
+SemanticGraphContext = GraphRunContext[
+    SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+]
+"""RunContext type passed through the nodes of a semantic operation's graph."""
+
+
+def _ensure_confidence_supported_agent(
+    agent: PydanticAIAgent,
+) -> PydanticAIAgent:
+    """
+    Ensures that a given `pydantic_ai.Agent` is configured to return confidence
+    scores, when it is active.
+    """
+    model = agent._get_model(agent.model)
+    model_name = model.model_name
+
+    if not model.client or model.client.__class__.__name__ not in (  # type: ignore[attr-defined]
+        "OpenAI",
+        "AsyncOpenAI",
+    ):
+        _logger.warning(
+            f"Confidence scoring is only supported with OpenAI or OpenAI-like models. "
+            f"Model '{model}' may not return log-probabilities, so confidence will be inaccurate."
+        )
+        return agent
+    else:
+        if model.__class__.__name__ == "OpenAIChatModel":
+            from pydantic_ai.models.openai import (
+                OpenAIResponsesModel,
+                OpenAIResponsesModelSettings,
+            )
+            from pydantic_ai.providers.openai import OpenAIProvider
+
+            _logger.debug(
+                f"Attempting to switch model class for {model_name} to use OpenAIResponsesModel."
+            )
+            agent._model = OpenAIResponsesModel(
+                model_name=model_name,
+                provider=OpenAIProvider(
+                    openai_client=model.client  # type: ignore[attr-defined]
+                ),
+            )
+            agent.model_settings = merge_model_settings(
+                base=agent.model_settings,
+                overrides=OpenAIResponsesModelSettings(
+                    openai_logprobs=True, openai_top_logprobs=10
+                ),
+            )
+            return agent
+
+    return agent

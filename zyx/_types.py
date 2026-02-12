@@ -44,7 +44,7 @@ Output = TypeVar("Output")
 `Stream` returned by a semantic operation."""
 
 
-InstructionsParam: TypeAlias = _pydantic_ai_agent.Instructions
+InstructionsParam: TypeAlias = _pydantic_ai_agent.Instructions | Any
 """Accepted formats of passing in instructions to a semantic operation. This is a re-export
 of the `pydantic_ai.agent.Instructions` type, and supports:
 

@@ -15,6 +15,7 @@ from ._aliases import (
     PydanticAIUsage,
     PydanticAIMessage,
 )
+from ._confidence import Confidence, score_confidence
 
 
 Output = TypeVar("Output")
@@ -39,6 +40,24 @@ class Result(Generic[Output]):
 
     raw: List[PydanticAIAgentResult[Any]] = field(repr=False)
     """All underlying AgentRunResult(s) that were used to produce this result."""
+
+    @property
+    def confidence(self) -> Confidence:
+        """
+        Confidence scores for the `output` of this result.
+
+        NOTE: This may return `None` if `confidence` was not enabled when running the
+        semantic operation this result was produced from, or if the model API does not support
+        retrieving log-probabilities.
+
+        Returns:
+            A `Confidence` object containing the confidence scores for the `output` of this result.
+        """
+        return score_confidence(
+            runs=self.raw,
+            output=self.output,
+            model_name=self.model,
+        )  # type: ignore
 
     @property
     def model(self) -> str:
@@ -86,7 +105,11 @@ class Result(Generic[Output]):
         renderables: list[RenderableType] = []
 
         renderables.append(
-            Rule(title="✨ Result", style="rule.line", align="left")
+            Rule(
+                title=f"✨ Result({type(self.output).__name__})",
+                style="rule.line",
+                align="left",
+            )
         )
 
         output_text = f"{self.output}\n"

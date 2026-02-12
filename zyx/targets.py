@@ -49,11 +49,14 @@ class Target(Generic[Output]):
     """Specific instructions for the model to follow when generating this target."""
 
     constraints: List[str] | None = field(default=None)
-    """An optional list of constraints that this target type must adhere to,
-    these can be explicitly validated by a model if needed."""
+    """Optional list of constraints the parsed value must satisfy (used by parse/aparse)."""
 
     model: ModelParam | None = field(default=None)
     """Default model/pydantic ai agent to use for operations on this target (e.g. ``validate``)."""
+
+    constraints: str | List[str] | None = field(default=None)
+    """An optional list of constraints that this target type must adhere to,
+    these can be explicitly validated by a model if needed."""
 
     _field_hooks: Dict[str, Callable[[Any], Any]] = field(
         init=False, default_factory=dict
@@ -102,3 +105,45 @@ class Target(Generic[Output]):
             return fn
 
         return decorator
+
+
+def target(
+    target: Output | Type[Output],
+    name: str | None = None,
+    description: str | None = None,
+    instructions: str | None = None,
+    constraints: List[str] | None = None,
+    model: ModelParam | None = None,
+) -> Target[Output]:
+    """
+    A decorator/function to create a new `Target` object from a
+    given type or value.
+
+    Args:
+        target: Output | Type[Output]
+            The target type or value to create a `Target` object from.
+        name: str | None = None
+            An optional human readable name for this target type, this is useful
+            for targets of primitive types as well as for better model understanding
+            of a target.
+        description: str | None = None
+            An optional human readable description of this target type.
+        instructions: str | None = None
+            Specific instructions for the model to follow when generating this target.
+        constraints: List[str] | None = None
+            Optional list of constraints the parsed value must satisfy (used by parse/aparse).
+        model: ModelParam | None = None
+            Default model/pydantic ai agent to use for operations on this target (e.g. ``validate``).
+
+    Returns:
+        Target[Output]
+            A new `Target` object from the given type or value.
+    """
+    return Target(
+        target=target,
+        name=name,
+        description=description,
+        instructions=instructions,
+        constraints=constraints,
+        model=model,
+    )

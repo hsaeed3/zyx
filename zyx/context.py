@@ -20,7 +20,10 @@ from ._aliases import (
     PydanticAIToolset,
     PydanticAIUserContent,
 )
-from ._processing._messages import parse_context_to_pydantic_ai_messages
+from ._processing._messages import (
+    parse_context_to_pydantic_ai_messages,
+    parse_instructions_as_system_prompt_parts,
+)
 
 if TYPE_CHECKING:
     from ._types import ToolType, ContextType
@@ -328,47 +331,11 @@ class Context(Generic[Deps]):
         if self.exclude_instructions or not self.instructions:
             return []
 
-        instruction = self.instructions
-        resolved: Any
-
-        if callable(instruction):
-            fn_sig = inspect.signature(instruction)
-            params = fn_sig.parameters
-            should_pass_deps = False
-
-            if params:
-                first_param = next(iter(params.values()))
-                if first_param.annotation is not inspect._empty:
-                    if self.deps is not None and isinstance(
-                        self.deps, first_param.annotation
-                    ):
-                        should_pass_deps = True
-                elif len(params) == 1:
-                    should_pass_deps = True
-
-            try:
-                if should_pass_deps:
-                    resolved = instruction(self.deps)
-                else:
-                    resolved = instruction()
-            except Exception:
-                resolved = (
-                    instruction(self.deps)
-                    if self.deps is not None
-                    else instruction()
-                )
-        else:
-            resolved = instruction
-
-        content = resolved.strip() if isinstance(resolved, str) else None
-        if not content:
-            return []
-
-        if self.compact_instructions:
-            return [_messages.SystemPromptPart(content=content)]
-
-        parts = [s for s in content.split("\n\n") if s.strip()]
-        return [_messages.SystemPromptPart(content=part) for part in parts]
+        return parse_instructions_as_system_prompt_parts(
+            instructions=self.instructions,
+            deps=self.deps,
+            compact=self.compact_instructions,
+        )
 
     def render_toolsets(self) -> List[PydanticAIToolset]:
         """Render the toolsets of this `Context` into a list of `PydanticAIToolset` objects."""
