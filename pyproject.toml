@@ -37,6 +37,7 @@ dependencies = [
 ai = ["pydantic-ai"]
 code = ["pydantic-monty"]
 chroma = ["chromadb"]
+qdrant = ["qdrant-client[fastembed]"]
 
 [dependency-groups]
 dev = [

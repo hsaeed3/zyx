@@ -14,7 +14,6 @@ here:
 from __future__ import annotations
 
 import asyncio
-import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -34,6 +33,7 @@ def sanitize_memory_key(key: str) -> str:
 MemoryProviderName: TypeAlias = Literal[
     "chroma/persistent",
     "chroma/ephemeral",
+    "qdrant",
 ]
 
 
@@ -66,7 +66,7 @@ class MemoryProvider(ABC):
         """Search the index for `n` memories using a string query."""
 
 
-@dataclass(kw_only=True)
+@dataclass(init=False)
 class Memory(AbstractResource):
     """
     A `Resource` that can be used by a model/agent to store, query and retrieve
@@ -75,32 +75,46 @@ class Memory(AbstractResource):
     A `Memory` resource can be configured based on a given `MemoryProvider`.
     """
 
-    key: str = field(kw_only=False)
+    def __init__(
+        self,
+        key: str,
+        provider: MemoryProvider | MemoryProviderName = "chroma/persistent",
+        instructions: str | None = None,
+        auto: bool = False,
+    ):
+        """
+        Create a new `Memory` resource with a given key, provider, instructions and auto mode.
 
-    provider: MemoryProvider | MemoryProviderName = "chroma/persistent"
-    """A classification (name) or pre-configured instance of a `MemoryProvider` that will be used
-    to store and query memories."""
+        Args:
+            key : `str`
+                The key to use for this memory resource.
+            provider : `MemoryProvider` | `MemoryProviderName`
+                The provider to use for this memory resource.
+            instructions : `str` | None
+                The instructions to use for this memory resource.
+            auto : `bool`
+                Whether to automatically add memories when a semantic operation is executed, using
+                the context of the operation as the content to use for the query.
+        """
+        key = sanitize_memory_key(key)
+        super().__init__(
+            name=key,
+            writeable=True,
+            confirm=False,
+        )
 
-    instructions: str | None = field(default=None)
-    """Optional instructions for the model or agent to follow, which should explain the reason
-    for these memories and how it should be used."""
-
-    auto: bool = field(default=True)
-    """Whether memories are automatically included within the instructions/context of a request,
-    on all requests using the message history of the context to query before the model
-    or agent is invoked."""
+        self.key = key
+        self._provider = get_memory_provider(provider)
+        self.instructions = instructions
+        self.auto = auto
 
     def __hash__(self) -> int:
         return id(self)
 
-    def __post_init__(self) -> None:
-        self.key = sanitize_memory_key(self.key)
-        self._provider = get_memory_provider(self.provider)
-
     @property
     def provider(self) -> MemoryProvider:
         """The `MemoryProvider` instance that will be used to store and query memories."""
-        return self._provider
+        return self._provider  # type: ignore[return]
 
     async def async_add(self, content: str) -> str:
         """
@@ -210,6 +224,11 @@ def get_memory_provider(
             return ChromaMemoryProvider(client="persistent")
         elif provider == "chroma/ephemeral":
             return ChromaMemoryProvider(client="ephemeral")
+
+    elif provider == "qdrant":
+        from .qdrant import QdrantMemoryProvider
+
+        return QdrantMemoryProvider()
 
     else:
         raise ValueError(f"Invalid memory provider name: {provider}")
