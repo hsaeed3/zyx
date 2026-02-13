@@ -14,9 +14,15 @@ A fun **"anti-framework"** for doing useful things with agents and LLMs.
 { .hero-tagline }
 
 <p align="center">
-<a href="https://pypi.org/project/fastapi" target="_blank">
-    <img src="https://img.shields.io/pypi/v/zyx?color=%2334D058&label=pypi%20package" alt="Package version">
-</a>
+  <a href="https://pypi.org/project/zyx" target="_blank">
+    <img src="https://img.shields.io/pypi/v/zyx.svg" alt="PyPI version">
+  </a>
+  <a href="https://pypi.org/project/zyx" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/zyx.svg?cacheSeconds=3600" alt="Python version">
+  </a>
+  <a href="https://github.com/hsaeed3/zyx/blob/main/LICENSE" target="_blank">
+    <img src="https://img.shields.io/github/license/hsaeed3/zyx.svg" alt="License">
+  </a>
 </p>
 
 ---
