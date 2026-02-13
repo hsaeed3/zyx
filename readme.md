@@ -326,6 +326,7 @@ result = zyx.parse(
 
 ```python
 import zyx
+from pydantic_ai import ModelRequest
 
 ctx = zyx.create_context(instructions="You are a data analyst")
 
@@ -342,8 +343,8 @@ result = zyx.parse(
         zyx.paste("instructions.md"),
         # Add an OpenAI-style system message
         {"role": "system", "content": "Be thorough in your analysis."},
-        # Mix in a simple string
-        "Parse the CSV file according to all the instructions above",
+        # Mix in a direct PydanticAI message
+        ModelRequest.user_text_prompt("Parse the CSV file according to all the instructions above"),
         # Add more snippets
         zyx.paste("reference_data.json"),
         # Another role-tagged message
@@ -372,67 +373,6 @@ result = zyx.query(
     target=str,
     context=messages,
 )
-```
-
-### Message Dictionaries
-
-Pass OpenAI-style message dictionaries or PydanticAI ModelMessage dictionaries:
-
-```python
-import zyx
-
-# OpenAI-style user message
-user_msg = {
-    "role": "user",
-    "content": "Hello!"
-}
-
-# OpenAI-style system message
-system_msg = {
-    "role": "system",
-    "content": "You are a helpful assistant."
-}
-
-# OpenAI-style assistant message
-assistant_msg = {
-    "role": "assistant",
-    "content": "Hello! How can I help you?"
-}
-
-# OpenAI-style multimodal message (with images)
-multimodal_msg = {
-    "role": "user",
-    "content": [
-        {"type": "text", "text": "What's in this image?"},
-        {"type": "image_url", "image_url": {"url": "https://example.com/image.png"}}
-    ]
-}
-
-# OpenAI-style tool message
-tool_msg = {
-    "role": "tool",
-    "name": "get_weather",
-    "content": "Sunny, 72°F"
-}
-
-# Mix OpenAI dicts with other context types
-result = zyx.make(
-    target=str,
-    context=[
-        system_msg,
-        user_msg,
-        assistant_msg,
-        "Continue the conversation",
-        zyx.paste("additional_context.txt"),
-    ]
-)
-
-# PydanticAI format
-pydantic_ai_message = {
-    "parts": [{"type": "user_prompt", "content": "Hello!"}]
-}
-
-result = zyx.make(target=str, context=[pydantic_ai_message])
 ```
 
 ### Pydantic Models
