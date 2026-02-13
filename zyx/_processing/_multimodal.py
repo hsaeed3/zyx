@@ -26,6 +26,16 @@ from ._toon import object_as_toon_text
 if TYPE_CHECKING:
     from markitdown import MarkItDown
 
+__all__ = (
+    "MultimodalContent",
+    "MultimodalContentOrigin",
+    "MultimodalContentMediaType",
+    "classify_multimodal_source",
+    "render_multimodal_source_as_user_content",
+    "render_multimodal_source_as_text",
+    "render_multimodal_source_as_description",
+)
+
 
 MultimodalContent: TypeAlias = Path | str | bytes | Any
 """

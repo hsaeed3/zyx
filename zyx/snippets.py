@@ -17,6 +17,11 @@ from ._processing._multimodal import (
     render_multimodal_source_as_description,
 )
 
+__all__ = (
+    "Snippet",
+    "paste",
+)
+
 
 SourceType = TypeVar("SourceType")
 

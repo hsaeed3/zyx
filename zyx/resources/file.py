@@ -18,6 +18,8 @@ from .._processing._multimodal import (
 )
 from .abstract import AbstractResource
 
+__all__ = ("File",)
+
 
 _FILE_LOCKS: dict[str, threading.RLock] = {}
 

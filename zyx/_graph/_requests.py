@@ -25,6 +25,8 @@ from ._context import (
     SemanticGraphContext,
 )
 
+__all__ = ("SemanticGraphRequestTemplate",)
+
 
 Deps = TypeVar("Deps")
 Output = TypeVar("Output")
@@ -246,15 +248,18 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 output_type = getattr(ctx.state.output, "normalized", None)
 
             if self.native_output:
-                output_type = NativeOutput(
-                    outputs=output_type,
-                    name=self.native_output_name
-                    if self.native_output_name
-                    else None,
-                    description=self.native_output_description
-                    if self.native_output_description
-                    else None,
-                )
+                # Don't wrap str in NativeOutput - pydantic_ai needs str directly
+                # to create a TextOutputSchema for stream_text() to work
+                if output_type is not str:
+                    output_type = NativeOutput(
+                        outputs=output_type,
+                        name=self.native_output_name
+                        if self.native_output_name
+                        else None,
+                        description=self.native_output_description
+                        if self.native_output_description
+                        else None,
+                    )
         else:
             output_type = NativeOutput(
                 outputs=ctx.state.output.normalized,

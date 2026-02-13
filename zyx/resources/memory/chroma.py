@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Literal, TypeAlias
 
 try:
-    import chromadb  # type: ignore[import-untyped]
+    import chromadb  # type: ignore[unresolved-import]
 except ImportError:
     raise ImportError(
         "To use the `chroma` memory provider, you must first install the `chromadb` library.\n"
@@ -19,8 +19,13 @@ except ImportError:
 
 from . import MemoryProvider
 
+__all__ = (
+    "ChromaMemoryProvider",
+    "ChromaMemoryClientKind",
+)
 
-ChromaMemoryClient: TypeAlias = Literal["persistent", "ephemeral"]
+
+ChromaMemoryClientKind: TypeAlias = Literal["persistent", "ephemeral"]
 
 
 @dataclass(init=False)
@@ -30,7 +35,7 @@ class ChromaMemoryProvider(MemoryProvider):
     """
 
     @property
-    def client(self) -> chromadb.ClientAPI:
+    def client(self) -> chromadb.ClientAPI | None:
         """The `chromadb.ClientAPI` instance to use for this memory provider."""
         return getattr(self, "_client", None)
 
@@ -55,7 +60,7 @@ class ChromaMemoryProvider(MemoryProvider):
 
     def __init__(
         self,
-        client: chromadb.ClientAPI | ChromaMemoryClient = "persistent",
+        client: chromadb.ClientAPI | ChromaMemoryClientKind = "persistent",
         path: str | Path | None = None,
         collection_name: str = "memory-{key}",
     ):
@@ -87,9 +92,12 @@ class ChromaMemoryProvider(MemoryProvider):
         self._collection_name = collection_name
 
     def get_collection(self, key: str) -> chromadb.Collection:
-        return self.client.get_or_create_collection(
-            self.collection_name.format(key=key)
-        )
+        if self.client is not None and hasattr(
+            self.client, "get_or_create_collection"
+        ):
+            return self.client.get_or_create_collection(
+                self.collection_name.format(key=key)
+            )
 
     async def add(self, key: str, content: str) -> str:
         collection = self.get_collection(key)
@@ -114,7 +122,7 @@ class ChromaMemoryProvider(MemoryProvider):
         return dict(
             zip(
                 results["ids"][0],
-                results["documents"][0],
+                results["documents"][0] if results["documents"] else [],
                 strict=False,
             )
         )

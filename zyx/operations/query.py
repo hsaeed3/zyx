@@ -29,6 +29,11 @@ from .._types import (
 from ..result import Result
 from ..stream import Stream
 
+__all__ = (
+    "aquery",
+    "query",
+)
+
 
 _logger = logging.getLogger("zyx.operations.query")
 

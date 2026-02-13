@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     except ImportError:
         Monty: TypeAlias = Any
 
+__all__ = ("Code",)
+
 
 def _get_monty():
     try:

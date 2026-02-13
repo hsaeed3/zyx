@@ -8,6 +8,21 @@ from pathlib import Path
 from typing import Dict
 import warnings
 
+try:
+    from qdrant_client import AsyncQdrantClient  # type: ignore[unresolved-import]
+    from qdrant_client.http import models  # type: ignore[unresolved-import]
+except ImportError:
+    raise ImportError(
+        "To use the `qdrant` memory provider, you must first install the `qdrant-client` library.\n"
+        "You can install it by using one of the following commands:\n"
+        "```bash\n"
+        "pip install zyx[qdrant]\n"
+        "pip install 'qdrant-client[fastembed]'\n"
+        "```"
+    )
+
+from . import MemoryProvider
+
 warnings.filterwarnings(
     "ignore",
     message=r".*`add` method has been deprecated.*",
@@ -21,21 +36,7 @@ warnings.filterwarnings(
     module=r".*qdrant_client\.common\.client_warnings.*",
 )
 
-
-try:
-    from qdrant_client import AsyncQdrantClient
-    from qdrant_client.http import models
-except ImportError:
-    raise ImportError(
-        "To use the `qdrant` memory provider, you must first install the `qdrant-client` library.\n"
-        "You can install it by using one of the following commands:\n"
-        "```bash\n"
-        "pip install zyx[qdrant]\n"
-        "pip install 'qdrant-client[fastembed]'\n"
-        "```"
-    )
-
-from . import MemoryProvider
+__all__ = ("QdrantMemoryProvider",)
 
 
 @dataclass(init=False)
@@ -46,7 +47,7 @@ class QdrantMemoryProvider(MemoryProvider):
     """
 
     @property
-    def client(self) -> AsyncQdrantClient:
+    def client(self) -> AsyncQdrantClient | None:
         """The `qdrant_client.AsyncQdrantClient` instance for this memory provider."""
         return getattr(self, "_client", None)
 
@@ -100,33 +101,41 @@ class QdrantMemoryProvider(MemoryProvider):
     async def get_collection(self, key: str) -> models.CollectionInfo:
         """Return collection info for the given memory key."""
         name = self.collection_name.format(key=key)
-        return await self.client.get_collection(collection_name=name)
+
+        if self.client is not None and hasattr(self.client, "get_collection"):
+            return await self.client.get_collection(collection_name=name)
 
     async def add(self, key: str, content: str) -> str:
         memory_id = str(uuid.uuid4())
         collection_name = self.collection_name.format(key=key)
-        ids = await self.client.add(
-            collection_name=collection_name,
-            documents=[content],
-            metadata=[{"id": memory_id}],
-            ids=[memory_id],
-        )
-        return ids[0] if ids else memory_id
+
+        if self.client is not None and hasattr(self.client, "add"):
+            ids = await self.client.add(
+                collection_name=collection_name,
+                documents=[content],
+                metadata=[{"id": memory_id}],
+                ids=[memory_id],
+            )
+        return str(ids[0]) if ids else memory_id
 
     async def delete(self, key: str, id: str) -> None:
         collection_name = self.collection_name.format(key=key)
-        await self.client.delete(
-            collection_name=collection_name,
-            points_selector=[id],
-        )
+
+        if self.client is not None and hasattr(self.client, "delete"):
+            await self.client.delete(
+                collection_name=collection_name,
+                points_selector=[id],
+            )
 
     async def search(
         self, key: str, query: str, n: int = 20
     ) -> Dict[str, str]:
         collection_name = self.collection_name.format(key=key)
-        results = await self.client.query(
-            collection_name=collection_name,
-            query_text=query,
-            limit=n,
-        )
+
+        if self.client is not None and hasattr(self.client, "query"):
+            results = await self.client.query(
+                collection_name=collection_name,
+                query_text=query,
+                limit=n,
+            )
         return {str(r.id): r.document for r in results}

@@ -38,7 +38,6 @@ from .._types import (
 from ..result import Result
 from ..stream import Stream
 
-
 __all__ = ("aselect", "select")
 
 

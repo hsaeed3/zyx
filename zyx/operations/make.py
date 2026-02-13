@@ -28,12 +28,17 @@ from .._types import (
     AttachmentType,
 )
 
+__all__ = (
+    "amake",
+    "make",
+)
+
 
 Deps = TypeVar("Deps")
 Output = TypeVar("Output")
 
 
-_DISTILLATION_KEYWORDS: list[str] = [
+_RANDOMIZATION_KEYWORDS: list[str] = [
     "concise",
     "succinct",
     "evocative",
@@ -87,7 +92,7 @@ def prepare_make_graph(
     """
 
     randomization_system_prompt = (
-        f"Ensure your final response is {random.choice(_DISTILLATION_KEYWORDS)} and {random.choice(_DISTILLATION_KEYWORDS)}."
+        f"Ensure your final response is {random.choice(_RANDOMIZATION_KEYWORDS)} and {random.choice(_RANDOMIZATION_KEYWORDS)}."
         "Although you are free to be creative, try to be as realistic as possible to the given response schema."
         "Your goal is uncommon responses that are believable. Never use the first 2-3 ideas that come to mind."
     )

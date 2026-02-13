@@ -25,6 +25,12 @@ if TYPE_CHECKING:
     )
     from ._types import SourceParam, ModelParam, ContextType, ToolType
 
+__all__ = (
+    "Target",
+    "TargetHook",
+    "target",
+)
+
 
 Deps = TypeVar("Deps")
 Output = TypeVar("Output")

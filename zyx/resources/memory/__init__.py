@@ -16,13 +16,18 @@ from __future__ import annotations
 import asyncio
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Literal, TypeAlias
 
 from pydantic_ai.toolsets import FunctionToolset
 
 from ..._aliases import PydanticAITool, PydanticAIToolset
 from ..abstract import AbstractResource
+
+__all__ = (
+    "MemoryProvider",
+    "Memory",
+)
 
 
 def sanitize_memory_key(key: str) -> str:
@@ -210,7 +215,7 @@ class Memory(AbstractResource):
 
 def get_memory_provider(
     provider: MemoryProvider | MemoryProviderName,
-) -> MemoryProvider:
+) -> MemoryProvider | None:
     """
     Get a `MemoryProvider` instance based on a given name or pre-configured instance.
     """
@@ -232,3 +237,36 @@ def get_memory_provider(
 
     else:
         raise ValueError(f"Invalid memory provider name: {provider}")
+
+
+def mem(
+    key: str = "memories",
+    provider: MemoryProvider | MemoryProviderName = "chroma/persistent",
+    instructions: str | None = None,
+    auto: bool = False,
+) -> Memory:
+    """
+    Create or retrieve a `Memory` resource with based on a given key (collection
+    name) and provider.
+
+    Args:
+        key : `str`
+            The key to use for this memory resource.
+        provider : `MemoryProvider` | `MemoryProviderName`
+            The provider to use for this memory resource.
+        instructions : `str` | None
+            The instructions to use for this memory resource.
+        auto : `bool`
+            Whether to automatically add memories when a semantic operation is executed, using
+            the context of the operation as the content to use for the query.
+
+    Returns:
+        `Memory`
+            A `Memory` resource with the given key, provider, instructions and auto mode.
+    """
+    return Memory(
+        key=key,
+        provider=provider,
+        instructions=instructions,
+        auto=auto,
+    )

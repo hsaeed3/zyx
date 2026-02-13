@@ -23,6 +23,8 @@ from ._aliases import (
 from ._utils._outputs import OutputBuilder
 from .result import Result
 
+__all__ = ("Stream",)
+
 
 Output = TypeVar("Output")
 
@@ -103,7 +105,7 @@ class Stream(Generic[Output]):
         self._is_complete = True
 
     async def stream_partial(
-        self, *, debounce_by: float | None = 0.1
+        self, *, delta: bool = False, debounce_by: float | None = 0.1
     ) -> AsyncIterator[Output]:
         """
         Stream real-time updates of the target output. This method aggregates all runs
@@ -111,11 +113,17 @@ class Stream(Generic[Output]):
         multiple fields within the output.
 
         Args:
+            delta: Whether to stream only the delta (changes) since the last yield.
+                If ``False`` (default), yields the full accumulated output each time.
+                If ``True``, yields only the changes since the last yield.
             debounce_by: The debounce interval in seconds.
 
         Yields:
-            The partial output of the stream.
+            The partial output of the stream. If ``delta=True``, yields only the changes
+            since the last yield. If ``delta=False``, yields the full accumulated output.
         """
+        previous_output: Output | None = None
+
         for idx, stream in enumerate(self._streams):
             self._current_stream_index = idx
             mapping = self._field_mappings[idx]
@@ -128,7 +136,61 @@ class Stream(Generic[Output]):
                     fields=mapping["fields"],
                     debounce_by=debounce_by,
                 ):
-                    yield partial
+                    if delta:
+                        if previous_output is not None:
+                            # Calculate delta by comparing with previous output
+                            if isinstance(partial, str) and isinstance(
+                                previous_output, str
+                            ):
+                                # For strings, yield only the new characters
+                                if len(partial) > len(previous_output):
+                                    delta_str = partial[len(previous_output) :]
+                                    yield delta_str
+                                    previous_output = (
+                                        partial  # Update after yielding delta
+                                    )
+                                elif partial != previous_output:
+                                    # String changed but got shorter (shouldn't happen normally)
+                                    yield partial
+                                    previous_output = partial
+                            elif isinstance(partial, BaseModel) and isinstance(
+                                previous_output, BaseModel
+                            ):
+                                # For BaseModel, create a delta with only changed fields
+                                delta_dict = {}
+                                for field_name in partial.model_fields.keys():
+                                    prev_val = getattr(
+                                        previous_output, field_name, None
+                                    )
+                                    curr_val = getattr(
+                                        partial, field_name, None
+                                    )
+                                    if prev_val != curr_val:
+                                        delta_dict[field_name] = curr_val
+
+                                if delta_dict:
+                                    # Create a partial model with only changed fields
+                                    delta_output = self._builder.partial_type.model_validate(
+                                        delta_dict
+                                    )
+                                    yield delta_output
+                                    previous_output = (
+                                        partial  # Update after yielding delta
+                                    )
+                            else:
+                                # For other simple types, only yield if value changed
+                                if partial != previous_output:
+                                    yield partial
+                                    previous_output = (
+                                        partial  # Update after yielding
+                                    )
+                        else:
+                            # First iteration - yield full output
+                            yield partial
+                            previous_output = partial
+                    else:
+                        # Not delta mode - always yield full accumulated output
+                        yield partial
             else:
                 async for _ in stream.stream_output(debounce_by=debounce_by):
                     pass
@@ -228,18 +290,23 @@ class Stream(Generic[Output]):
             self.stream_text(delta=delta, debounce_by=debounce_by)
         )
 
-    def partial(self, *, debounce_by: float | None = 0.1) -> Iterator[Output]:
+    def partial(
+        self, *, delta: bool = False, debounce_by: float | None = 0.1
+    ) -> Iterator[Output]:
         """
         Stream the composition of the output as it is generated.
 
         Args:
+            delta: Whether to stream only the delta (changes) since the last yield.
+                If ``False`` (default), yields the full accumulated output each time.
             debounce_by: The debounce interval in seconds.
 
         Returns:
-            The partial output of the stream.
+            The partial output of the stream. If ``delta=True``, yields only the changes
+            since the last yield. If ``delta=False``, yields the full accumulated output.
         """
         return _sync_async_iterator(
-            self.stream_partial(debounce_by=debounce_by)
+            self.stream_partial(delta=delta, debounce_by=debounce_by)
         )
 
     def field(

@@ -28,6 +28,11 @@ from ._processing._messages import (
 if TYPE_CHECKING:
     from ._types import ToolType, ContextType
 
+__all__ = (
+    "Context",
+    "create_context",
+)
+
 
 Deps = TypeVar("Deps")
 

@@ -17,6 +17,8 @@ from ._aliases import (
 )
 from ._confidence import Confidence, score_confidence
 
+__all__ = ("Result",)
+
 
 Output = TypeVar("Output")
 

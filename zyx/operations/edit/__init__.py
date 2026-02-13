@@ -199,7 +199,7 @@ class PlanEditNode(AbstractSemanticNode[Deps, Output]):
             return PlanEditsStreamNode(
                 request=_build_edit_request(
                     ctx,
-                    output_type=self.strategy.get_plan_edit_schema(plan),  # type: ignore[arg-type]
+                    output_type=self.strategy.get_plan_edit_schema(plan),
                     system_prompt_additions=_EDIT_SYSTEM_PROMPT,
                 ),
                 exclude_none=self.exclude_none,
@@ -208,7 +208,7 @@ class PlanEditNode(AbstractSemanticNode[Deps, Output]):
         return PlanEditsNode(
             request=_build_edit_request(
                 ctx,
-                output_type=self.strategy.get_plan_edit_schema(plan),  # type: ignore[arg-type]
+                output_type=self.strategy.get_plan_edit_schema(plan),
                 system_prompt_additions=_EDIT_SYSTEM_PROMPT,
             ),
             strategy=self.strategy,
@@ -373,7 +373,7 @@ def _build_iterative_items(
     items: List[dict[str, Any]] = []
     if strategy.kind == "mapping":
         selections = getattr(strategy, "_extract_plan_selections")(plan)
-        split = split_output_model_by_fields(strategy.builder.normalized)  # type: ignore
+        split = split_output_model_by_fields(strategy.builder.normalized)
         for field in selections:
             model = split.get(field)
             if model is None:
@@ -484,7 +484,7 @@ def prepare_edit_graph(
             nodes=nodes,
             start=start_node,
             state=state,
-            deps=deps,  # type: ignore
+            deps=deps,
         )
 
     if selective:
@@ -500,8 +500,8 @@ def prepare_edit_graph(
             nodes = [ReplaceEditStreamNode]
             return SemanticGraph(
                 nodes=nodes,
-                start=start_node,
-                state=state,
+                start=start_node,  # type: ignore[arg-type]
+                state=state,  # type: ignore[arg-type]
                 deps=deps,  # type: ignore
             )
 
@@ -518,7 +518,7 @@ def prepare_edit_graph(
         return SemanticGraph(
             nodes=nodes,
             start=start_node,
-            state=state,
+            state=state,  # type: ignore[arg-type]
             deps=deps,  # type: ignore
         )
 
@@ -533,8 +533,8 @@ def prepare_edit_graph(
         nodes = [ReplaceEditStreamNode]
         return SemanticGraph(
             nodes=nodes,
-            start=start_node,
-            state=state,
+            start=start_node,  # type: ignore[arg-type]
+            state=state,  # type: ignore[arg-type]
             deps=deps,  # type: ignore
         )
 

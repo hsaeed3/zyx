@@ -7,6 +7,8 @@ from dataclasses import dataclass
 
 from .._aliases import PydanticAIToolset
 
+__all__ = ("AbstractResource",)
+
 
 @dataclass(init=False)
 class AbstractResource(ABC):

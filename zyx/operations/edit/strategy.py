@@ -17,6 +17,14 @@ from ..._processing._outputs import (
 )
 from ..._utils._outputs import OutputBuilder
 
+__all__ = (
+    "AbstractEditStrategy",
+    "BasicEditStrategy",
+    "TextEditStrategy",
+    "MappingEditStrategy",
+    "EditStrategy",
+)
+
 
 Output = TypeVar("Output")
 
@@ -172,7 +180,7 @@ class TextEditStrategy(AbstractEditStrategy[str]):
     """Strategy for edits made to strings."""
 
     def __post_init__(self) -> None:
-        if not self.builder.normalized == str:
+        if self.builder.normalized is not str:
             raise ValueError(
                 "TextEditStrategy can only be used with string targets."
             )
@@ -570,7 +578,7 @@ class EditStrategy(AbstractEditStrategy[Output]):
         if builder.field_count > 0:
             return MappingEditStrategy(builder)
 
-        if builder.normalized == str:
+        if builder.normalized is str:
             return TextEditStrategy(builder)  # type: ignore[arg-type]
 
         return BasicEditStrategy(builder)

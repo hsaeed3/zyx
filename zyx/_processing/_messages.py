@@ -31,6 +31,15 @@ from pydantic_ai.messages import (
     ImageUrl,
 )
 
+__all__ = (
+    "PydanticAIMessageAdapter",
+    "openai_dict_to_pydantic_ai_message",
+    "text_to_pydantic_ai_messages",
+    "compact_pydantic_ai_messages",
+    "parse_context_to_pydantic_ai_messages",
+    "parse_instructions_as_system_prompt_parts",
+)
+
 
 PydanticAIMessageAdapter: TypeAdapter[ModelMessage] = TypeAdapter(ModelMessage)
 
