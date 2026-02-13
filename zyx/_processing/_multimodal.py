@@ -171,7 +171,11 @@ class MultimodalContentMediaType(Enum):
             if mime_type.startswith("text/"):
                 return cls.TEXT  # type: ignore
 
-        if origin == MultimodalContentOrigin.URL and not suffix and not mime_type:
+        if (
+            origin == MultimodalContentOrigin.URL
+            and not suffix
+            and not mime_type
+        ):
             detected, _ = _detect_url_media_type(source)
             if detected:
                 return detected  # type: ignore
@@ -218,7 +222,11 @@ def _classify_magic_bytes(
         return MultimodalContentMediaType.IMAGE
     if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
         return MultimodalContentMediaType.AUDIO
-    if head.startswith(b"OggS") or head.startswith(b"fLaC") or head.startswith(b"ID3"):
+    if (
+        head.startswith(b"OggS")
+        or head.startswith(b"fLaC")
+        or head.startswith(b"ID3")
+    ):
         return MultimodalContentMediaType.AUDIO
     if len(head) >= 8 and head[4:8] == b"ftyp":
         return MultimodalContentMediaType.VIDEO
@@ -240,9 +248,7 @@ def _detect_url_media_type(
     url: str,
 ) -> Tuple[MultimodalContentMediaType | None, str | None]:
     try:
-        req = urllib.request.Request(
-            url, method="HEAD", headers=_URL_HEADERS
-        )
+        req = urllib.request.Request(url, method="HEAD", headers=_URL_HEADERS)
         with urllib.request.urlopen(req, timeout=5) as resp:
             content_type = resp.headers.get("Content-Type")
             classified = _classify_content_type(content_type)
@@ -404,7 +410,7 @@ def render_multimodal_source_as_text(
         MultimodalContentMediaType.TEXT,
         MultimodalContentMediaType.HTML,
         MultimodalContentMediaType.DOCUMENT,
-        MultimodalContentMediaType.UNKNOWN
+        MultimodalContentMediaType.UNKNOWN,
     ):
         if origin == MultimodalContentOrigin.STRING and isinstance(
             source, str

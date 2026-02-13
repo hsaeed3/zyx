@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Literal, TypeAlias
 
 try:
-    import chromadb # type: ignore[import-untyped]
+    import chromadb  # type: ignore[import-untyped]
 except ImportError:
     raise ImportError(
-        f"To use the `chroma` memory provider, you must first install the `chromadb` library.\n"
+        "To use the `chroma` memory provider, you must first install the `chromadb` library.\n"
         "You can install it by using one of the following commands:\n"
         "```bash\n"
         "pip install zyx[chroma]\n"

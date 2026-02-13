@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Any, Callable, Dict, List, TypeAlias, TYPE_CHECKING
 
 from pydantic_ai.toolsets import FunctionToolset
@@ -17,19 +16,19 @@ from .abstract import AbstractResource
 
 if TYPE_CHECKING:
     try:
-        from pydantic_monty import Monty # type: ignore[import-untyped]
+        from pydantic_monty import Monty  # type: ignore[import-untyped]
     except ImportError:
         Monty: TypeAlias = Any
 
 
 def _get_monty():
     try:
-        import pydantic_monty # type: ignore[import-untyped]
+        import pydantic_monty  # type: ignore[import-untyped]
 
         return pydantic_monty
     except ImportError:
         raise ImportError(
-            f"To use the `Code` resource, you must first install the `pydantic-monty` library.\n"
+            "To use the `Code` resource, you must first install the `pydantic-monty` library.\n"
             "You can install it by using one of the following commands:\n"
             "```bash\n"
             "pip install zyx[code]\n"

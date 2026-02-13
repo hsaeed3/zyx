@@ -199,7 +199,7 @@ class PlanEditNode(AbstractSemanticNode[Deps, Output]):
             return PlanEditsStreamNode(
                 request=_build_edit_request(
                     ctx,
-                    output_type=self.strategy.get_plan_edit_schema(plan), # type: ignore[arg-type]
+                    output_type=self.strategy.get_plan_edit_schema(plan),  # type: ignore[arg-type]
                     system_prompt_additions=_EDIT_SYSTEM_PROMPT,
                 ),
                 exclude_none=self.exclude_none,
@@ -373,7 +373,7 @@ def _build_iterative_items(
     items: List[dict[str, Any]] = []
     if strategy.kind == "mapping":
         selections = getattr(strategy, "_extract_plan_selections")(plan)
-        split = split_output_model_by_fields(strategy.builder.normalized) # type: ignore
+        split = split_output_model_by_fields(strategy.builder.normalized)  # type: ignore
         for field in selections:
             model = split.get(field)
             if model is None:
@@ -481,7 +481,10 @@ def prepare_edit_graph(
             PlanIterativeStreamNode,
         ]
         return SemanticGraph(
-            nodes=nodes, start=start_node, state=state, deps=deps # type: ignore
+            nodes=nodes,
+            start=start_node,
+            state=state,
+            deps=deps,  # type: ignore
         )
 
     if selective:
@@ -496,7 +499,10 @@ def prepare_edit_graph(
             start_node = ReplaceEditStreamNode(request=request)
             nodes = [ReplaceEditStreamNode]
             return SemanticGraph(
-                nodes=nodes, start=start_node, state=state, deps=deps # type: ignore
+                nodes=nodes,
+                start=start_node,
+                state=state,
+                deps=deps,  # type: ignore
             )
 
         request = SemanticGraphRequestTemplate(
@@ -510,7 +516,10 @@ def prepare_edit_graph(
         )
         nodes = [SelectiveEditNode]
         return SemanticGraph(
-            nodes=nodes, start=start_node, state=state, deps=deps # type: ignore
+            nodes=nodes,
+            start=start_node,
+            state=state,
+            deps=deps,  # type: ignore
         )
 
     if stream:
@@ -523,7 +532,10 @@ def prepare_edit_graph(
         start_node = ReplaceEditStreamNode(request=request)
         nodes = [ReplaceEditStreamNode]
         return SemanticGraph(
-            nodes=nodes, start=start_node, state=state, deps=deps # type: ignore
+            nodes=nodes,
+            start=start_node,
+            state=state,
+            deps=deps,  # type: ignore
         )
 
     request = SemanticGraphRequestTemplate(
@@ -536,7 +548,7 @@ def prepare_edit_graph(
         request=request, strategy=strategy, exclude_none=exclude_none
     )
     nodes = [ReplaceEditNode]
-    return SemanticGraph(nodes=nodes, start=start_node, state=state, deps=deps) # type: ignore
+    return SemanticGraph(nodes=nodes, start=start_node, state=state, deps=deps)  # type: ignore
 
 
 @overload

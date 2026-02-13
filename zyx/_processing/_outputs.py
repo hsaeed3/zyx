@@ -474,7 +474,7 @@ def partial_output_model(
 def selection_output_model(
     options: list | type,
     name: str | None = None,
-    multi_select: bool = False,
+    multi_label: bool = False,
     literal: bool = False,
     reason: bool = False,
 ) -> Type[BaseModel]:
@@ -524,7 +524,7 @@ def selection_output_model(
     doc_choices = "\nChoices:\n" + "\n".join(
         f"- {repr(choice)}" for choice in choices
     )
-    if multi_select:
+    if multi_label:
         doc = (
             f"Structured selection model. Select one or more indices from given options.\n"
             f"{doc_choices}\n"
@@ -561,7 +561,7 @@ def selection_output_model(
         )
     ):
         literal_type = Literal[tuple(choices)]  # type: ignore[literal-required]
-        if multi_select:
+        if multi_label:
             index_field = (
                 list[literal_type],
                 Field(
@@ -575,9 +575,14 @@ def selection_output_model(
                 Field(..., description="Selected option value (literal)"),
             )
     else:
-        if multi_select:
+        # Constrain indices to valid range to reduce hallucinated values.
+        if choices:
+            bounded_index = Annotated[int, Field(ge=0, lt=len(choices))]
+        else:
+            bounded_index = int
+        if multi_label:
             index_field = (
-                list[int],
+                list[bounded_index],
                 Field(
                     ...,
                     description="Selected option indices (list of integers)",
@@ -585,12 +590,12 @@ def selection_output_model(
             )
         else:
             index_field = (
-                int,
+                bounded_index,
                 Field(..., description="Selected option index (integer)"),
             )
 
     # Add optional reason if required
-    if multi_select:
+    if multi_label:
         fields = {"indices": index_field}
     else:
         fields = {"index": index_field}
