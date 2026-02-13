@@ -46,6 +46,16 @@ Deps = TypeVar("Deps")
 Output = TypeVar("Output")
 
 
+class SelectionWithReason(BaseModel):
+    selection: Any
+    reason: str | None = None
+
+
+class MultiSelectionWithReason(BaseModel):
+    selection: list[Any]
+    reason: str | None = None
+
+
 _SELECT_SYSTEM_PROMPT = (
     "\n[INSTRUCTION]\n"
     "- Your ONLY task is to select the best option(s) from the provided choices.\n"
@@ -99,14 +109,15 @@ def _selection_to_output(
     target: Any | Sequence[Any],
     output: BaseModel,
     *,
-    multi_select: bool = False,
+    multi_label: bool = False,
     literal: bool = False,
+    include_reason: bool = False,
 ) -> Any:
     """Map a structured selection model back to the original target object(s).
 
     The return value is:
-    - A single selected object when `multi_select` is False
-    - A list of selected objects when `multi_select` is True
+    - A single selected object when `multi_label` is False
+    - A list of selected objects when `multi_label` is True
     """
 
     # Try to re-use the choices stored on the model built by `selection_output_model`
@@ -120,12 +131,10 @@ def _selection_to_output(
         if isinstance(idx_or_value, int):
             if not choices:
                 raise ValueError("No choices available for selection.")
-            # Clamp the index defensively rather than raising IndexError
+            # Reject out-of-range indices (avoid accidental clamping)
             if idx_or_value < 0 or idx_or_value >= len(choices):
-                idx = max(0, min(len(choices) - 1, idx_or_value))
-            else:
-                idx = idx_or_value
-            return choices[idx]
+                return None
+            return choices[idx_or_value]
 
         # Literal mode or direct value – match by equality against choices
         for choice in choices:
@@ -134,25 +143,42 @@ def _selection_to_output(
         # If nothing matches, return the raw value as-is
         return idx_or_value
 
-    if multi_select:
+    if multi_label:
         indices: Iterable[Any] | None = getattr(output, "indices", None)
         if indices is None:
             # Graceful fallback – treat missing indices as empty selection
-            return []
-        return [_select_one(value) for value in indices]
+            selection: Any = []
+        else:
+            selected: list[Any] = []
+            for value in indices:
+                mapped = _select_one(value)
+                if mapped is not None:
+                    selected.append(mapped)
+            selection = selected
+    else:
+        index_value: Any = getattr(output, "index", None)
+        if index_value is None:
+            # No explicit selection – return None
+            selection = None
+        else:
+            selection = _select_one(index_value)
 
-    index_value: Any = getattr(output, "index", None)
-    if index_value is None:
-        # No explicit selection – return None
-        return None
-    return _select_one(index_value)
+    if include_reason:
+        reason: Any = getattr(output, "reason", None)
+        if multi_label:
+            return MultiSelectionWithReason(
+                selection=cast(list[Any], selection), reason=reason
+            )
+        return SelectionWithReason(selection=selection, reason=reason)
+
+    return selection
 
 
 def prepare_select_graph(
     deps: SemanticGraphDeps[Deps, BaseModel],
     state: SemanticGraphState[BaseModel],
     *,
-    multi_select: bool = False,
+    multi_label: bool = False,
     literal: bool = False,
     include_reason: bool = False,
     stream: bool = False,
@@ -199,8 +225,9 @@ class _SelectionStreamWrapper:
 
     _inner: Stream[BaseModel]
     _target: Any | Sequence[Any]
-    _multi_select: bool
+    _multi_label: bool
     _literal: bool
+    _include_reason: bool
 
     async def __aenter__(self) -> "_SelectionStreamWrapper":
         await self._inner.__aenter__()
@@ -237,8 +264,9 @@ class _SelectionStreamWrapper:
         selected = _selection_to_output(
             self._target,
             base_result.output,
-            multi_select=self._multi_select,
+            multi_label=self._multi_label,
             literal=self._literal,
+            include_reason=self._include_reason,
         )
         return Result(output=selected, raw=base_result.raw)
 
@@ -259,7 +287,64 @@ async def aselect(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = ...,
     *,
-    multi_select: bool = ...,
+    multi_label: Literal[False] = ...,
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[True],
+) -> _SelectionStreamWrapper: ...
+
+
+@overload
+async def aselect(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: bool = ...,
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[SelectionWithReason]: ...
+
+
+@overload
+async def aselect(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: Literal[True],
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[MultiSelectionWithReason]: ...
+
+
+@overload
+async def aselect(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: bool = ...,
     literal: bool = ...,
     include_reason: bool = ...,
     confidence: bool = ...,
@@ -278,7 +363,7 @@ async def aselect(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = ...,
     *,
-    multi_select: bool = ...,
+    multi_label: bool = ...,
     literal: bool = ...,
     include_reason: bool = ...,
     confidence: bool = ...,
@@ -296,8 +381,8 @@ async def aselect(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = None,
     *,
-    multi_select: bool = False,
-    literal: bool = False,
+    multi_label: bool = False,
+    literal: bool = True,
     include_reason: bool = False,
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
@@ -317,10 +402,10 @@ async def aselect(
             - An Enum subclass
             - A Union[..., ...] type
         context (ContextType | List[ContextType] | None): Optional additional context or conversation history. Defaults to None.
-        multi_select (bool): When True, return a list of selected objects; otherwise
+        multi_label (bool): When True, return a list of selected objects; otherwise
             return a single selected object. Defaults to False.
         literal (bool): When True and supported by the options, use Literal[...] for
-            the selection field instead of indices. Defaults to False.
+            the selection field instead of indices. Defaults to True.
         include_reason (bool): Reserved flag to include a textual reason field in the
             intermediate structured output (not exposed in the final result). Defaults to False.
         confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
@@ -335,14 +420,15 @@ async def aselect(
 
     Returns:
         Result[Output] | _SelectionStreamWrapper: A `Result` whose `output` is either the selected object or a list
-            of selected objects, or a streaming wrapper with the same final
-            semantics.
+            of selected objects. When `include_reason` is True, the output is a
+            dict with keys `selection` and `reason`. For streaming, the wrapper
+            preserves the same final semantics.
     """
     # Build the structured selection model for these options.
     selection_model = selection_output_model(
         options=target,
         name="Selection",
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
         reason=include_reason,
     )
@@ -364,7 +450,7 @@ async def aselect(
     graph = prepare_select_graph(
         deps=graph_deps,
         state=graph_state,
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
         include_reason=include_reason,
         stream=stream,
@@ -375,16 +461,18 @@ async def aselect(
         return _SelectionStreamWrapper(
             _inner=inner_stream,
             _target=target,
-            _multi_select=multi_select,
+            _multi_label=multi_label,
             _literal=literal,
+            _include_reason=include_reason,
         )
 
     base_result = await graph.run()
     selected = _selection_to_output(
         target,
         base_result.output,
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
+        include_reason=include_reason,
     )
     return Result(output=selected, raw=base_result.raw)
 
@@ -394,7 +482,64 @@ def select(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = ...,
     *,
-    multi_select: bool = ...,
+    multi_label: Literal[False] = ...,
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[True],
+) -> _SelectionStreamWrapper: ...
+
+
+@overload
+def select(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: bool = ...,
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[SelectionWithReason]: ...
+
+
+@overload
+def select(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: Literal[True],
+    literal: bool = ...,
+    include_reason: Literal[True],
+    confidence: bool = ...,
+    model: ModelParam = ...,
+    model_settings: PydanticAIModelSettings | None = ...,
+    instructions: PydanticAIInstructions | None = ...,
+    tools: ToolType | List[ToolType] | None = ...,
+    deps: Deps | None = ...,
+    usage_limits: PydanticAIUsageLimits | None = ...,
+    stream: Literal[False] = False,
+) -> Result[MultiSelectionWithReason]: ...
+
+
+@overload
+def select(
+    target: Any | List[Any],
+    context: ContextType | List[ContextType] | None = ...,
+    *,
+    multi_label: bool = ...,
     literal: bool = ...,
     include_reason: bool = ...,
     confidence: bool = ...,
@@ -413,7 +558,7 @@ def select(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = ...,
     *,
-    multi_select: bool = ...,
+    multi_label: bool = ...,
     literal: bool = ...,
     include_reason: bool = ...,
     confidence: bool = ...,
@@ -431,8 +576,8 @@ def select(
     target: Any | List[Any],
     context: ContextType | List[ContextType] | None = None,
     *,
-    multi_select: bool = False,
-    literal: bool = False,
+    multi_label: bool = False,
+    literal: bool = True,
     include_reason: bool = False,
     confidence: bool = False,
     model: ModelParam = "openai:gpt-4o-mini",
@@ -452,10 +597,10 @@ def select(
             - An Enum subclass
             - A Union[..., ...] type
         context (ContextType | List[ContextType] | None): Optional additional context or conversation history. Defaults to None.
-        multi_select (bool): When True, return a list of selected objects; otherwise
+        multi_label (bool): When True, return a list of selected objects; otherwise
             return a single selected object. Defaults to False.
         literal (bool): When True and supported by the options, use Literal[...] for
-            the selection field instead of indices. Defaults to False.
+            the selection field instead of indices. Defaults to True.
         include_reason (bool): Reserved flag to include a textual reason field in the
             intermediate structured output (not exposed in the final result). Defaults to False.
         confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
@@ -470,14 +615,15 @@ def select(
 
     Returns:
         Result[Output] | _SelectionStreamWrapper: A `Result` whose `output` is either the selected object or a list
-            of selected objects, or a streaming wrapper with the same final
-            semantics.
+            of selected objects. When `include_reason` is True, the output is a
+            dict with keys `selection` and `reason`. For streaming, the wrapper
+            preserves the same final semantics.
     """
     # Build the structured selection model for these options.
     selection_model = selection_output_model(
         options=target,
         name="Selection",
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
         reason=include_reason,
     )
@@ -499,7 +645,7 @@ def select(
     graph = prepare_select_graph(
         deps=graph_deps,
         state=graph_state,
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
         include_reason=include_reason,
         stream=stream,
@@ -510,15 +656,17 @@ def select(
         return _SelectionStreamWrapper(
             _inner=inner_stream,
             _target=target,
-            _multi_select=multi_select,
+            _multi_label=multi_label,
             _literal=literal,
+            _include_reason=include_reason,
         )
 
     base_result = graph.run_sync()
     selected = _selection_to_output(
         target,
         base_result.output,
-        multi_select=multi_select,
+        multi_label=multi_label,
         literal=literal,
+        include_reason=include_reason,
     )
     return Result(output=selected, raw=base_result.raw)
