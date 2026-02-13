@@ -1,11 +1,11 @@
 @font-face {
     font-family: "Zed Mono";
-    src: url("../fonts/zed-mono-extended.ttf") format("truetype");
+    src: url("../assets/fonts/zed-mono-extended.ttf") format("truetype");
     font-display: swap;
 }
 @font-face {
     font-family: "Zed Sans";
-    src: url("../fonts/zed-sans-extended.ttf") format("truetype");
+    src: url("../assets/fonts/zed-sans-extended.ttf") format("truetype");
     font-display: swap;
 }
 
@@ -49,6 +49,13 @@
 .c1 {
     font-style: italic !important;
     font-weight: 300 !important;
+}
+
+
+.md-annotation .md-annotation__index {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
 

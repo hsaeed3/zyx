@@ -10,24 +10,14 @@ Copyright &copy; 2026 Hammad Saeed
 extra_css = ["stylesheets/extras.css"]
 
 nav = [
-    {"Getting Started" = [
-        {"Introduction" = "index.md"},
-        {"Installation" = "getting-started/installation.md"}
-    ]},
+    {"Introduction" = "index.md"},
     {"Core Concepts" = [
         {"Semantic Operations" = "core-concepts/semantic-operations.md"},
         {"Context & Prompting" = "core-concepts/context.md"},
-        {"Attachments" = "core-concepts/attachments.md"},
-        {"Tool Use" = "core-concepts/tool-use.md"},
-    ]},
-    {"Context" = [
-        {"Prompting" = "context/prompting.md"},
-        {"Context Spans" = "context/spans.md"},
-        {"Memory" = "context/memory.md"},
-    ]},
-    {"Attachments" = [
-        {"Resources" = "attachments/resources.md"},
-        {"Snippets" = "attachments/snippets.md"},
+        {"Targets & Sources" = "core-concepts/targets.md"},
+        {"Snippets" = "core-concepts/snippets.md"},
+        {"Resources" = "core-concepts/resources.md"},
+        {"Results & Streaming" = "core-concepts/results.md"},
     ]},
     {"Semantic Operations" = [
         {"Make" = "semantic-operations/make.md"},
@@ -37,9 +27,6 @@ nav = [
         {"Expressions" = "semantic-operations/expressions.md"},
         {"Parse" = "semantic-operations/parse.md"},
         {"Validate" = "semantic-operations/validate.md"},
-    ]},
-    {"API Reference" = [
-        {"API Reference" = "api-reference.md"},
     ]}
 ]
 

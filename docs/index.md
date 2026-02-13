@@ -1,5 +1,5 @@
 ---
-icon: lucide/book
+icon: lucide/smile
 title: ""
 hide:
   - title
@@ -25,103 +25,156 @@ A fun **"anti-framework"** for doing useful things with agents and LLMs.
 
     `ZYX` is a simplicity-first library wrapped on top of [Pydantic AI]{ data-preview } and heavily inspired by [Marvin]{ data-preview }. It aims to provide a simple, *stdlib-like* interface for working with language models, without loss of control as well as flexibility that more complex frameworks provide.
 
+
+[Pydantic AI]: https://ai.pydantic.dev/ "A Python framework for building production-grade applications with LLMs"
+[Pydantic]: https://docs.pydantic.dev/ "A library for data validation and settings management using Python type hints"
+[Marvin]: https://askmarvin.ai/ "A clean & simple frameworks for building AI applications"
+
 ## Introduction
 
 `ZYX` stands on the shoulders of [Pydantic AI]{ data-preview } to provide a set of functions and components that aim to complete the following goals:
 
 - **Simplicity-First**: Above all else, `ZYX` aims to be as simple as possible to use. The library is designed in a very semantically literal sense, with the hope that a 12 year old could pick up and run with it immediately.
 - **Fast & Flexible**: `ZYX` is designed to be as fast as possible in two senses, (1) performance wise, and (2) development time wise, providing a very flexible interface that allows rapid prototyping and iteration.
-- **Type-Focused**: `ZYX` provides a very type-focused interface, leveraging [Pydantic]'s powerful validation capabilities to ensure that your data is always in the expected format.
+- **Type-Focused**: `ZYX` provides a very type-focused interface, leveraging [Pydantic]{ data-preview }'s powerful validation capabilities to ensure that your data is always in the expected format.
 - **Model Agnostic**: Through [Pydantic AI]{ data-preview }, `ZYX` is completely model agnostic and supports virtually *any* LLM provider.
 
-[Pydantic AI]: https://ai.pydantic.dev/ "A Python framework for building production-grade applications with LLMs"
-[Pydantic]: https://docs.pydantic.dev/ "A library for data validation and settings management using Python type hints"
-[Marvin]: https://askmarvin.ai/ "A clean & simple frameworks for building AI applications"
+---
+
+## Getting Started
+
+The following guide is a quick way to get started on how to
+install `ZYX` and get up and running with a few of the core concepts.
+
+### Installation
+
+You can install `ZYX` using your favorite Python package manager.
+
+=== "pip"
+
+    ```bash
+    pip install zyx
+    ```
+
+=== "uv"
+
+    ```bash
+    uv add zyx
+    ```
+
+=== "poetry"
+
+    ```bash
+    poetry add zyx
+    ```
+
+=== "conda"
+
+    ```bash
+    conda install zyx
+    ```
+
+??? tip "Adding Model Providers"
+
+    The core package for `ZYX` installs the minimum required dependencies from [Pydantic AI] using their `pydantic-ai-slim` package, along with the `openai` library for out of the box OpenAI support.
+
+    To add support for additional LLM providers, you can use one of the following methods to install the relevant dependencies:
+
+    === "Install All Providers at Once"
+
+        To install all of `pydantic-ai`'s supported providers, simply install the full package along with `ZYX`:
+
+        ```bash
+        pip install zyx pydantic-ai
+        ```
+
+        Or use the `ai` extra:
+
+        ```bash
+        pip install 'zyx[ai]'
+        ```
+
+    === "Install Specific Providers"
+
+        If you dont want to install the entire `pydantic-ai` package, you can easily add your desired providers individually, either through installing their libraries directly, or through a `ZYX` extra:
+
+        ```bash
+        # install provider libraries directly
+        pip install zyx anthropic
+        ```
 
 ---
 
 ## Quickstart
 
-Here's a few quick examples to get you started with `ZYX`!
-
-??? tip "Installation"
-
-    You can install `ZYX` using your favorite package manager.
-
-    === "pip"
-
-        ```bash
-        # install to your current environment
-        pip install zyx
-        ```
-
-    === "uv"
-
-        ```bash
-        # install to your current environment
-        uv pip install zyx
-
-        # or add it to your current project
-        # uv add zyx
-        ```
-
----
+Once you've installed `ZYX`, try running some of the following code examples to get a feel for the library!
 
 ### Generating Content
 
-```python
-from zyx import make
+The easiest way to use LLMs within `ZYX` is through the `zyx.make` **semantic operation**. Semantic operations are specialized functions that allow you to use LLMs to generate/edit content, parse data, and more!
+
+```python title="Generating Content"
+import zyx
+
+
+result = zyx.make(
+    target=int, # (1)!
+    context="What is 45+45?",
+)
+
+
+print(result.output)
+"""
+90
+"""
+```
+
+1. **`Targets`** are how to define the output of a semantic operation. In this case, we want to generate an integer.
+
+### Parsing a Website
+
+Through the **`source`**, **`context`** and **`attachments`** parameters, `ZYX` provides a bunch of options on how you want to pass content to a model.
+
+```python title="Parsing a Website"
+import zyx
 from pydantic import BaseModel
 
-class Poem(BaseModel):
-    title : str
-    verses : list[str]
 
-# generate a poem
-# all models supported by Pydantic AI are supported in ZYX!
-response = make(
-  Poem, context="Generate a poem about the beauty of nature.", model="openai:gpt-4o-mini"
+class Information(BaseModel): # (1)!
+    library_name : str
+    library_description : str
+
+
+def log_website_url(url : str) -> None:
+    print(f"Website URL: {url}")
+
+
+result = zyx.parse( # (2)!
+    source=zyx.paste("https://zyx.hammad.app"), # (3)!
+    target=Information,
+    context="log the website URL before you parse.", # (4)!
+    model="openai:gpt-4o-mini", # (5)!
+    tools=[log_website_url] # (6)!
 )
 
-print(response.output)
+
+print(result.output.library_name)
+print(result.output.library_description)
+"""
+Website URL: https://zyx.hammad.app
+ZYX
+A fun "anti-framework" for doing useful things with agents and LLMs.
+"""
 ```
 
-```bash title="Output"
-Poem(title="Nature's Beauty", verses=["The leaves rustle softly in the breeze,", "A gentle song of leaves and breeze.", "The trees sway in the wind,", "A dance of leaves and breeze."])
-```
+1. First-class support for structured outputs in nearly every semantic operation within `ZYX`.
 
-??? tip "Did you know?"
+2. `zyx.parse` is a **semantic operation** that allows you to parse a `source` object or content into a `target`.
 
-    The `make` operation is a very versatile operation, and supports passing in no additional context for dynamic synthetic data generation.
+3. `zyx.paste` is a convenience function for creating a **`Snippet`** from a source object. <br/> A **`Snippet`** is a piece of content that can be used to represent multimodal or textual content easily.
 
-    ```python
-    response = make(Poem)
-    ```
+4. The `context` parameter is how prompts and messages are provided to the model. `ZYX` provides many options on how context can be provided!
 
-    ??? example "Output"
+5. All models and providers supported by [Pydantic AI]{ data-preview } are supported within `ZYX`.
 
-        ```bash title="Output"
-        title='Whispers of Forgotten Seasons' verses=['In the quiet of dusk, shadows intertwine,', 'Leaves whisper secrets, old as the pine.', 'The river hums tales of the days gone by,', 'Where laughter was born, and dreams learned to fly. ', '', 'A flicker of fireflies, dancing in flight,', 'Guide the lost souls through the veil of night.', 'Each twinkle a promise of moments once shared,', 'A tapestry woven, with hearts that once cared.', '', 'The moon, a lone sentinel, gazes with grace,', 'Over fields where the wildflowers once held their place.', 'Their colors now muted, yet fragrant still lingers,', "As nostalgia's soft touch brushes fingers with stingers.", '', 'In the echoes of time, we find our refrain,', 'A melody sweet, woven with joy and with pain.', 'For every season forgotten, a whisper remains,', 'In the heart of the woods, where memory reigns.']
-        ```
-
----
-
-### Using External Sources as Context
-
-```python
-from zyx import query, paste
-
-# `query` is a semantic operation for querying against a `source`
-# a source can be anything!
-# in this case we're linking it to these docs directly
-response = query(
-  source=paste("https://zyx.hammad.app"),
-  context="What library is this built on top of?"
-)
-
-print(response.output)
-```
-
-```bash title="Output"
-Pydantic AI
-```
+6. Thanks to [Pydantic AI]{ data-preview }, all **semantic operations** inherently support tool usage.
