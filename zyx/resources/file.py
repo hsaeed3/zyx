@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import threading
-from typing import Any, List
+from typing import List
 
 from pydantic import BaseModel, Field
 from pydantic_ai.toolsets import FunctionToolset

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, List, Literal, Type, Generic, TypeVar
 
 from pydantic import BaseModel, Field, create_model
@@ -52,7 +52,9 @@ class AbstractEditStrategy(ABC, Generic[Output]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_plan_edits_schema(self, plan: BaseModel | Any) -> List[Type[BaseModel]]:
+    def get_plan_edits_schema(
+        self, plan: BaseModel | Any
+    ) -> List[Type[BaseModel]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -253,16 +255,14 @@ class TextEditStrategy(AbstractEditStrategy[str]):
     def get_plan_schema(self) -> Type[BaseModel]:
         return self.EditPlan
 
-    def get_plan_edit_schema(
-        self, plan: BaseModel | Any
-    ) -> Type[BaseModel]:
+    def get_plan_edit_schema(self, plan: BaseModel | Any) -> Type[BaseModel]:
         """
         Dynamically builds a Pydantic model with one field per selection in the plan,
         using keys 'edit_1', 'edit_2', ... Each field includes a reference to the start/end anchor
         in its docstring.
         """
         fields = {}
-        for idx, selection in enumerate(plan.selections, 1):
+        for idx, selection in enumerate(plan.selections, 1):  # type: ignore[union-attr]
             field_name = f"edit_{idx}"
             field_doc = (
                 f"Replacement for the selection spanning:\n"
@@ -288,7 +288,7 @@ class TextEditStrategy(AbstractEditStrategy[str]):
         self, plan: BaseModel | Any
     ) -> List[Type[BaseModel]]:
         schemas = []
-        for edit in plan.selections:
+        for edit in plan.selections:  # type: ignore
             schemas.append(self.get_replacement_schema())
 
         return schemas
@@ -443,7 +443,7 @@ class MappingEditStrategy(AbstractEditStrategy[Output]):
         selections = self.builder.field_names + ["null", "all"]
 
         model = selection_output_model(
-            selections, multi_select=True, name="EditPlan"
+            selections, multi_label=True, name="EditPlan"
         )
         model.__doc__ = (
             "A plan for a series of edit operations to be applied onto the mapping-like data that has been provided to you."
@@ -453,7 +453,9 @@ class MappingEditStrategy(AbstractEditStrategy[Output]):
         )
         return model
 
-    def get_plan_edits_schema(self, plan: BaseModel | Any) -> List[Type[BaseModel]]:
+    def get_plan_edits_schema(
+        self, plan: BaseModel | Any
+    ) -> List[Type[BaseModel]]:
         schemas = []
 
         selections = self._extract_plan_selections(plan)
@@ -565,7 +567,6 @@ class EditStrategy(AbstractEditStrategy[Output]):
     def create(
         cls, builder: OutputBuilder[Output]
     ) -> AbstractEditStrategy[Output]:
-
         if builder.field_count > 0:
             return MappingEditStrategy(builder)
 

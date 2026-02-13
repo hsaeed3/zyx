@@ -7,6 +7,8 @@ from enum import Enum
 from io import BytesIO
 import mimetypes
 import re
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Any, TypeAlias, Self, Tuple, TYPE_CHECKING
 
@@ -52,6 +54,10 @@ _DOCUMENT_MIMETYPES: frozenset[str] = frozenset(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 )
+_URL_HEADERS = {
+    "User-Agent": "zyx/1.0",
+    "Accept": "*/*",
+}
 
 
 class MultimodalContentOrigin(Enum):
@@ -123,41 +129,7 @@ class MultimodalContentMediaType(Enum):
                 if isinstance(source, memoryview)
                 else bytes(source)  # type: ignore
             )
-            head = data[:512]
-            if head.startswith(b"%PDF"):
-                return cls.DOCUMENT  # type: ignore
-            if (
-                head.startswith(b"\x89PNG\r\n\x1a\n")
-                or head[:3] == b"\xff\xd8\xff"
-            ):
-                return cls.IMAGE  # type: ignore
-            if head.startswith(b"GIF87a") or head.startswith(b"GIF89a"):
-                return cls.IMAGE  # type: ignore
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
-                return cls.IMAGE  # type: ignore
-            if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
-                return cls.AUDIO  # type: ignore
-            if (
-                head.startswith(b"OggS")
-                or head.startswith(b"fLaC")
-                or head.startswith(b"ID3")
-            ):
-                return cls.AUDIO  # type: ignore
-            if len(head) >= 8 and head[4:8] == b"ftyp":
-                return cls.VIDEO  # type: ignore
-            if head.startswith(b"\x1a\x45\xdf\xa3"):
-                return cls.VIDEO  # type: ignore
-            if b"\x00" in head:
-                return cls.UNKNOWN  # type: ignore
-            try:
-                text = head.decode("utf-8")
-            except UnicodeDecodeError:
-                return cls.UNKNOWN  # type: ignore
-            if re.search(
-                r"(?i)<!doctype html|<html\\b|<head\\b|<body\\b", text
-            ):
-                return cls.HTML  # type: ignore
-            return cls.TEXT  # type: ignore
+            return _classify_magic_bytes(data)  # type: ignore
 
         path_text = ""
         suffix = ""
@@ -199,11 +171,114 @@ class MultimodalContentMediaType(Enum):
             if mime_type.startswith("text/"):
                 return cls.TEXT  # type: ignore
 
-        if origin == MultimodalContentOrigin.URL and not suffix and not mime_type:
+        if (
+            origin == MultimodalContentOrigin.URL
+            and not suffix
+            and not mime_type
+        ):
+            detected, _ = _detect_url_media_type(source)
+            if detected:
+                return detected  # type: ignore
             # Default unknown URLs to text to avoid treating common web pages as UNKNOWN.
             return cls.TEXT  # type: ignore
 
         return cls.UNKNOWN  # type: ignore
+
+
+def _classify_content_type(
+    content_type: str | None,
+) -> MultimodalContentMediaType | None:
+    if not content_type:
+        return None
+    ct = content_type.split(";", 1)[0].strip().lower()
+    if not ct:
+        return None
+    if ct == "text/html":
+        return MultimodalContentMediaType.HTML
+    if ct in _DOCUMENT_MIMETYPES or ct == "application/pdf":
+        return MultimodalContentMediaType.DOCUMENT
+    if ct.startswith("image/"):
+        return MultimodalContentMediaType.IMAGE
+    if ct.startswith("audio/"):
+        return MultimodalContentMediaType.AUDIO
+    if ct.startswith("video/"):
+        return MultimodalContentMediaType.VIDEO
+    if ct.startswith("text/"):
+        return MultimodalContentMediaType.TEXT
+    return None
+
+
+def _classify_magic_bytes(
+    data: bytes,
+) -> MultimodalContentMediaType | None:
+    head = data[:512]
+    if head.startswith(b"%PDF"):
+        return MultimodalContentMediaType.DOCUMENT
+    if head.startswith(b"\x89PNG\r\n\x1a\n") or head[:3] == b"\xff\xd8\xff":
+        return MultimodalContentMediaType.IMAGE
+    if head.startswith(b"GIF87a") or head.startswith(b"GIF89a"):
+        return MultimodalContentMediaType.IMAGE
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return MultimodalContentMediaType.IMAGE
+    if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
+        return MultimodalContentMediaType.AUDIO
+    if (
+        head.startswith(b"OggS")
+        or head.startswith(b"fLaC")
+        or head.startswith(b"ID3")
+    ):
+        return MultimodalContentMediaType.AUDIO
+    if len(head) >= 8 and head[4:8] == b"ftyp":
+        return MultimodalContentMediaType.VIDEO
+    if head.startswith(b"\x1a\x45\xdf\xa3"):
+        return MultimodalContentMediaType.VIDEO
+    if b"\x00" in head:
+        return MultimodalContentMediaType.UNKNOWN
+    try:
+        text = head.decode("utf-8")
+    except UnicodeDecodeError:
+        return MultimodalContentMediaType.UNKNOWN
+    if re.search(r"(?i)<!doctype html|<html\\b|<head\\b|<body\\b", text):
+        return MultimodalContentMediaType.HTML
+    return MultimodalContentMediaType.TEXT
+
+
+@lru_cache(maxsize=128)
+def _detect_url_media_type(
+    url: str,
+) -> Tuple[MultimodalContentMediaType | None, str | None]:
+    try:
+        req = urllib.request.Request(url, method="HEAD", headers=_URL_HEADERS)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            content_type = resp.headers.get("Content-Type")
+            classified = _classify_content_type(content_type)
+            return classified, (
+                content_type.split(";", 1)[0].strip().lower()
+                if content_type
+                else None
+            )
+    except (urllib.error.URLError, urllib.error.HTTPError):
+        pass
+
+    try:
+        req = urllib.request.Request(
+            url,
+            method="GET",
+            headers={**_URL_HEADERS, "Range": "bytes=0-511"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            content_type = resp.headers.get("Content-Type")
+            ct_class = _classify_content_type(content_type)
+            if ct_class:
+                return ct_class, (
+                    content_type.split(";", 1)[0].strip().lower()
+                    if content_type
+                    else None
+                )
+            data = resp.read(512)
+            return _classify_magic_bytes(data), None
+    except (urllib.error.URLError, urllib.error.HTTPError):
+        return None, None
 
 
 def classify_multimodal_source(
@@ -256,6 +331,9 @@ def render_multimodal_source_as_user_content(
 
     if origin == MultimodalContentOrigin.URL and isinstance(source, str):
         guessed_media_type, _ = mimetypes.guess_type(source)
+        if not guessed_media_type:
+            _, detected = _detect_url_media_type(source)
+            guessed_media_type = detected
         if media_type == MultimodalContentMediaType.IMAGE:
             return ImageUrl(url=source, media_type=guessed_media_type)
         if media_type == MultimodalContentMediaType.AUDIO:
@@ -332,7 +410,7 @@ def render_multimodal_source_as_text(
         MultimodalContentMediaType.TEXT,
         MultimodalContentMediaType.HTML,
         MultimodalContentMediaType.DOCUMENT,
-        MultimodalContentMediaType.UNKNOWN
+        MultimodalContentMediaType.UNKNOWN,
     ):
         if origin == MultimodalContentOrigin.STRING and isinstance(
             source, str

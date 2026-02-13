@@ -33,7 +33,6 @@ class AbstractResource(ABC):
         writeable: bool = False,
         confirm: bool = True,
     ) -> None:
-
         self.name = name
         """Human-readable resource name."""
 

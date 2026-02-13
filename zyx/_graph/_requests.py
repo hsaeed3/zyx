@@ -177,6 +177,12 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 snippet = None
 
             if snippet is not None:
+                system_parts.append(
+                    PydanticAISystemPromptPart(
+                        content=_render_source_metadata(snippet)
+                    )
+                )
+
                 is_text_based = snippet._media_type in (
                     MultimodalContentMediaType.TEXT,
                     MultimodalContentMediaType.HTML,
@@ -312,6 +318,27 @@ def _render_source_attachment_context(content: str) -> str:
     For non-text content (images/audio/video), only the description appears.
     """
     return f"\n\n[PRIMARY INPUT]\n\n{content}\n\n[END PRIMARY INPUT]\n"
+
+
+def _render_source_metadata(snippet: Snippet) -> str:
+    """Generates system prompt metadata for a snippet source.
+
+    This keeps source identifiers (URL/path) outside the PRIMARY INPUT block
+    while still making the origin and media type explicit to the model.
+    """
+    source = snippet.source
+    if isinstance(source, str):
+        source_repr = source
+    else:
+        source_repr = object_as_toon_text(source)
+
+    return (
+        "\n\n[SOURCE META]\n"
+        f"Origin: {snippet._origin.value}\n"
+        f"Media Type: {snippet._media_type.value}\n"
+        f"Source: {source_repr}\n"
+        "[END SOURCE META]\n"
+    )
 
 
 def _render_attachment_context(
