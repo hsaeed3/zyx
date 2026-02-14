@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, List, Generic, Self, TypeVar
 
 from pydantic_graph import (
     BaseNode,
     End,
 )
+from pydantic_ai.exceptions import UserError
 
 from .._aliases import (
     PydanticAIAgentResult,
@@ -28,6 +29,11 @@ __all__ = (
     "SemanticGenerateNode",
     "SemanticStreamNode",
 )
+
+
+# temporary workaround used if a model provider doesnt support native structured output
+# when creating a request
+_NATIVE_OUTPUT_UNSUPPORTED_ERROR = "Native structured output is not supported"
 
 
 Deps = TypeVar("Deps")
@@ -74,7 +80,14 @@ class AbstractSemanticNode(
         params = request.render(ctx)
 
         try:
-            result = await ctx.deps.agent.run(**params)
+            try:
+                result = await ctx.deps.agent.run(**params)
+            except UserError as e:
+                if _NATIVE_OUTPUT_UNSUPPORTED_ERROR in str(e):
+                    params = replace(request, native_output=False)
+                    result = await ctx.deps.agent.run(**params.render(ctx))
+                else:
+                    raise
         except Exception as e:
             raise e
 
@@ -101,7 +114,15 @@ class AbstractSemanticNode(
         `StreamedRunResult`.
         """
         params = request.render(ctx)
-        return ctx.deps.agent.run_stream(**params)
+
+        try:
+            return ctx.deps.agent.run_stream(**params)
+        except UserError as e:
+            if _NATIVE_OUTPUT_UNSUPPORTED_ERROR in str(e):
+                params = replace(request, native_output=False)
+                return ctx.deps.agent.run_stream(**params.render(ctx))
+            else:
+                raise
 
 
 @dataclass
