@@ -52,6 +52,50 @@ Deps = TypeVar("Deps")
 Output = TypeVar("Output")
 
 
+def _stream_sync_impl(
+    self: SemanticGraph[Output], *, exclude_none: bool
+) -> Stream[Output]:
+    """Run stream() in a dedicated thread so anyio/pydantic_ai context stays isolated."""
+    import threading
+
+    result_container: list[
+        tuple[Stream[Output], asyncio.AbstractEventLoop]
+    ] = []
+    error_container: list[BaseException] = []
+    ready = threading.Event()
+
+    def _worker() -> None:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            stream = loop.run_until_complete(
+                self.stream(exclude_none=exclude_none)
+            )
+            stream._loop = loop
+            result_container.append((stream, loop))
+        except BaseException as exc:
+            error_container.append(exc)
+        finally:
+            ready.set()
+        try:
+            loop.run_forever()
+        finally:
+            loop.close()
+
+    thread = threading.Thread(target=_worker, name="zyx-stream-sync")
+    thread.start()
+    ready.wait()
+    if error_container:
+        thread.join()
+        raise error_container[0]
+    if not result_container:
+        thread.join()
+        raise RuntimeError("Stream sync worker failed to produce a stream")
+    stream, _loop = result_container[0]
+    stream._loop_owner_thread = thread
+    return stream
+
+
 def _get_event_loop() -> asyncio.AbstractEventLoop:
     """Get or create event loop for sync operations."""
     try:
@@ -276,14 +320,17 @@ class SemanticGraph(Generic[Output]):
         Returns a `Stream[Output]` whose sync iteration methods (`text()`,
         `partial()`, `field()`, `finish()`) can be used from non-async code.
 
+        Runs the graph in a dedicated thread so that anyio cancel scopes and
+        contextvars stay within one task/thread, avoiding RuntimeError when
+        using pydantic_graph with sync entry points.
+
         Args:
             exclude_none: Forwarded to ``stream()``.
 
         Raises:
             RuntimeError: If called from within an already-running async context.
         """
-        loop = _get_event_loop()
-        return loop.run_until_complete(self.stream(exclude_none=exclude_none))
+        return _stream_sync_impl(self, exclude_none=exclude_none)
 
 
 def _install_target_hooks(

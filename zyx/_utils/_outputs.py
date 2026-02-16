@@ -351,60 +351,72 @@ class OutputBuilder(Generic[Output]):
             else:
                 field_names = fields
 
-        async for output in stream.stream_output(debounce_by=debounce_by):
-            # Field-level streaming
-            if field_names:
-                if self._partial is None:
-                    if isinstance(self.normalized, type) and issubclass(
-                        self.normalized, BaseModel
+        stream_iter = stream.stream_output(debounce_by=debounce_by)
+        try:
+            async for output in stream_iter:
+                # Field-level streaming
+                if field_names:
+                    if self._partial is None:
+                        if isinstance(self.normalized, type) and issubclass(
+                            self.normalized, BaseModel
+                        ):
+                            self._partial = self.partial_type()  # type: ignore
+                        else:
+                            self._partial = output  # type: ignore
+
+                    # Handle single or multiple field updates
+                    if isinstance(self._partial, BaseModel):
+                        update_dict: dict[str, Any] = {}
+                        for field_name in field_names:
+                            # Extract value - split models wrap in a 'content' field
+                            if len(field_names) == 1:
+                                field_value = getattr(
+                                    output, "content", output
+                                )
+                            else:
+                                field_value = getattr(output, field_name, None)
+
+                            if field_value is not None:
+                                update_dict[field_name] = field_value
+
+                        self._partial = self._partial.model_copy(  # type: ignore
+                            update=update_dict
+                        )
+
+                # Full object streaming
+                else:
+                    if isinstance(output, BaseModel) and isinstance(
+                        self._partial, BaseModel
                     ):
-                        self._partial = self.partial_type()  # type: ignore
+                        # Merge BaseModel updates
+                        self._partial = self._partial.model_copy(  # type: ignore
+                            update=output.model_dump(exclude_none=True)
+                        )
+                    elif isinstance(self._partial, BaseModel):
+                        # If partial is BaseModel but output is not, don't replace it
+                        # This handles cases where output is a different type that will be
+                        # handled separately (shouldn't happen in normal streaming)
+                        pass
                     else:
                         self._partial = output  # type: ignore
 
-                # Handle single or multiple field updates
+                yield self._partial if self._partial is not None else output
+
+            # Record final state and track filled fields
+            if self._partial is not None:
                 if isinstance(self._partial, BaseModel):
-                    update_dict: dict[str, Any] = {}
-                    for field_name in field_names:
-                        # Extract value - split models wrap in a 'content' field
-                        if len(field_names) == 1:
-                            field_value = getattr(output, "content", output)
-                        else:
-                            field_value = getattr(output, field_name, None)
-
-                        if field_value is not None:
-                            update_dict[field_name] = field_value
-
-                    self._partial = self._partial.model_copy(  # type: ignore
-                        update=update_dict
-                    )
-
-            # Full object streaming
-            else:
-                if isinstance(output, BaseModel) and isinstance(
-                    self._partial, BaseModel
-                ):
-                    # Merge BaseModel updates
-                    self._partial = self._partial.model_copy(  # type: ignore
-                        update=output.model_dump(exclude_none=True)
-                    )
-                elif isinstance(self._partial, BaseModel):
-                    # If partial is BaseModel but output is not, don't replace it
-                    # This handles cases where output is a different type that will be
-                    # handled separately (shouldn't happen in normal streaming)
+                    for name in self.field_names:
+                        if getattr(self._partial, name, None) is not None:
+                            self._filled_fields.add(name)
+                self._history.append(self._partial)
+        finally:
+            # Properly close the async iterator
+            aclose = getattr(stream_iter, "aclose", None)
+            if aclose is not None:
+                try:
+                    await aclose()
+                except Exception:
                     pass
-                else:
-                    self._partial = output  # type: ignore
-
-            yield self._partial if self._partial is not None else output
-
-        # Record final state and track filled fields
-        if self._partial is not None:
-            if isinstance(self._partial, BaseModel):
-                for name in self.field_names:
-                    if getattr(self._partial, name, None) is not None:
-                        self._filled_fields.add(name)
-            self._history.append(self._partial)
 
     def finalize(self, *, exclude_none: bool = False) -> Output:
         """Return the final output, converting back to the original type if needed.
