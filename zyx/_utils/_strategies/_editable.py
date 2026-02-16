@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import json
 from typing import Any, List, Literal, Type, Generic, TypeVar
 
 from pydantic import BaseModel, Field, create_model
@@ -20,6 +21,8 @@ from .._outputs import OutputBuilder
 
 
 Output = TypeVar("Output")
+
+SHORT_TEXT_REPLACEMENT_THRESHOLD = 75
 
 
 @dataclass
@@ -105,6 +108,10 @@ class BasicEditStrategy(AbstractEditableStrategy[Output]):
     Fallback editable strategy for non-text, non-mapping outputs.
     """
 
+    @property
+    def kind(self) -> Literal["basic"]:
+        return "basic"
+
     def get_replacement_schema(self) -> Type[BaseModel]:
         normalized = self.builder.partial_type
         model = create_model(
@@ -152,6 +159,19 @@ class BasicEditStrategy(AbstractEditableStrategy[Output]):
 
     def apply_replacement(self, replacement: Any) -> Output:
         value = getattr(replacement, "value", replacement)
+        if (
+            self.builder.normalized is str
+            and isinstance(value, str)
+            and value.startswith('"')
+            and value.endswith('"')
+        ):
+            try:
+                decoded = json.loads(value)
+            except json.JSONDecodeError:
+                decoded = value
+            else:
+                if isinstance(decoded, str):
+                    value = decoded
         return self.builder.update(value)
 
     def apply_selective(self, edits: Any) -> Output:
@@ -552,14 +572,29 @@ class MappingEditStrategy(AbstractEditableStrategy[Output]):
 class EditStrategy(AbstractEditableStrategy[Output]):
     """Helper factory that auto-determines the appropriate edit strategy."""
 
+    @property
+    def kind(self) -> None:
+        return None
+
     @classmethod
     def create(
         cls, builder: OutputBuilder[Output]
     ) -> AbstractEditableStrategy[Output]:
+        base_text: str | None = None
+        if isinstance(builder.partial, str):
+            base_text = builder.partial
+        elif builder.is_value and isinstance(builder.target, str):
+            base_text = builder.target
+
         if builder.field_count > 0:
             return MappingEditStrategy(builder)
 
         if builder.normalized is str:
+            if (
+                base_text is not None
+                and len(base_text) < SHORT_TEXT_REPLACEMENT_THRESHOLD
+            ):
+                return BasicEditStrategy(builder)
             return TextEditStrategy(builder)  # type: ignore[arg-type]
 
         return BasicEditStrategy(builder)

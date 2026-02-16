@@ -132,6 +132,51 @@ class Confidence:
 
         return base + f", fields={self.fields!r})"
 
+    def __rich__(self):
+        from rich.console import RenderableType, Group
+        from rich.rule import Rule
+        from rich.text import Text
+
+        renderables: list[RenderableType] = []
+
+        renderables.append(
+            Rule(
+                title="✨ Confidence",
+                style="rule.line",
+                align="left",
+            )
+        )
+
+        renderables.append(
+            Text.from_markup(f"[bold]overall: {self.overall}[/bold]")
+        )
+        renderables.append(
+            Text.from_markup(
+                f"[dim italic]level: {self.level.value}[/dim italic]"
+            )
+        )
+        renderables.append(
+            Text.from_markup(
+                f"[dim italic]token_count: {self.token_count}[/dim italic]"
+            )
+        )
+
+        if self.model:
+            renderables.append(
+                Text.from_markup(
+                    f"[sandy_brown]>>>[/sandy_brown] [dim italic]Model: {self.model}[/dim italic]"
+                )
+            )
+
+        if not self._should_hide_fields_in_repr():
+            renderables.append(
+                Text.from_markup(
+                    f"[dim italic]fields: {self.fields}[/dim italic]"
+                )
+            )
+
+        return Group(*renderables)
+
 
 def _score_confidence_level(score: float) -> ConfidenceLevel:
     if score >= _HIGH_THRESHOLD:
