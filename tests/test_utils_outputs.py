@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 
-import pytest
 from pydantic import BaseModel
 
 from zyx._utils._outputs import OutputBuilder
@@ -48,7 +47,7 @@ def test_output_builder_update_and_missing_fields():
 def test_output_builder_field_level_update_from_result():
     builder = OutputBuilder(target=PersonModel)
     result = DummyResult(output=5)
-    builder.update_from_pydantic_ai_result(result, fields="age") # type: ignore[arg-type]
+    builder.update_from_pydantic_ai_result(result, fields="age")  # type: ignore[arg-type]
     assert builder.partial is not None
     assert builder.partial.age == 5
     assert builder.missing_fields == ["name"]

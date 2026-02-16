@@ -31,7 +31,11 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    model = mo.ui.text(label="Model: ", placeholder="openai:gpt-4o-mini", value="openai:gpt-4o-mini")
+    model = mo.ui.text(
+        label="Model: ",
+        placeholder="openai:gpt-4o-mini",
+        value="openai:gpt-4o-mini",
+    )
     model
     return (model,)
 
@@ -62,13 +66,11 @@ def _(mo, model_name):
         # the 'target' type controls the output of the make operation, as well as most other
         # semantic operations
         target=int,
-
         # `context` is the universal parameter or entrypoint for passing prompts/message history and more
         # to your models and agents
         context="What is 45+45-20?",
-
         # all `pydantic_ai` models are compatible with zyx
-        model=model_name
+        model=model_name,
     )
     mo.show_code()
     return make, result
@@ -120,9 +122,9 @@ def _(make, mo, model_name):
 
     @dataclass
     class User:
-        name : str
-        age : int
-        address : str
+        name: str
+        age: int
+        address: str
 
     # as you can see here we havent passed any instructions or context at all.
     user = make(User, model=model_name)

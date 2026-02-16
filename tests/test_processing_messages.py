@@ -1,7 +1,5 @@
 """tests.test_processing_messages"""
 
-import pytest
-
 from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,

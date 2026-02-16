@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, TypeAlias, TYPE_CHECKING
+from typing import Any, Callable, Dict, List
 
 from pydantic_ai.toolsets import FunctionToolset
 import pydantic_monty
@@ -95,7 +95,7 @@ class Code:
         )
         return await pydantic_monty.run_monty_async(
             m,
-            inputs=inputs or {},
+            inputs=inputs if inputs else None,
             external_functions=self.external_functions,
         )
 

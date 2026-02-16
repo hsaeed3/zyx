@@ -26,11 +26,11 @@ class BadNode(BaseNode[object, object, str]):
 
 def test_run_v1_node_chain():
     ctx = StepContext(state=object(), deps=object(), inputs=None)
-    result = asyncio.run(run_v1_node_chain(NodeA(), ctx)) # type: ignore[arg-type]
+    result = asyncio.run(run_v1_node_chain(NodeA(), ctx))  # type: ignore[arg-type]
     assert result == "done"
 
 
 def test_run_v1_node_chain_invalid_transition():
     ctx = StepContext(state=object(), deps=object(), inputs=None)
     with pytest.raises(ValueError):
-        asyncio.run(run_v1_node_chain(BadNode(), ctx)) # type: ignore[arg-type]
+        asyncio.run(run_v1_node_chain(BadNode(), ctx))  # type: ignore[arg-type]

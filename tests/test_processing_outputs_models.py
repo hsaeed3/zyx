@@ -43,8 +43,8 @@ def test_sparse_output_model_changes():
     parsed = Updates.model_validate(
         {"changes": [{"field": "name", "value": "A"}]}
     )
-    assert parsed.changes[0].field == "name" # type: ignore[attr-defined]
-    assert parsed.changes[0].value == "A" # type: ignore[attr-defined]
+    assert parsed.changes[0].field == "name"  # type: ignore[attr-defined]
+    assert parsed.changes[0].value == "A"  # type: ignore[attr-defined]
 
 
 def test_split_output_model_by_fields():

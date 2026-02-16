@@ -85,7 +85,7 @@ class Memory:
         provider: MemoryProvider | MemoryProviderName = "chroma/persistent",
         instructions: str | None = None,
         auto: bool = False,
-        writeable : bool = True,
+        writeable: bool = True,
     ):
         """
         Create a new `Memory` resource with a given key, provider, instructions and auto mode.
@@ -180,19 +180,19 @@ class Memory:
         write_tools = [
             PydanticAITool(
                 function=self.add,
-                name="add_memory",
+                name=f"add_memory_{self.key}",
                 description="Add a memory to the index of memories.",
             ),
             PydanticAITool(
                 function=self.delete,
-                name="delete_memory",
+                name=f"delete_memory_{self.key}",
                 description="Delete a memory by it's ID from the index of memories.",
             ),
         ]
         read_tools = [
             PydanticAITool(
                 function=self.search,
-                name="search_memory",
+                name=f"search_memory_{self.key}",
                 description="Search the index of memories for a given query.",
             ),
         ]
@@ -242,7 +242,7 @@ def memories(
     provider: MemoryProvider | MemoryProviderName = "qdrant",
     instructions: str | None = None,
     auto: bool = False,
-    writeable : bool = True,
+    writeable: bool = True,
 ) -> Memory:
     """
     Create or retrieve a `Memory` resource with based on a given key (collection

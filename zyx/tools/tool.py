@@ -30,7 +30,9 @@ ToolReturn = TypeVar("ToolReturn")
 ToolParams = ParamSpec("ToolParams")
 
 
-class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn]):
+class Tool(
+    _pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn]
+):
     """A tool that can be given to a model or an agent for tool calling and execution during
     a semantic operation.
 
@@ -40,22 +42,29 @@ class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn])
 
     def __init__(
         self,
-        function: Callable[ToolParams, ToolReturn] | Callable[[PydanticAIRunContext[Deps], ToolParams], ToolReturn],
+        function: Callable[ToolParams, ToolReturn]
+        | Callable[[PydanticAIRunContext[Deps], ToolParams], ToolReturn],
         *,
         takes_ctx: bool | None = None,
         max_retries: int | None = None,
         name: str | None = None,
         description: str | None = None,
-        prepare: _pydantic_ai_tools.ToolPrepareFunc[_pydantic_ai_tools.ToolAgentDepsT] | None = None,
-        docstring_format: _pydantic_ai_tools.DocstringFormat = 'auto',
+        prepare: _pydantic_ai_tools.ToolPrepareFunc[
+            _pydantic_ai_tools.ToolAgentDepsT
+        ]
+        | None = None,
+        docstring_format: _pydantic_ai_tools.DocstringFormat = "auto",
         require_parameter_descriptions: bool = False,
-        schema_generator: type[_pydantic_ai_tools.GenerateJsonSchema] = _pydantic_ai_tools.GenerateToolJsonSchema,
+        schema_generator: type[
+            _pydantic_ai_tools.GenerateJsonSchema
+        ] = _pydantic_ai_tools.GenerateToolJsonSchema,
         strict: bool | None = None,
         sequential: bool = False,
         requires_approval: bool = False,
         metadata: dict[str, Any] | None = None,
         timeout: float | None = None,
-        function_schema: _pydantic_ai_function_schema.FunctionSchema | None = None,
+        function_schema: _pydantic_ai_function_schema.FunctionSchema
+        | None = None,
     ) -> None:
         """
         Initialize a new `Tool` instance.
@@ -112,7 +121,9 @@ class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn])
             function_schema=function_schema,
         )
 
-    def _args_dict(self, *args: ToolParams.args, **kwargs: ToolParams.kwargs) -> dict[str, Any]:
+    def _args_dict(
+        self, *args: ToolParams.args, **kwargs: ToolParams.kwargs
+    ) -> dict[str, Any]:
         """Build and validate args dict from *args, **kwargs using the tool schema."""
         schema = self.function_schema
         if schema.positional_fields:
@@ -122,7 +133,9 @@ class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn])
         args_dict.update(kwargs)
         return schema.validator.validate_python(args_dict)
 
-    def __call__(self, *args: ToolParams.args, **kwargs: ToolParams.kwargs) -> ToolReturn:
+    def __call__(
+        self, *args: ToolParams.args, **kwargs: ToolParams.kwargs
+    ) -> ToolReturn:
         """Invoke the tool synchronously. Uses pydantic_ai invocation when takes_ctx."""
         if self.takes_ctx:
             ctx = get_current_run_context()
@@ -153,7 +166,9 @@ class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn])
             )
         return result
 
-    async def acall(self, *args: ToolParams.args, **kwargs: ToolParams.kwargs) -> ToolReturn:
+    async def acall(
+        self, *args: ToolParams.args, **kwargs: ToolParams.kwargs
+    ) -> ToolReturn:
         """Invoke the tool asynchronously. Uses pydantic_ai invocation when takes_ctx."""
         if self.takes_ctx:
             ctx = get_current_run_context()
@@ -171,16 +186,22 @@ class Tool(_pydantic_ai_tools.Tool[Deps], Generic[Deps, ToolParams, ToolReturn])
 
 
 def tool(
-    function: Callable[ToolParams, ToolReturn] | Callable[[PydanticAIRunContext[Deps], ToolParams], ToolReturn],
+    function: Callable[ToolParams, ToolReturn]
+    | Callable[[PydanticAIRunContext[Deps], ToolParams], ToolReturn],
     *,
     takes_ctx: bool | None = None,
     max_retries: int | None = None,
     name: str | None = None,
     description: str | None = None,
-    prepare: _pydantic_ai_tools.ToolPrepareFunc[_pydantic_ai_tools.ToolAgentDepsT] | None = None,
-    docstring_format: _pydantic_ai_tools.DocstringFormat = 'auto',
+    prepare: _pydantic_ai_tools.ToolPrepareFunc[
+        _pydantic_ai_tools.ToolAgentDepsT
+    ]
+    | None = None,
+    docstring_format: _pydantic_ai_tools.DocstringFormat = "auto",
     require_parameter_descriptions: bool = False,
-    schema_generator: type[_pydantic_ai_tools.GenerateJsonSchema] = _pydantic_ai_tools.GenerateToolJsonSchema,
+    schema_generator: type[
+        _pydantic_ai_tools.GenerateJsonSchema
+    ] = _pydantic_ai_tools.GenerateToolJsonSchema,
     strict: bool | None = None,
     sequential: bool = False,
     requires_approval: bool = False,
