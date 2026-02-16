@@ -1,4 +1,4 @@
-"""zyx.operations.edit.strategy"""
+"""zyx._utils._strategies._editable"""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Any, List, Literal, Type, Generic, TypeVar
 
 from pydantic import BaseModel, Field, create_model
 
+from ._abstract import AbstractStrategy
 from ..._processing._outputs import (
     partial_output_model,
     sparse_output_model,
@@ -15,24 +16,19 @@ from ..._processing._outputs import (
     split_output_model_by_fields,
     split_output_model,
 )
-from ..._utils._outputs import OutputBuilder
-
-__all__ = (
-    "AbstractEditStrategy",
-    "BasicEditStrategy",
-    "TextEditStrategy",
-    "MappingEditStrategy",
-    "EditStrategy",
-)
+from .._outputs import OutputBuilder
 
 
 Output = TypeVar("Output")
 
 
 @dataclass
-class AbstractEditStrategy(ABC, Generic[Output]):
-    """Abstract base class for type-specific strategies used by the
-    `edit` semantic operation."""
+class AbstractEditableStrategy(AbstractStrategy, ABC, Generic[Output]):
+    """
+    Abstract base class for strategies referring to objects that can be
+    edited through natural language instructions / or the `edit`
+    semantic operation.
+    """
 
     class Confirmation(BaseModel):
         needs_edits: bool = Field(
@@ -42,65 +38,75 @@ class AbstractEditStrategy(ABC, Generic[Output]):
 
     builder: OutputBuilder[Output]
 
-    @property
     @abstractmethod
-    def kind(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_replacement_schema(self) -> Type[BaseModel]:
+    def get_replacement_schema(self) -> Any:
+        """
+        Returns the schema/model describing a full replacement for the editable object.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_selective_schema(self) -> Type[BaseModel]:
+    def get_selective_schema(self) -> Any:
+        """
+        Returns the schema/model describing a set of selective (field- or anchor-specific) edits.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_plan_schema(self) -> Type[BaseModel]:
+    def get_plan_schema(self) -> Any:
+        """
+        Returns the schema/model describing an edit 'plan' (e.g., anchors/selections to be edited).
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_plan_edits_schema(
-        self, plan: BaseModel | Any
-    ) -> List[Type[BaseModel]]:
+    def get_plan_edits_schema(self, plan: Any) -> list[Any]:
+        """
+        Given a plan, returns a list of schemas/models describing the possible edits for each selection
+        in the plan.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_plan_edit_schema(self, plan: BaseModel | Any) -> Type[BaseModel]:
+    def get_plan_edit_schema(self, plan: Any) -> Any:
+        """
+        Given a plan, returns a schema/model with enumerated fields for each edit to be performed
+        according to the selections in the plan.
+        """
         raise NotImplementedError
 
-    def apply_replacement(self, replacement: Any) -> Output:
+    @abstractmethod
+    def apply_replacement(self, replacement: Any) -> Any:
+        """
+        Applies a full-object replacement, returning the updated value.
+        """
         raise NotImplementedError
 
-    def apply_selective(self, edits: Any) -> Output:
+    @abstractmethod
+    def apply_selective(self, edits: Any) -> Any:
+        """
+        Applies selective (field- or anchor-specific) edits provided by the model,
+        returning the updated value.
+        """
         raise NotImplementedError
 
-    def apply_plan_edits(self, plan: BaseModel, edits: Any) -> Output:
+    @abstractmethod
+    def apply_plan_edits(self, plan: Any, edits: Any) -> Any:
+        """
+        Applies a set of planned edits to the object based on the provided plan (e.g., anchor selections)
+        and corresponding replacement edits.
+        """
         raise NotImplementedError
 
 
 @dataclass
-class BasicEditStrategy(AbstractEditStrategy[Output]):
-    """Fallback strategy for non-text, non-mapping outputs.
-
-    Contract:
-    - Replacement: provide a complete new value of the normalized type.
-    - Selective: same as Replacement (no sub-fields to select).
-    - Plan: choose between 'null' (no edits) and 'replace' (apply one replacement).
+class BasicEditStrategy(AbstractEditableStrategy[Output]):
+    """
+    Fallback editable strategy for non-text, non-mapping outputs.
     """
 
-    @property
-    def kind(self) -> Literal["basic"]:
-        return "basic"
-
     def get_replacement_schema(self) -> Type[BaseModel]:
-        """
-        For basic types, the replacement is just a full new value of the normalized type.
-        We wrap it in a single-field Pydantic model so the instructions/docs are clear.
-        """
-        normalized = (
-            self.builder.partial_type
-        )  # already handles simple/BaseModel
+        normalized = self.builder.partial_type
         model = create_model(
             "Replacement",
             value=(
@@ -117,17 +123,9 @@ class BasicEditStrategy(AbstractEditStrategy[Output]):
         return model
 
     def get_selective_schema(self) -> Type[BaseModel]:
-        """
-        For scalar/basic outputs, 'selective' edits have the same shape as replacement:
-        you either provide a new value or nothing.
-        """
-        # You can just reuse the same schema:
         return self.get_replacement_schema()
 
     def get_plan_schema(self) -> Type[BaseModel]:
-        """
-        Simple plan: either perform no edits ('null') or replace the value ('replace').
-        """
         Plan = create_model(
             "EditPlan",
             selection=(
@@ -145,19 +143,11 @@ class BasicEditStrategy(AbstractEditStrategy[Output]):
         return Plan
 
     def get_plan_edits_schema(self, plan: BaseModel) -> List[Type[BaseModel]]:
-        """
-        If the plan says 'replace', we expect one replacement value.
-        If 'null', no edits are required.
-        """
         if getattr(plan, "selection") == "replace":
             return [self.get_replacement_schema()]
         return []
 
     def get_plan_edit_schema(self, plan: BaseModel) -> Type[BaseModel]:
-        """
-        Single-edit case: if plan == 'replace', use the replacement schema;
-        if 'null', you won't actually be asked for edits.
-        """
         return self.get_replacement_schema()
 
     def apply_replacement(self, replacement: Any) -> Output:
@@ -171,12 +161,12 @@ class BasicEditStrategy(AbstractEditStrategy[Output]):
         if getattr(plan, "selection", None) == "null":
             if self.builder.partial is None and self.builder.is_value:
                 return self.builder.update(self.builder.target)
-            return self.builder.partial  # type: ignore[return-value]
+            return self.builder.partial # type: ignore[return-value]
         return self.apply_replacement(edits)
 
 
 @dataclass
-class TextEditStrategy(AbstractEditStrategy[str]):
+class TextEditStrategy(AbstractEditableStrategy[str]):
     """Strategy for edits made to strings."""
 
     def __post_init__(self) -> None:
@@ -264,11 +254,6 @@ class TextEditStrategy(AbstractEditStrategy[str]):
         return self.EditPlan
 
     def get_plan_edit_schema(self, plan: BaseModel | Any) -> Type[BaseModel]:
-        """
-        Dynamically builds a Pydantic model with one field per selection in the plan,
-        using keys 'edit_1', 'edit_2', ... Each field includes a reference to the start/end anchor
-        in its docstring.
-        """
         fields = {}
         for idx, selection in enumerate(plan.selections, 1):  # type: ignore[union-attr]
             field_name = f"edit_{idx}"
@@ -296,7 +281,7 @@ class TextEditStrategy(AbstractEditStrategy[str]):
         self, plan: BaseModel | Any
     ) -> List[Type[BaseModel]]:
         schemas = []
-        for edit in plan.selections:  # type: ignore
+        for _edit in plan.selections:  # type: ignore
             schemas.append(self.get_replacement_schema())
 
         return schemas
@@ -354,7 +339,6 @@ class TextEditStrategy(AbstractEditStrategy[str]):
 
         base = self._base_text()
         updated = base
-        # edits may be a single model with edit_1... or a list of replacements
         if isinstance(edits, BaseModel):
             edits_map = {
                 name: getattr(edits, name)
@@ -407,7 +391,7 @@ class TextEditStrategy(AbstractEditStrategy[str]):
         return self.builder.update(updated)
 
 
-class MappingEditStrategy(AbstractEditStrategy[Output]):
+class MappingEditStrategy(AbstractEditableStrategy[Output]):
     """Strategy for edits made to dictionaries/pydantic models/other mapping-like
     structures and types."""
 
@@ -446,8 +430,6 @@ class MappingEditStrategy(AbstractEditStrategy[Output]):
         return model
 
     def get_plan_schema(self) -> Type[BaseModel]:
-        model = selection_output_model(self.builder.normalized)
-
         selections = self.builder.field_names + ["null", "all"]
 
         model = selection_output_model(
@@ -516,7 +498,6 @@ class MappingEditStrategy(AbstractEditStrategy[Output]):
         if selections in (None, "null"):
             return []
 
-        # normalize special options
         if isinstance(selections, list):
             if "all" in selections:
                 return self.builder.field_names
@@ -558,23 +539,23 @@ class MappingEditStrategy(AbstractEditStrategy[Output]):
 
         if isinstance(edits, BaseModel):
             updates = edits.model_dump(exclude_none=True)
-            return self.builder.update(updates)
-        if isinstance(edits, dict):
-            return self.builder.update(edits)
-        return self.builder.update(edits)
+        elif isinstance(edits, dict):
+            updates = {k: v for k, v in edits.items() if v is not None}
+        else:
+            updates = edits
+        if selections:
+            updates = {k: v for k, v in updates.items() if k in selections}
+        return self.builder.update(updates)
 
 
 @dataclass(init=False)
-class EditStrategy(AbstractEditStrategy[Output]):
-    """
-    Helper factory that auto-determines the appropriate edit strategy class given an
-    `OutputBuilder` object.
-    """
+class EditStrategy(AbstractEditableStrategy[Output]):
+    """Helper factory that auto-determines the appropriate edit strategy."""
 
     @classmethod
     def create(
         cls, builder: OutputBuilder[Output]
-    ) -> AbstractEditStrategy[Output]:
+    ) -> AbstractEditableStrategy[Output]:
         if builder.field_count > 0:
             return MappingEditStrategy(builder)
 
