@@ -128,6 +128,8 @@ ContextType: TypeAlias = Union[
     BaseModel,
     Dict[str, Any],
     Context,
+    AttachmentLike,
+    Attachment
 ]
 """Accepted formats for a single item within the ``context`` of a semantic
 operation.  All items are converted to ``pydantic_ai.ModelMessage`` objects
