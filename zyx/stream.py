@@ -7,7 +7,6 @@ from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
 from typing import (
     Any,
-    Dict,
     Generic,
     List,
     TypeVar,
@@ -30,6 +29,13 @@ Output = TypeVar("Output")
 
 
 @dataclass
+class StreamFieldMapping:
+    stream_index: int
+    fields: List[str] | None
+    update_output: bool
+
+
+@dataclass
 class Stream(Generic[Output]):
     """
     Streamed result wrapper for semantic operations.
@@ -44,18 +50,18 @@ class Stream(Generic[Output]):
 
     _builder: OutputBuilder[Output] = field(repr=False)
     _streams: List[PydanticAIAgentStream] = field(repr=False)
-    _field_mappings: List[Dict[str, Any]] = field(repr=False)
+    _field_mappings: List[StreamFieldMapping] = field(repr=False)
     _stream_contexts: List[Any] = field(repr=False)
-    _exclude_none: bool = field(default=False, repr=False)
-    """When ``True``, ``finalize()`` will omit ``None``-valued fields from
-    the result (useful for selective edits where only changed fields should
-    appear)."""
 
     _current_stream_index: int = field(default=0, init=False, repr=False)
     _raw: List[PydanticAIAgentResult[Any]] = field(
         default_factory=list, init=False, repr=False
     )
     _is_complete: bool = field(default=False, init=False, repr=False)
+    _exclude_none: bool = field(default=False, repr=False)
+    """When ``True``, ``finalize()`` will omit ``None``-valued fields from
+    the result (useful for selective edits where only changed fields should
+    appear)."""
 
     async def __aenter__(self) -> Stream[Output]:
         return self
@@ -95,9 +101,9 @@ class Stream(Generic[Output]):
             final_output = await stream.get_output()
             result = PydanticAIAgentResult(output=final_output)
 
-            if mapping["update_output"]:
+            if mapping.update_output:
                 self._builder.update_from_pydantic_ai_result(
-                    result, fields=mapping["fields"]
+                    result, fields=mapping.fields
                 )
 
             self._raw.append(result)
@@ -128,12 +134,12 @@ class Stream(Generic[Output]):
             self._current_stream_index = idx
             mapping = self._field_mappings[idx]
 
-            if mapping["update_output"]:
+            if mapping.update_output:
                 async for (
                     partial
                 ) in self._builder.update_from_pydantic_ai_stream(
                     stream=stream,
-                    fields=mapping["fields"],
+                    fields=mapping.fields,
                     debounce_by=debounce_by,
                 ):
                     if delta:
@@ -217,14 +223,14 @@ class Stream(Generic[Output]):
             self._current_stream_index = idx
             mapping = self._field_mappings[idx]
 
-            if mapping["fields"] is None or field_name in mapping["fields"]:
+            if mapping.fields is None or field_name in mapping.fields:
                 async for output in stream.stream_output(
                     debounce_by=debounce_by
                 ):
-                    if mapping["update_output"]:
+                    if mapping.update_output:
                         temp_result = PydanticAIAgentResult(output=output)
                         self._builder.update_from_pydantic_ai_result(
-                            temp_result, fields=mapping["fields"]
+                            temp_result, fields=mapping.fields
                         )
 
                     if isinstance(output, BaseModel) and hasattr(
@@ -259,10 +265,10 @@ class Stream(Generic[Output]):
 
             final_output = await stream.get_output()
 
-            if mapping["update_output"]:
+            if mapping.update_output:
                 result = PydanticAIAgentResult(output=final_output)
                 self._builder.update_from_pydantic_ai_result(
-                    result, fields=mapping["fields"]
+                    result, fields=mapping.fields
                 )
                 self._raw.append(result)
 
