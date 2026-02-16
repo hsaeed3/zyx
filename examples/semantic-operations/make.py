@@ -53,7 +53,7 @@ def _(mo):
 
 
 @app.cell
-def _(model_name, mo):
+def _(mo, model_name):
     # import 'make'
     from zyx import make
 
@@ -115,7 +115,7 @@ def _(mo):
 
 
 @app.cell
-def _(make, model_name, mo):
+def _(make, mo, model_name):
     from dataclasses import dataclass
 
     @dataclass

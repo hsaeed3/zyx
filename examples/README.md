@@ -15,8 +15,14 @@ or through the `zyx[examples]` extra:
 pip install 'zyx[examples]'
 ```
 
-Once you've installed the `marimo` library, you can run any of the examples by running the `marimo run` command, for example:
+Once you've installed the `marimo` library, you can run any of the examples by running the `marimo run` command to run an example as is, for example:
 
 ```bash
-marimo run examples/make.py
+marimo run examples/semantic-operations/make.py
+```
+
+Or use the `marimo edit` command to look through the code of an example directly, using:
+
+```bash
+marimo edit examples/semantic-operations/make.py
 ```
