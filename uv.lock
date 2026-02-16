@@ -5579,6 +5579,9 @@ ai = [
 chroma = [
     { name = "chromadb" },
 ]
+examples = [
+    { name = "marimo" },
+]
 qdrant = [
     { name = "qdrant-client", extra = ["fastembed"] },
 ]
@@ -5603,6 +5606,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "chromadb", marker = "extra == 'chroma'" },
+    { name = "marimo", marker = "extra == 'examples'" },
     { name = "markitdown", specifier = ">=0.1.4" },
     { name = "openai", specifier = ">=2.16.0" },
     { name = "pydantic-ai", marker = "extra == 'ai'" },
@@ -5611,7 +5615,7 @@ requires-dist = [
     { name = "qdrant-client", extras = ["fastembed"], marker = "extra == 'qdrant'" },
     { name = "toonify", specifier = ">=1.6.0" },
 ]
-provides-extras = ["ai", "chroma", "qdrant"]
+provides-extras = ["ai", "chroma", "examples", "qdrant"]
 
 [package.metadata.requires-dev]
 dev = [

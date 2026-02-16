@@ -42,6 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ai = ["pydantic-ai"]
+examples = ["marimo"]
 chroma = ["chromadb"]
 qdrant = ["qdrant-client[fastembed]"]
 
