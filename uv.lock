@@ -5563,6 +5563,7 @@ wheels = [
 
 [[package]]
 name = "zyx"
+version = "1.0.23"
 source = { editable = "." }
 dependencies = [
     { name = "markitdown" },
@@ -5615,7 +5616,7 @@ requires-dist = [
     { name = "qdrant-client", extras = ["fastembed"], marker = "extra == 'qdrant'" },
     { name = "toonify", specifier = ">=1.6.0" },
 ]
-provides-extras = ["ai", "chroma", "examples", "qdrant"]
+provides-extras = ["ai", "examples", "chroma", "qdrant"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -1,9 +1,9 @@
 [build-system]
-requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.version]
-source = "uv-dynamic-versioning"
+[tool.uv]
+package = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["zyx"]
@@ -20,7 +20,7 @@ bump = true
 
 [project]
 name = "zyx"
-dynamic = ["version"]
+version = "1.0.23"
 description = "ZYX"
 authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
 readme = "readme.md"
