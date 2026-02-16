@@ -1,4 +1,4 @@
-"""zyx._confidence
+"""zyx._utils._confidence
 
 NOTE: This is a re-implementation of the ideas provided by Ruthvik Bandari's
 pull request implementing confidence scoring in `instructor`. You can view
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import enum
 from typing import Any, Dict, List, Sequence, TypeVar
 
-from ._aliases import (
+from .._aliases import (
     PydanticAIAgentResult,
 )
 
