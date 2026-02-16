@@ -1,9 +1,9 @@
 [build-system]
-requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.version]
-source = "uv-dynamic-versioning"
+[tool.uv]
+package = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["zyx"]
@@ -11,6 +11,8 @@ packages = ["zyx"]
 [tool.hatch.build.targets.sdist]
 exclude = [
     "/docs",
+    "/tests",
+    "/examples",
 ]
 
 [tool.uv-dynamic-versioning]
@@ -20,7 +22,7 @@ bump = true
 
 [project]
 name = "zyx"
-dynamic = ["version"]
+version = "1.0.24"
 description = "ZYX"
 authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
 readme = "readme.md"
@@ -36,12 +38,13 @@ dependencies = [
     "markitdown>=0.1.4",
     "openai>=2.16.0",
     "pydantic-ai-slim>=1.58.0",
+    "pydantic-monty>=0.0.4",
     "toonify>=1.6.0",
 ]
 
 [project.optional-dependencies]
 ai = ["pydantic-ai"]
-code = ["pydantic-monty"]
+examples = ["marimo"]
 chroma = ["chromadb"]
 qdrant = ["qdrant-client[fastembed]"]
 

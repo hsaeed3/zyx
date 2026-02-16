@@ -1,4 +1,4 @@
-"""zyx.resources.memory.qdrant"""
+"""zyx.tools.memory.qdrant"""
 
 from __future__ import annotations
 

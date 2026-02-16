@@ -5563,11 +5563,13 @@ wheels = [
 
 [[package]]
 name = "zyx"
+version = "1.0.24"
 source = { editable = "." }
 dependencies = [
     { name = "markitdown" },
     { name = "openai" },
     { name = "pydantic-ai-slim" },
+    { name = "pydantic-monty" },
     { name = "toonify" },
 ]
 
@@ -5578,8 +5580,8 @@ ai = [
 chroma = [
     { name = "chromadb" },
 ]
-code = [
-    { name = "pydantic-monty" },
+examples = [
+    { name = "marimo" },
 ]
 qdrant = [
     { name = "qdrant-client", extra = ["fastembed"] },
@@ -5605,15 +5607,16 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "chromadb", marker = "extra == 'chroma'" },
+    { name = "marimo", marker = "extra == 'examples'" },
     { name = "markitdown", specifier = ">=0.1.4" },
     { name = "openai", specifier = ">=2.16.0" },
     { name = "pydantic-ai", marker = "extra == 'ai'" },
     { name = "pydantic-ai-slim", specifier = ">=1.58.0" },
-    { name = "pydantic-monty", marker = "extra == 'code'" },
+    { name = "pydantic-monty", specifier = ">=0.0.4" },
     { name = "qdrant-client", extras = ["fastembed"], marker = "extra == 'qdrant'" },
     { name = "toonify", specifier = ">=1.6.0" },
 ]
-provides-extras = ["ai", "chroma", "code", "qdrant"]
+provides-extras = ["ai", "examples", "chroma", "qdrant"]
 
 [package.metadata.requires-dev]
 dev = [

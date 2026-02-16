@@ -15,7 +15,8 @@ from ._aliases import (
     PydanticAIUsage,
     PydanticAIMessage,
 )
-from ._confidence import Confidence, score_confidence
+from ._utils._confidence import Confidence, score_confidence
+from ._utils._semantic import semantic_from_output, semantic_for_operation
 
 __all__ = ("Result",)
 
@@ -42,6 +43,8 @@ class Result(Generic[Output]):
 
     raw: List[PydanticAIAgentResult[Any]] = field(repr=False)
     """All underlying AgentRunResult(s) that were used to produce this result."""
+
+    _semantic_message: str | None = field(default=None, init=False)
 
     @property
     def confidence(self) -> Confidence:
@@ -98,6 +101,27 @@ class Result(Generic[Output]):
             f"{self.output}\n\n"
             f">>> Model: {self.model}\n"
         )
+
+    def as_message(
+        self,
+        *,
+        operation: str | None = None,
+        original: Any | None = None,
+        updated: Any | None = None,
+        summary: str | None = None,
+    ) -> str:
+        """Return a semantic message for this result."""
+        if self._semantic_message:
+            return self._semantic_message
+        if operation:
+            return semantic_for_operation(
+                operation,
+                output=self.output,
+                original=original,
+                updated=updated,
+                summary=summary,
+            )
+        return semantic_from_output(self.output)
 
     def __rich__(self):
         from rich.console import RenderableType, Group

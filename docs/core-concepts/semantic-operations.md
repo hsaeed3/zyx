@@ -62,4 +62,88 @@ The following cards illustrate the different semantic operations provided by `ZY
 
     [More Info](../semantic-operations/validate.md){ data-preview }
 
+- :lucide-play: **Run**
+
+    *Run* an agent or model on an arbitrary task, and optionally return a **target** value.
+
+    [More Info](../semantic-operations/run.md){ data-preview }
+
 </div>
+
+## Common Parameters
+
+Most semantic operations share a consistent set of parameters. These three are especially useful when you want richer runtime behavior.
+
+### `confidence`
+
+Enable log-probability based confidence scoring on the returned `Result`. This only works for models that expose log-probabilities.
+
+```python title="Confidence Scores"
+from zyx import parse
+from pydantic import BaseModel
+
+
+class Info(BaseModel):
+    title: str
+
+
+result = parse(
+    source="The Hobbit is a novel by J. R. R. Tolkien.",
+    target=Info,
+    confidence=True,
+)
+
+print(result.confidence)
+```
+
+### `observe`
+
+Enable CLI observation of tool calls and progress. Pass `True` for the default observer, or provide a custom `Observer` instance.
+
+```python title="Observation Output"
+from zyx import edit
+
+data = {
+    "name": "John Doe",
+    "age": 30,
+    "email": "john.doe@example.com",
+}
+
+result = edit(
+    target=data,
+    context="Change the name to 'Jane Doe'.",
+    merge=False,
+    observe=True,
+)
+"""
+╭─ ▶ Operation ─╮
+│ Edit          │
+╰───────────────╯
+  ⟳ Processing (edit)...
+╭─ ✨ Fields Generated ─╮
+│   • name              │
+╰───────────────────────╯
+✓ Edit complete
+"""
+```
+
+### `stream`
+
+Stream results as they are generated. When enabled, the operation returns a `Stream[T]` instead of a `Result[T]`.
+
+```python title="Streaming Output"
+from zyx import query
+
+stream = query(
+    source="The Sun is a star at the center of the Solar System.",
+    target=str,
+    context="Return the key fact in one line.",
+    stream=True,
+)
+
+for chunk in stream.text():
+    print(chunk)
+
+final_result = stream.finish()
+print(final_result.output)
+```

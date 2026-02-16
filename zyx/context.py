@@ -374,6 +374,10 @@ class Context(Generic[Deps]):
         except Exception:
             pass
 
+    def extend_messages(self, messages: List[PydanticAIMessage]) -> None:
+        """Append a list of PydanticAI messages to this context."""
+        self._messages.extend(messages)
+
     def __rich__(self):
         from rich.console import RenderableType, Group
         from rich.rule import Rule

@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     overload,
     cast,
+    TYPE_CHECKING,
 )
 
 from pydantic import BaseModel
@@ -26,8 +27,9 @@ from .._graph import (
     SemanticGraphDeps,
     SemanticGraphState,
     SemanticGraphRequestTemplate,
-    SemanticGenerateNode,
-    SemanticStreamNode,
+    GraphHooks,
+    make_generate_step,
+    make_stream_step,
 )
 from .._processing._outputs import selection_output_model
 from .._types import (
@@ -35,8 +37,12 @@ from .._types import (
     ModelParam,
     ToolType,
 )
+from .._utils._semantic import semantic_for_operation
 from ..result import Result
 from ..stream import Stream
+
+if TYPE_CHECKING:
+    from .._utils._observer import Observer
 
 __all__ = ("aselect", "select")
 
@@ -67,6 +73,18 @@ _SELECT_SYSTEM_PROMPT = (
     "zero or more options.\n"
     "- Never return the literal value null as the entire response.\n"
 )
+
+
+def _attach_observer_hooks(
+    deps: SemanticGraphDeps[Deps, BaseModel], operation: str
+) -> None:
+    observe = getattr(deps, "observe", None)
+    if not observe or getattr(deps, "hooks", None) is not None:
+        return
+    deps.hooks = GraphHooks(
+        on_run_start=lambda _ctx: observe.on_operation_start(operation),
+        on_run_end=lambda _res: observe.on_operation_complete(operation),
+    )
 
 
 def _normalize_choices(target: Any | Sequence[Any]) -> list[Any]:
@@ -206,13 +224,11 @@ def prepare_select_graph(
         )
 
     if stream:
-        nodes = [SemanticStreamNode]
-        start_node = SemanticStreamNode(request=request)
+        steps = [make_stream_step(request)]
     else:
-        nodes = [SemanticGenerateNode]
-        start_node = SemanticGenerateNode(request=request)
+        steps = [make_generate_step(request)]
 
-    return SemanticGraph(nodes=nodes, start=start_node, state=state, deps=deps)
+    return SemanticGraph(steps=steps, state=state, deps=deps)
 
 
 @dataclass
@@ -296,6 +312,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> _SelectionStreamWrapper: ...
 
@@ -315,6 +332,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[SelectionWithReason]: ...
 
@@ -334,6 +352,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[MultiSelectionWithReason]: ...
 
@@ -353,6 +372,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> _SelectionStreamWrapper: ...
 
@@ -372,6 +392,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -390,6 +411,7 @@ async def aselect(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | _SelectionStreamWrapper:
     """Asynchronously select one or more options from the given `target`.
@@ -443,7 +465,12 @@ async def aselect(
         target=selection_model,
         source=target,
         confidence=confidence,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "select", output=res.output
+        ),
     )
+    _attach_observer_hooks(graph_deps, "select")
     graph_state = SemanticGraphState.prepare(deps=graph_deps)
 
     graph = prepare_select_graph(
@@ -491,6 +518,7 @@ def select(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> _SelectionStreamWrapper: ...
 
@@ -510,6 +538,7 @@ def select(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[SelectionWithReason]: ...
 
@@ -529,6 +558,7 @@ def select(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[MultiSelectionWithReason]: ...
 
@@ -548,6 +578,7 @@ def select(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> _SelectionStreamWrapper: ...
 
@@ -567,6 +598,7 @@ def select(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -585,6 +617,7 @@ def select(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | _SelectionStreamWrapper:
     """Synchronously select one or more options from the given `target`.
@@ -638,7 +671,12 @@ def select(
         target=selection_model,
         source=target,
         confidence=confidence,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "select", output=res.output
+        ),
     )
+    _attach_observer_hooks(graph_deps, "select")
     graph_state = SemanticGraphState.prepare(deps=graph_deps)
 
     graph = prepare_select_graph(

@@ -1,6 +1,6 @@
-"""zyx.resources.memory
+"""zyx.tools.memory
 
-Provides Vector Database based resources that can be used by an agent or
+Provides Vector Database based tools that can be used by an agent or
 model to store and query memories.
 
 NOTE:
@@ -22,7 +22,6 @@ from typing import Dict, Literal, TypeAlias
 from pydantic_ai.toolsets import FunctionToolset
 
 from ..._aliases import PydanticAITool, PydanticAIToolset
-from ..abstract import AbstractResource
 
 __all__ = (
     "MemoryProvider",
@@ -72,9 +71,9 @@ class MemoryProvider(ABC):
 
 
 @dataclass(init=False)
-class Memory(AbstractResource):
+class Memory:
     """
-    A `Resource` that can be used by a model/agent to store, query and retrieve
+    A tool that can be used by a model/agent to store, query and retrieve
     memories that are stored in a vector database.
 
     A `Memory` resource can be configured based on a given `MemoryProvider`.
@@ -86,6 +85,7 @@ class Memory(AbstractResource):
         provider: MemoryProvider | MemoryProviderName = "chroma/persistent",
         instructions: str | None = None,
         auto: bool = False,
+        writeable: bool = True,
     ):
         """
         Create a new `Memory` resource with a given key, provider, instructions and auto mode.
@@ -100,14 +100,12 @@ class Memory(AbstractResource):
             auto : `bool`
                 Whether to automatically add memories when a semantic operation is executed, using
                 the context of the operation as the content to use for the query.
+            writeable : `bool`
+                Whether the memory can be written to.
         """
         key = sanitize_memory_key(key)
-        super().__init__(
-            name=key,
-            writeable=True,
-            confirm=False,
-        )
 
+        self.writeable = writeable
         self.key = key
         self._provider = get_memory_provider(provider)
         self.instructions = instructions
@@ -182,19 +180,19 @@ class Memory(AbstractResource):
         write_tools = [
             PydanticAITool(
                 function=self.add,
-                name="add_memory",
+                name=f"add_memory_{self.key}",
                 description="Add a memory to the index of memories.",
             ),
             PydanticAITool(
                 function=self.delete,
-                name="delete_memory",
+                name=f"delete_memory_{self.key}",
                 description="Delete a memory by it's ID from the index of memories.",
             ),
         ]
         read_tools = [
             PydanticAITool(
                 function=self.search,
-                name="search_memory",
+                name=f"search_memory_{self.key}",
                 description="Search the index of memories for a given query.",
             ),
         ]
@@ -239,11 +237,12 @@ def get_memory_provider(
         raise ValueError(f"Invalid memory provider name: {provider}")
 
 
-def mem(
+def memories(
     key: str = "memories",
-    provider: MemoryProvider | MemoryProviderName = "chroma/persistent",
+    provider: MemoryProvider | MemoryProviderName = "qdrant",
     instructions: str | None = None,
     auto: bool = False,
+    writeable: bool = True,
 ) -> Memory:
     """
     Create or retrieve a `Memory` resource with based on a given key (collection
@@ -259,6 +258,8 @@ def mem(
         auto : `bool`
             Whether to automatically add memories when a semantic operation is executed, using
             the context of the operation as the content to use for the query.
+        writeable : `bool`
+            Whether the memory can be written to.
 
     Returns:
         `Memory`
@@ -269,4 +270,5 @@ def mem(
         provider=provider,
         instructions=instructions,
         auto=auto,
+        writeable=writeable,
     )

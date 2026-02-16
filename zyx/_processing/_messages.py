@@ -344,16 +344,14 @@ def parse_context_to_pydantic_ai_messages(
     """
     messages: List[ModelMessage] = []
 
-    from ..snippets import Snippet
     from ..context import Context
+    from ..attachments import Attachment
 
     if not context:
         return []
     else:
         if not isinstance(context, list):
             context = [context]
-
-        seen_snippet_ids: set[int] = set()
 
         for item in context:
             if isinstance(item, Context):
@@ -364,12 +362,10 @@ def parse_context_to_pydantic_ai_messages(
                 messages.extend(text_to_pydantic_ai_messages(item))
                 continue
 
-            if isinstance(item, Snippet):
-                sid = id(item)
-                if sid in seen_snippet_ids:
-                    continue
-                seen_snippet_ids.add(sid)
-                messages.append(item.message)
+            if isinstance(item, Attachment):
+                msg = item.message
+                if msg is not None:
+                    messages.append(msg)
                 continue
 
             if hasattr(item, "model_dump"):
@@ -436,21 +432,19 @@ def parse_instructions_as_system_prompt_parts(
 
             if params:
                 first_param = next(iter(params.values()))
-                if first_param.annotation is not inspect._empty:
-                    if deps is not None and (
-                        first_param.annotation is not inspect._empty
-                        and (
-                            first_param.annotation == RunContext
-                            or (
-                                hasattr(first_param.annotation, "__origin__")
-                                and first_param.annotation.__origin__
-                                == RunContext
-                            )
+                if deps is not None:
+                    if first_param.annotation is not inspect._empty and (
+                        first_param.annotation == RunContext
+                        or (
+                            hasattr(first_param.annotation, "__origin__")
+                            and first_param.annotation.__origin__ == RunContext
                         )
                     ):
                         should_pass_deps = True
                     elif len(params) == 1:
                         should_pass_deps = True
+                elif len(params) == 1:
+                    should_pass_deps = True
 
             try:
                 resolved = instruction(

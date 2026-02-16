@@ -8,7 +8,11 @@
 # Ruff Cache
 .ruff_cache/
 
+# MacOS Nonsense
 .DS_Store
+
+# Examples
+__marimo__/
 
 # --------------------------------------------------------------
 # GITHUB DEFAULT PYTHON .GITIGNORE

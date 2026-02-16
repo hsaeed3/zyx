@@ -328,8 +328,15 @@ def _make_field_optional(
     """
     from copy import deepcopy
 
+    import sys
+    import types
+
     tmp_field = deepcopy(field_info)
     annotation = field_info.annotation
+    if sys.version_info >= (3, 10):
+        union_origins = (Union, types.UnionType)
+    else:
+        union_origins = (Union,)
 
     if not make_optional:
         # If not making optional, just process nested models
@@ -340,9 +347,12 @@ def _make_field_optional(
                 _process_generic_arg(arg, make_optional=False)
                 for arg in generic_args
             )
-            tmp_field.annotation = (
-                generic_base[modified_args] if generic_base else None
-            )
+            if generic_base in union_origins:
+                tmp_field.annotation = Union[modified_args]
+            else:
+                tmp_field.annotation = (
+                    generic_base[modified_args] if generic_base else None
+                )
         elif isinstance(annotation, type) and issubclass(
             annotation, BaseModel
         ):
@@ -368,9 +378,12 @@ def _make_field_optional(
         )
 
         # Make the entire field Optional
-        tmp_field.annotation = (
-            Optional[generic_base[modified_args]] if generic_base else None  # type: ignore[valid-type]
-        )
+        if generic_base in union_origins:
+            tmp_field.annotation = Optional[Union[modified_args]]  # type: ignore[invalid-type-form]
+        else:
+            tmp_field.annotation = (
+                Optional[generic_base[modified_args]] if generic_base else None  # type: ignore[valid-type]
+            )
         tmp_field.default = None
         tmp_field.default_factory = None
 
@@ -799,8 +812,8 @@ def split_output_model(
     # Create the split model
     split_model = create_model(
         model_name,
-        __base__=model,
         __module__=model.__module__,
+        __config__=model.model_config,
         **processed_fields,
     )  # type: ignore[call-overload]
 

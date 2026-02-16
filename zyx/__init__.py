@@ -1,46 +1,107 @@
-"""zyx"""
+"""zyx
 
-from .context import Context, create_context
-from .snippets import Snippet, paste
-from .targets import Target, target
-from .resources import (
-    Code,
-    File,
-    Memory,
+> A fun **"anti-framework"** for doing useful things with agents and LLMs.
+
+## Quick Start
+
+### Generating Content
+
+```python
+from zyx import make
+
+def get_weather(city: str) -> str:
+    return f"The weather in {city} is sunny."
+
+result = make(
+    target=str,
+    context="What is the weather in Tokyo?",
+    tools=[get_weather],
 )
+```
 
-from .operations.make import make, amake
-from .operations.edit import edit, aedit
+### Streaming
+
+```python
+from zyx import make
+
+stream = make(context="Write a haiku about the weather.", stream=True)
+
+for chunk in stream.text():
+    print(chunk, end="", flush=True)
+```
+
+---
+
+### Editing Values
+
+```python
+from zyx import edit
+
+data = {
+    "name": "John Doe",
+    "age": 30,
+    "email": "john.doe@example.com",
+}
+
+result = edit(
+    target=data,
+    context="Change the name to 'Jane Doe'.",
+    merge=False,
+)
+```
+"""
+
+# --- core components & objects ---
+from .attachments import Attachment, paste, attach
+from .context import Context, create_context
+from .targets import Target, target
+from .result import Result
+from .stream import Stream
+
+# --- tools / prebuilt toolsets ---
+from .tools import Tool, tool, Code, Memory, memories
+
+# --- semantic operations ---
+from .operations.edit import aedit, edit
 from .operations.expressions import expr
-from .operations.parse import parse, aparse
-from .operations.query import query, aquery
-from .operations.select import select, aselect
-from .operations.validate import validate, avalidate
+from .operations.make import amake, make
+from .operations.parse import aparse, parse
+from .operations.query import aquery, query
+from .operations.run import arun, run
+from .operations.select import aselect, select
+from .operations.validate import avalidate, validate
 
 __all__ = (
-    # Core Objects
+    # --- core components & objects ---
+    "Attachment",
+    "paste",
+    "attach",
     "Context",
     "create_context",
-    "Snippet",
-    "paste",
     "Target",
     "target",
-    # Resources
+    "Result",
+    "Stream",
+    # --- tools / prebuilt toolsets ---
+    "Tool",
+    "tool",
     "Code",
-    "File",
     "Memory",
-    # Semantic Operations
-    "make",
-    "amake",
-    "edit",
+    "memories",
+    # --- semantic operations ---
     "aedit",
+    "edit",
     "expr",
-    "parse",
+    "amake",
+    "make",
     "aparse",
-    "query",
+    "parse",
     "aquery",
-    "select",
+    "query",
+    "arun",
+    "run",
     "aselect",
-    "validate",
+    "select",
     "avalidate",
+    "validate",
 )

@@ -8,39 +8,17 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, TypeAlias, TYPE_CHECKING
+from typing import Any, Callable, Dict, List
 
 from pydantic_ai.toolsets import FunctionToolset
+import pydantic_monty
 
-from .abstract import AbstractResource
-
-if TYPE_CHECKING:
-    try:
-        from pydantic_monty import Monty  # type: ignore[import-untyped]
-    except ImportError:
-        Monty: TypeAlias = Any
 
 __all__ = ("Code",)
 
 
-def _get_monty():
-    try:
-        import pydantic_monty  # type: ignore[import-untyped]
-
-        return pydantic_monty
-    except ImportError:
-        raise ImportError(
-            "To use the `Code` resource, you must first install the `pydantic-monty` library.\n"
-            "You can install it by using one of the following commands:\n"
-            "```bash\n"
-            "pip install zyx[code]\n"
-            "pip install pydantic-monty\n"
-            "```"
-        )
-
-
 @dataclass(init=False)
-class Code(AbstractResource):
+class Code:
     """
     A resource that allows safely executing Python code using Monty, a minimal,
     secure Python interpreter written in Rust.
@@ -66,15 +44,13 @@ class Code(AbstractResource):
     def __init__(
         self,
         *,
-        name: str = "code",
-        writeable: bool = True,
         confirm: bool = False,
         script_name: str = "code.py",
         type_check: bool = True,
         type_check_stubs: str | None = None,
         external_functions: Dict[str, Callable] | None = None,
     ) -> None:
-        super().__init__(name=name, writeable=writeable, confirm=confirm)
+        self.confirm = confirm
         self.script_name = script_name
         self.type_check = type_check
         self.type_check_stubs = type_check_stubs
@@ -97,9 +73,9 @@ class Code(AbstractResource):
         self,
         code: str,
         inputs: List[str] | None = None,
-    ) -> Monty:
+    ) -> pydantic_monty.Monty:
         """Create a Monty instance for the given code."""
-        return _get_monty().Monty(
+        return pydantic_monty.Monty(
             code,
             inputs=inputs or [],
             external_functions=list(self.external_functions.keys()),
@@ -117,9 +93,9 @@ class Code(AbstractResource):
         m = self._create_monty(
             code, inputs=list(inputs.keys()) if inputs else None
         )
-        return await _get_monty().run_monty_async(
+        return await pydantic_monty.run_monty_async(
             m,
-            inputs=inputs or {},
+            inputs=inputs if inputs else None,
             external_functions=self.external_functions,
         )
 

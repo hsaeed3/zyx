@@ -2,6 +2,8 @@
 site_name = "zyx"
 site_description = "fun llm functions"
 site_author = "Hammad Saeed"
+site_url = "https://zyx.hammad.app"
+repo_url = "https://github.com/hsaeed3/zyx"
 
 copyright = """
 Copyright &copy; 2026 Hammad Saeed
@@ -15,8 +17,8 @@ nav = [
         {"Semantic Operations" = "core-concepts/semantic-operations.md"},
         {"Context & Prompting" = "core-concepts/context.md"},
         {"Targets & Sources" = "core-concepts/targets.md"},
-        {"Snippets" = "core-concepts/snippets.md"},
-        {"Resources" = "core-concepts/resources.md"},
+        {"Attachments" = "core-concepts/attachments.md"},
+        {"Tools" = "core-concepts/tools.md"},
         {"Results & Streaming" = "core-concepts/results.md"},
     ]},
     {"Semantic Operations" = [
@@ -27,6 +29,7 @@ nav = [
         {"Expressions" = "semantic-operations/expressions.md"},
         {"Parse" = "semantic-operations/parse.md"},
         {"Validate" = "semantic-operations/validate.md"},
+        {"Run" = "semantic-operations/run.md"},
     ]}
 ]
 

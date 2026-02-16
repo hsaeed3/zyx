@@ -32,7 +32,7 @@
 
 * [Pydantic AI](https://ai.pydantic.dev/) for LLM integration
 * [Pydantic](https://docs.pydantic.dev/) for data validation
-* [MarkItDown](https://github.com/microsoft/markitdown) used by `Snippets` for rendering to text
+* [MarkItDown](https://github.com/microsoft/markitdown) used by `Attachments` for rendering to text
 * Python 3.11+
 
 ## Installation
@@ -291,9 +291,9 @@ result1 = zyx.make(target=str, context=[ctx, "What is Python?"])
 result2 = zyx.make(target=str, context=[ctx, "Tell me more about that"])
 ```
 
-### Snippets
+### Attachments
 
-Use `zyx.paste()` to include files, URLs, or other content as snippets:
+Use `zyx.paste()` to include files, URLs, or other content as attachments:
 
 ```python
 import zyx
@@ -317,6 +317,18 @@ result = zyx.parse(
     source=zyx.paste(b"raw binary data"),
     target=str,
     context="What is this?",
+)
+```
+
+Use `zyx.attach()` to include a Pythonic object as an attachment:
+
+```python
+import zyx
+
+result = zyx.parse(
+    target=str,
+    attachments=[zyx.attach({"name": "John", "age": 30})],
+    context="What is the name of the person?",
 )
 ```
 

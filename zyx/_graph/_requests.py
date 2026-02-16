@@ -7,11 +7,10 @@ from typing import Any, Dict, List, Generic, Type, TypeVar
 
 from pydantic_ai.output import NativeOutput
 
-from .._processing._toon import object_as_toon_text
+from .._processing._toon import object_as_text
 from .._processing._messages import (
     parse_instructions_as_system_prompt_parts,
 )
-from .._processing._multimodal import MultimodalContentMediaType
 from .._aliases import (
     PydanticAIModelRequest,
     PydanticAIMessage,
@@ -19,9 +18,9 @@ from .._aliases import (
     PydanticAISystemPromptPart,
 )
 from .._utils._outputs import OutputBuilder
-from ..resources.abstract import AbstractResource
-from ..snippets import Snippet
-from ._context import (
+from .._utils._strategies._params import SourceStrategy, TargetStrategy
+from ..attachments import Attachment, is_attachment_like
+from ._ctx import (
     SemanticGraphContext,
 )
 
@@ -84,129 +83,55 @@ class SemanticGraphRequestTemplate(Generic[Output]):
         Renders a dictionary of parameters compatible for invoking a `pydantic_ai.Agent` instance
         using the deps & state within a `SemanticGraphContext` object.
         """
-        params: Dict[str, Any] = {}
+        message_history = self._build_message_history(ctx)
+        system_parts = self._build_system_prompt(ctx, message_history)
+        if system_parts:
+            message_history = [
+                PydanticAIModelRequest(parts=system_parts),
+                *message_history,
+            ]
 
-        # Start with base message history
+        self._apply_user_prompt_additions(message_history)
+        toolsets = self._collect_toolsets(ctx)
+        output_type = self._resolve_output_type(ctx)
+
+        return {
+            "message_history": message_history,
+            "output_type": output_type,
+            "toolsets": toolsets,
+            "deps": ctx.deps.deps,
+            "usage_limits": getattr(ctx.deps, "usage_limits", None),
+        }
+
+    def _build_message_history(
+        self, ctx: SemanticGraphContext[Output, Deps]
+    ) -> List[PydanticAIMessage]:
         message_history: List[PydanticAIMessage] = (
             list(ctx.deps.message_history) if ctx.deps.message_history else []
         )
 
-        # Optionally include run context
         if self.include_run_context and hasattr(ctx.state, "agent_runs"):
             for run in ctx.state.agent_runs:
                 message_history.extend(run.new_messages())
 
-        # Initialize system instructions (system prompt parts)
+        return message_history
+
+    def _build_system_prompt(
+        self,
+        ctx: SemanticGraphContext[Output, Deps],
+        message_history: List[PydanticAIMessage],
+    ) -> List[PydanticAISystemPromptPart]:
         system_parts: List[PydanticAISystemPromptPart] = (
             list(ctx.deps.instructions) if ctx.deps.instructions else []
         )
 
-        # If the Target exists and has instructions, add those as well
-        target = getattr(ctx.deps, "target", None)
-        from ..targets import Target as TargetClass
+        system_parts.extend(self._add_target_instructions(ctx))
+        system_parts.extend(self._add_system_prompt_additions(ctx))
+        system_parts.extend(self._add_attachments(ctx, message_history))
 
-        if target is not None and isinstance(target, TargetClass):
-            if getattr(target, "instructions", None):
-                system_parts.extend(
-                    parse_instructions_as_system_prompt_parts(
-                        instructions=target.instructions,
-                        deps=ctx.deps.deps,
-                    )
-                )
+        if self.include_source_context:
+            system_parts.extend(self._add_source_context(ctx, message_history))
 
-        # System prompt additions (before source so instructions are seen first)
-        if self.system_prompt_additions:
-            system_parts.extend(
-                parse_instructions_as_system_prompt_parts(
-                    instructions=self.system_prompt_additions,  # type: ignore
-                    deps=ctx.deps.deps,
-                )
-            )
-
-        # Attachments
-        if getattr(ctx.deps, "attachments", None):
-            for attachment in ctx.deps.attachments:  # type: ignore
-                if isinstance(attachment, Snippet):
-                    system_parts.append(
-                        PydanticAISystemPromptPart(
-                            content=_render_attachment_context(
-                                name="Snippet",
-                                description=attachment.description,
-                                state=None,
-                            )
-                        )
-                    )
-
-                    if attachment.message not in message_history:
-                        message_history.insert(0, attachment.message)
-                elif isinstance(attachment, AbstractResource):
-                    system_parts.append(
-                        PydanticAISystemPromptPart(
-                            content=_render_attachment_context(
-                                name=attachment.name,
-                                description=attachment.get_description(),
-                                state=attachment.get_state_description(),
-                            )
-                        )
-                    )
-                else:
-                    system_parts.append(
-                        PydanticAISystemPromptPart(
-                            content=_render_attachment_context(
-                                name="Attachment",
-                                description=str(attachment),
-                                state=None,
-                            )
-                        )
-                    )
-
-        if self.include_source_context and ctx.deps.source is not None:
-            if isinstance(ctx.deps.source, AbstractResource):
-                if ctx.deps.source.__class__.__name__ != "File":
-                    raise ValueError(
-                        f"Invalid Resource passed as `source` parameter: {ctx.deps.source.__class__.__name__}. "
-                        "Currently only `File` resources can be used as the `source` of a semantic operation."
-                    )
-                snippet = Snippet(source=ctx.deps.source.path)
-            elif isinstance(ctx.deps.source, Snippet):
-                snippet = ctx.deps.source
-            else:
-                system_parts.append(
-                    PydanticAISystemPromptPart(
-                        content=_render_source_context(ctx.deps.source)
-                    )
-                )
-                snippet = None
-
-            if snippet is not None:
-                system_parts.append(
-                    PydanticAISystemPromptPart(
-                        content=_render_source_metadata(snippet)
-                    )
-                )
-
-                is_text_based = snippet._media_type in (
-                    MultimodalContentMediaType.TEXT,
-                    MultimodalContentMediaType.HTML,
-                    MultimodalContentMediaType.DOCUMENT,
-                    MultimodalContentMediaType.UNKNOWN,
-                )
-
-                content = (
-                    snippet.text if is_text_based else snippet.description
-                )
-                system_parts.append(
-                    PydanticAISystemPromptPart(
-                        content=_render_source_attachment_context(content)
-                    )
-                )
-
-                if not is_text_based:
-                    snippet_message = snippet.message
-                    if snippet_message not in message_history:
-                        message_history.insert(0, snippet_message)
-
-        # Output context
         if (
             self.include_output_context
             and getattr(ctx.state, "output", None) is not None
@@ -217,29 +142,165 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 )
             )
 
-        # If we have system instructions, prepend a ModelRequest with those as system prompt parts
-        if system_parts:
-            message_history = [
-                PydanticAIModelRequest(parts=system_parts),
-                *message_history,
-            ]
+        return system_parts
 
-        # Optional user prompt additions
-        if self.user_prompt_additions:
-            message_history.append(
-                PydanticAIModelRequest.user_text_prompt(
-                    user_prompt=str(self.user_prompt_additions)
+    def _add_target_instructions(
+        self, ctx: SemanticGraphContext[Output, Deps]
+    ) -> List[PydanticAISystemPromptPart]:
+        target_strategy: TargetStrategy | None = getattr(
+            ctx.deps, "target_strategy", None
+        )
+        if target_strategy is None:
+            return []
+        if not target_strategy.instructions:
+            return []
+        return parse_instructions_as_system_prompt_parts(
+            instructions=target_strategy.instructions,
+            deps=ctx.deps.deps,
+        )
+
+    def _add_system_prompt_additions(
+        self, ctx: SemanticGraphContext[Output, Deps]
+    ) -> List[PydanticAISystemPromptPart]:
+        if not self.system_prompt_additions:
+            return []
+        return parse_instructions_as_system_prompt_parts(
+            instructions=self.system_prompt_additions,  # type: ignore
+            deps=ctx.deps.deps,
+        )
+
+    def _add_attachments(
+        self,
+        ctx: SemanticGraphContext[Output, Deps],
+        message_history: List[PydanticAIMessage],
+    ) -> List[PydanticAISystemPromptPart]:
+        parts: List[PydanticAISystemPromptPart] = []
+        if not getattr(ctx.deps, "attachments", None):
+            return parts
+
+        for attachment in ctx.deps.attachments:  # type: ignore
+            if isinstance(attachment, Attachment):
+                parts.append(
+                    PydanticAISystemPromptPart(
+                        content=_render_attachment_context(
+                            name=attachment.name
+                            or type(attachment.source).__name__,
+                            description=attachment.get_description(),
+                            state=attachment.get_state_description(),
+                        )
+                    )
+                )
+                if attachment.message is not None:
+                    if attachment.message not in message_history:
+                        message_history.insert(0, attachment.message)
+                continue
+            if is_attachment_like(attachment):
+                name = getattr(attachment, "name", None)
+                parts.append(
+                    PydanticAISystemPromptPart(
+                        content=_render_attachment_context(
+                            name=name or type(attachment).__name__,
+                            description=attachment.get_description(),
+                            state=attachment.get_state_description(),
+                        )
+                    )
+                )
+                message = getattr(attachment, "message", None)
+                if message is not None:
+                    if message not in message_history:
+                        message_history.insert(0, message)
+                continue
+
+            parts.append(
+                PydanticAISystemPromptPart(
+                    content=_render_attachment_context(
+                        name="Attachment",
+                        description=str(attachment),
+                        state=None,
+                    )
                 )
             )
 
-        # Compose toolsets: include user toolsets? add explicit toolsets?
+        return parts
+
+    def _add_source_context(
+        self,
+        ctx: SemanticGraphContext[Output, Deps],
+        message_history: List[PydanticAIMessage],
+    ) -> List[PydanticAISystemPromptPart]:
+        parts: List[PydanticAISystemPromptPart] = []
+        source_strategy: SourceStrategy | None = getattr(
+            ctx.deps, "source_strategy", None
+        )
+        if source_strategy is None:
+            if ctx.deps.source is None:
+                return parts
+            parts.append(
+                PydanticAISystemPromptPart(
+                    content=_render_source_context(ctx.deps.source)
+                )
+            )
+            return parts
+
+        payload = source_strategy.get_payload()
+        if payload.kind == "raw":
+            parts.append(
+                PydanticAISystemPromptPart(
+                    content=_render_source_context(payload.content)
+                )
+            )
+            return parts
+
+        parts.append(
+            PydanticAISystemPromptPart(
+                content=_render_source_metadata_values(
+                    origin=payload.origin,
+                    media_type=payload.media_type,
+                    source_repr=payload.source_repr,
+                )
+            )
+        )
+        parts.append(
+            PydanticAISystemPromptPart(
+                content=_render_source_attachment_context(payload.content)
+            )
+        )
+        if payload.message is not None:
+            if payload.message not in message_history:
+                message_history.insert(0, payload.message)
+        return parts
+
+    def _apply_user_prompt_additions(
+        self, message_history: List[PydanticAIMessage]
+    ) -> None:
+        if not self.user_prompt_additions:
+            return
+        message_history.append(
+            PydanticAIModelRequest.user_text_prompt(
+                user_prompt=str(self.user_prompt_additions)
+            )
+        )
+
+    def _collect_toolsets(
+        self, ctx: SemanticGraphContext[Output, Deps]
+    ) -> List[PydanticAIToolset]:
         toolsets: List[PydanticAIToolset] = []
         if self.include_user_toolsets and ctx.deps.toolsets:
             toolsets.extend(ctx.deps.toolsets)
         if self.toolsets:
             toolsets.extend(self.toolsets)
+        return toolsets
 
-        if not isinstance(ctx.deps.target, TargetClass):
+    def _resolve_output_type(
+        self, ctx: SemanticGraphContext[Output, Deps]
+    ) -> Type[Output] | None:
+        target_strategy: TargetStrategy | None = getattr(
+            ctx.deps, "target_strategy", None
+        )
+        if target_strategy is None:
+            return self.output_type
+
+        if not target_strategy.is_target_wrapper:
             output_type = self.output_type
             if (
                 output_type is None
@@ -248,39 +309,24 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 output_type = getattr(ctx.state.output, "normalized", None)
 
             if self.native_output:
-                # Don't wrap str in NativeOutput - pydantic_ai needs str directly
-                # to create a TextOutputSchema for stream_text() to work
                 if output_type is not str:
                     output_type = NativeOutput(
                         outputs=output_type,
-                        name=self.native_output_name
-                        if self.native_output_name
-                        else None,
-                        description=self.native_output_description
-                        if self.native_output_description
-                        else None,
+                        name=target_strategy.name or self.native_output_name,
+                        description=target_strategy.description
+                        or self.native_output_description,
                     )
-        else:
-            output_type = NativeOutput(
-                outputs=ctx.state.output.normalized,
-                name=ctx.deps.target.name,
-                description=ctx.deps.target.description,
-            )
-            if (
-                ctx.deps.target._field_hooks
-                or ctx.deps.target._prebuilt_hooks.get("complete", [])
-            ):
-                output_type = None
+            return output_type  # type: ignore
 
-        params = {
-            "message_history": message_history,
-            "output_type": output_type,
-            "toolsets": toolsets,
-            "deps": ctx.deps.deps,
-            "usage_limits": getattr(ctx.deps, "usage_limits", None),
-        }
+        output_type = NativeOutput(
+            outputs=ctx.state.output.normalized,
+            name=target_strategy.name,
+            description=target_strategy.description,
+        )
+        if target_strategy.has_hooks:
+            return None
 
-        return params
+        return output_type  # type: ignore
 
 
 def _render_output_context(builder: OutputBuilder[Output]) -> str:
@@ -290,17 +336,17 @@ def _render_output_context(builder: OutputBuilder[Output]) -> str:
     if builder.is_value:
         context = (
             f"\n\n[Output Context]\n"
-            f"You are currently building/generating an output of type: {object_as_toon_text(builder.normalized)}\n"
-            f"The output had a starting state of: {object_as_toon_text(builder.target)}\n"
+            f"You are currently building/generating an output of type: {object_as_text(builder.normalized)}\n"
+            f"The output had a starting state of: {object_as_text(builder.target)}\n"
         )
     else:
         context = (
             f"\n\n[Output Context]\n"
-            f"You are currently building/generating an output of type: {object_as_toon_text(builder.normalized)}\n"
+            f"You are currently building/generating an output of type: {object_as_text(builder.normalized)}\n"
         )
 
     if builder.partial is not None:
-        context += f"The current state of the output is: {object_as_toon_text(builder.partial)}\n"
+        context += f"The current state of the output is: {object_as_text(builder.partial)}\n"
 
     return context
 
@@ -312,36 +358,27 @@ def _render_source_context(source: Any | Type[Any]) -> str:
     line inside the block, so the model returns exactly that content when
     asked to extract the primary input.
     """
-    body = object_as_toon_text(source)
+    body = object_as_text(source)
     return f"\n\n[PRIMARY INPUT]\n\n{body}\n\n[END PRIMARY INPUT]\n"
 
 
 def _render_source_attachment_context(content: str) -> str:
-    """Generates system prompt context for a source attachment (e.g. Snippet).
-
-    For text-based content, the full text appears between the markers.
-    For non-text content (images/audio/video), only the description appears.
-    """
+    """Generates system prompt context for a source attachment."""
     return f"\n\n[PRIMARY INPUT]\n\n{content}\n\n[END PRIMARY INPUT]\n"
 
 
-def _render_source_metadata(snippet: Snippet) -> str:
-    """Generates system prompt metadata for a snippet source.
-
-    This keeps source identifiers (URL/path) outside the PRIMARY INPUT block
-    while still making the origin and media type explicit to the model.
-    """
-    source = snippet.source
-    if isinstance(source, str):
-        source_repr = source
-    else:
-        source_repr = object_as_toon_text(source)
-
+def _render_source_metadata_values(
+    *, origin: Any, media_type: Any, source_repr: str | None
+) -> str:
+    """Generates system prompt metadata for a source."""
+    origin_value = getattr(origin, "value", origin)
+    media_value = getattr(media_type, "value", media_type)
+    source_value = source_repr or ""
     return (
         "\n\n[SOURCE META]\n"
-        f"Origin: {snippet._origin.value}\n"
-        f"Media Type: {snippet._media_type.value}\n"
-        f"Source: {source_repr}\n"
+        f"Origin: {origin_value}\n"
+        f"Media Type: {media_value}\n"
+        f"Source: {source_value}\n"
         "[END SOURCE META]\n"
     )
 

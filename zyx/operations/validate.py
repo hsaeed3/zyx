@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Generic, List, TypeVar
+from typing import Any, Generic, List, TypeVar, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
@@ -17,8 +17,9 @@ from .._graph import (
     SemanticGraph,
     SemanticGraphDeps,
     SemanticGraphState,
-    SemanticGenerateNode,
+    make_generate_step,
     SemanticGraphRequestTemplate,
+    GraphHooks,
 )
 from .._types import (
     ModelParam,
@@ -30,6 +31,9 @@ from .._types import (
 )
 from ..result import Result
 from .parse import aparse, parse
+
+if TYPE_CHECKING:
+    from .._utils._observer import Observer
 
 __all__ = (
     "avalidate",
@@ -99,6 +103,30 @@ _VALIDATE_SYSTEM_PROMPT = (
 )
 
 
+def _attach_observer_hooks(
+    deps: SemanticGraphDeps[Deps, Output], operation: str
+) -> None:
+    observe = getattr(deps, "observe", None)
+    if not observe or getattr(deps, "hooks", None) is not None:
+        return
+    deps.hooks = GraphHooks(
+        on_run_start=lambda _ctx: observe.on_operation_start(operation),
+        on_run_end=lambda _res: observe.on_operation_complete(operation),
+    )
+
+
+def _normalize_observer(observe: Any | None) -> Any | None:
+    if not observe:
+        return None
+    from .._utils._observer import Observer
+
+    if observe is True:
+        return Observer()
+    if isinstance(observe, Observer):
+        return observe
+    raise ValueError("Invalid 'observe' value. Expected bool or Observer.")
+
+
 def _build_constraint_list(constraints: List[str]) -> str:
     """Format a numbered constraint list for inclusion in a system prompt."""
     lines = ["\n[CONSTRAINTS]"]
@@ -109,10 +137,10 @@ def _build_constraint_list(constraints: List[str]) -> str:
 
 def _build_validate_prompt(constraints: List[str], parsed_value: Any) -> str:
     """Build validation prompt that includes the parsed value and constraints."""
-    from .._processing._toon import object_as_toon_text
+    from .._processing._toon import object_as_text
 
     constraint_text = _build_constraint_list(constraints)
-    parsed_repr = object_as_toon_text(parsed_value)
+    parsed_repr = object_as_text(parsed_value)
     return (
         _VALIDATE_SYSTEM_PROMPT + constraint_text + "\n"
         f"\n[PARSED VALUE]\n"
@@ -129,12 +157,12 @@ def _raise_on_violations(
     Includes the parsed value in the error message for context.
     """
     if violations.violations:
-        from .._processing._toon import object_as_toon_text
+        from .._processing._toon import object_as_text
 
         formatted = "\n".join(
             f"  - {v.constraint}: {v.reason}" for v in violations.violations
         )
-        parsed_repr = object_as_toon_text(parsed)
+        parsed_repr = object_as_text(parsed)
         raise AssertionError(
             f"Constraint validation failed for parsed value:\n{parsed_repr}\n\n"
             f"Violations:\n{formatted}"
@@ -156,6 +184,7 @@ async def avalidate(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | "Observer" | None = None,
 ) -> Result[Output] | ValidationResult[Output]:
     """Asynchronously parse a source into a target type, then validate the result against constraints.
 
@@ -174,6 +203,7 @@ async def avalidate(
         tools (ToolType | List[ToolType] | None): Tools available to the model. Defaults to None.
         deps (Deps | None): Optional RunContext dependencies. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): Usage limits for the model call. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
 
     Returns:
         Result[Output] | ValidationResult[Output]: Result[Output] if raise_on_error is True and validation passes.
@@ -181,75 +211,89 @@ async def avalidate(
     """
     from ..targets import Target
 
-    _constraints: List[str] = constraints or []
-    if isinstance(target, Target) and getattr(target, "constraints", None):
-        _constraints = target.constraints or _constraints  # type: ignore[assignment]
+    observe_handler = _normalize_observer(observe)
+    if observe_handler:
+        observe_handler.on_operation_start("validate")
 
-    parse_result = await aparse(
-        source=source,
-        target=target,
-        context=context,
-        confidence=confidence,
-        model=model,
-        model_settings=model_settings,
-        instructions=instructions,
-        tools=tools,
-        deps=deps,
-        attachments=attachments,
-        usage_limits=usage_limits,
-        stream=False,
-    )
-    parsed_value = parse_result.output
+    try:
+        _constraints: List[str] = constraints or []
+        if isinstance(target, Target) and getattr(target, "constraints", None):
+            _constraints = target.constraints or _constraints  # type: ignore[assignment]
 
-    if _constraints:
-        validate_deps = SemanticGraphDeps.prepare(
-            target=ConstraintViolations,
-            source=None,
+        parse_result = await aparse(
+            source=source,
+            target=target,
+            context=context,
+            confidence=confidence,
             model=model,
             model_settings=model_settings,
-            context=None,
-            instructions=_build_validate_prompt(_constraints, parsed_value),
-            tools=None,
+            instructions=instructions,
+            tools=tools,
             deps=deps,
             attachments=attachments,
             usage_limits=usage_limits,
+            observe=observe_handler,
+            stream=False,
         )
-        validate_state = SemanticGraphState.prepare(deps=validate_deps)
-        validate_request = SemanticGraphRequestTemplate(
-            include_source_context=False,
-        )
-        validate_graph = SemanticGraph(
-            nodes=[SemanticGenerateNode],
-            start=SemanticGenerateNode(
-                request=validate_request,
-                update_output=False,
-            ),
-            state=validate_state,
-            deps=validate_deps,
-        )
-        validate_result = await validate_graph.run()
-        violations = validate_result.output
-        if (
-            isinstance(violations, ConstraintViolations)
-            and violations.violations
-        ):
+        parsed_value = parse_result.output
+
+        if _constraints:
+            validate_deps = SemanticGraphDeps.prepare(
+                target=ConstraintViolations,
+                source=None,
+                model=model,
+                model_settings=model_settings,
+                context=None,
+                instructions=_build_validate_prompt(
+                    _constraints, parsed_value
+                ),
+                tools=None,
+                deps=deps,
+                attachments=attachments,
+                usage_limits=usage_limits,
+                observe=observe_handler,
+            )
+            _attach_observer_hooks(validate_deps, "validate")
+            validate_state = SemanticGraphState.prepare(deps=validate_deps)
+            validate_request = SemanticGraphRequestTemplate(
+                include_source_context=False,
+            )
+            validate_graph = SemanticGraph(
+                steps=[
+                    make_generate_step(
+                        validate_request,
+                        update_output=False,
+                    )
+                ],
+                state=validate_state,
+                deps=validate_deps,
+            )
+            validate_result = await validate_graph.run()
+            violations = validate_result.output
+            if (
+                isinstance(violations, ConstraintViolations)
+                and violations.violations
+            ):
+                if raise_on_error:
+                    _raise_on_violations(violations, parsed_value)
+                return ValidationResult(
+                    output=parsed_value,
+                    violations=violations,
+                    raw=parse_result.raw + validate_result.raw,
+                )
             if raise_on_error:
-                _raise_on_violations(violations, parsed_value)
+                return parse_result
             return ValidationResult(
                 output=parsed_value,
                 violations=violations,
                 raw=parse_result.raw + validate_result.raw,
             )
-        if raise_on_error:
-            return parse_result
-        return ValidationResult(
-            output=parsed_value,
-            violations=violations,
-            raw=parse_result.raw + validate_result.raw,
-        )
 
-    else:
-        return parse_result
+        else:
+            return parse_result
+    finally:
+        if observe_handler:
+            observe_handler.on_operation_complete("validate")
 
 
 def validate(
@@ -267,6 +311,7 @@ def validate(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | "Observer" | None = None,
 ) -> Result[Output] | ValidationResult[Output]:
     """Synchronously parse a source into a target type, then validate the result against constraints.
 
@@ -285,6 +330,7 @@ def validate(
         tools (ToolType | List[ToolType] | None): Tools available to the model. Defaults to None.
         deps (Deps | None): Optional RunContext dependencies. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): Usage limits for the model call. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
 
     Returns:
         Result[Output] | ValidationResult[Output]: Result[Output] if raise_on_error is True and validation passes.
@@ -292,72 +338,86 @@ def validate(
     """
     from ..targets import Target
 
-    _constraints: List[str] = constraints or []
-    if isinstance(target, Target) and getattr(target, "constraints", None):
-        _constraints = target.constraints or _constraints  # type: ignore[assignment]
+    observe_handler = _normalize_observer(observe)
+    if observe_handler:
+        observe_handler.on_operation_start("validate")
 
-    parse_result = parse(
-        source=source,
-        target=target,
-        context=context,
-        confidence=confidence,
-        model=model,
-        model_settings=model_settings,
-        attachments=attachments,
-        instructions=instructions,
-        tools=tools,
-        deps=deps,
-        usage_limits=usage_limits,
-        stream=False,
-    )
-    parsed_value = parse_result.output
+    try:
+        _constraints: List[str] = constraints or []
+        if isinstance(target, Target) and getattr(target, "constraints", None):
+            _constraints = target.constraints or _constraints  # type: ignore[assignment]
 
-    if _constraints:
-        validate_deps = SemanticGraphDeps.prepare(
-            target=ConstraintViolations,
-            source=None,
+        parse_result = parse(
+            source=source,
+            target=target,
+            context=context,
+            confidence=confidence,
             model=model,
             model_settings=model_settings,
-            context=None,
-            instructions=_build_validate_prompt(_constraints, parsed_value),
-            tools=None,
-            deps=deps,
             attachments=attachments,
+            instructions=instructions,
+            tools=tools,
+            deps=deps,
             usage_limits=usage_limits,
+            observe=observe_handler,
+            stream=False,
         )
-        validate_state = SemanticGraphState.prepare(deps=validate_deps)
-        validate_request = SemanticGraphRequestTemplate(
-            include_source_context=False,
-        )
-        validate_graph = SemanticGraph(
-            nodes=[SemanticGenerateNode],
-            start=SemanticGenerateNode(
-                request=validate_request,
-                update_output=False,
-            ),
-            state=validate_state,
-            deps=validate_deps,
-        )
-        validate_result = validate_graph.run_sync()
-        violations = validate_result.output
-        if (
-            isinstance(violations, ConstraintViolations)
-            and violations.violations
-        ):
+        parsed_value = parse_result.output
+
+        if _constraints:
+            validate_deps = SemanticGraphDeps.prepare(
+                target=ConstraintViolations,
+                source=None,
+                model=model,
+                model_settings=model_settings,
+                context=None,
+                instructions=_build_validate_prompt(
+                    _constraints, parsed_value
+                ),
+                tools=None,
+                deps=deps,
+                attachments=attachments,
+                usage_limits=usage_limits,
+                observe=observe_handler,
+            )
+            _attach_observer_hooks(validate_deps, "validate")
+            validate_state = SemanticGraphState.prepare(deps=validate_deps)
+            validate_request = SemanticGraphRequestTemplate(
+                include_source_context=False,
+            )
+            validate_graph = SemanticGraph(
+                steps=[
+                    make_generate_step(
+                        validate_request,
+                        update_output=False,
+                    )
+                ],
+                state=validate_state,
+                deps=validate_deps,
+            )
+            validate_result = validate_graph.run_sync()
+            violations = validate_result.output
+            if (
+                isinstance(violations, ConstraintViolations)
+                and violations.violations
+            ):
+                if raise_on_error:
+                    _raise_on_violations(violations, parsed_value)
+                return ValidationResult(
+                    output=parsed_value,
+                    violations=violations,
+                    raw=parse_result.raw + validate_result.raw,
+                )
             if raise_on_error:
-                _raise_on_violations(violations, parsed_value)
+                return parse_result
             return ValidationResult(
                 output=parsed_value,
                 violations=violations,
                 raw=parse_result.raw + validate_result.raw,
             )
-        if raise_on_error:
-            return parse_result
-        return ValidationResult(
-            output=parsed_value,
-            violations=violations,
-            raw=parse_result.raw + validate_result.raw,
-        )
 
-    else:
-        return parse_result
+        else:
+            return parse_result
+    finally:
+        if observe_handler:
+            observe_handler.on_operation_complete("validate")

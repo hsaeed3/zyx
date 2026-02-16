@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Literal, TypeVar, overload
+from typing import List, Literal, TypeVar, overload, TYPE_CHECKING
 
 from .._aliases import (
     PydanticAIInstructions,
@@ -14,9 +14,10 @@ from .._graph import (
     SemanticGraph,
     SemanticGraphDeps,
     SemanticGraphState,
-    SemanticGenerateNode,
-    SemanticStreamNode,
+    make_generate_step,
+    make_stream_step,
     SemanticGraphRequestTemplate,
+    GraphHooks,
 )
 from .._types import (
     ModelParam,
@@ -26,8 +27,12 @@ from .._types import (
     ToolType,
     AttachmentType,
 )
+from .._utils._semantic import semantic_for_operation
 from ..result import Result
 from ..stream import Stream
+
+if TYPE_CHECKING:
+    from .._utils._observer import Observer
 
 __all__ = (
     "aquery",
@@ -52,6 +57,18 @@ _QUERY_SYSTEM_PROMPT = (
 )
 
 
+def _attach_observer_hooks(
+    deps: SemanticGraphDeps[Deps, Output], operation: str
+) -> None:
+    observe = getattr(deps, "observe", None)
+    if not observe or getattr(deps, "hooks", None) is not None:
+        return
+    deps.hooks = GraphHooks(
+        on_run_start=lambda _ctx: observe.on_operation_start(operation),
+        on_run_end=lambda _res: observe.on_operation_complete(operation),
+    )
+
+
 def prepare_query_graph(
     deps: SemanticGraphDeps[Deps, Output],
     state: SemanticGraphState[Output],
@@ -74,15 +91,12 @@ def prepare_query_graph(
         )
 
     if stream:
-        nodes = [SemanticStreamNode]
-        start_node = SemanticStreamNode(request=request)
+        steps = [make_stream_step(request)]
     else:
-        nodes = [SemanticGenerateNode]
-        start_node = SemanticGenerateNode(request=request)
+        steps = [make_generate_step(request)]
 
     return SemanticGraph(
-        nodes=nodes,
-        start=start_node,
+        steps=steps,
         state=state,
         deps=deps,
     )
@@ -102,6 +116,7 @@ async def aquery(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> Stream[Output]: ...
 
@@ -120,6 +135,7 @@ async def aquery(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -137,6 +153,7 @@ async def aquery(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
     """Asynchronously query a grounded source into a target type using a model or Pydantic AI agent.
@@ -148,11 +165,12 @@ async def aquery(
         confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
         model (ModelParam): The model to use for querying. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
-        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
         tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
         deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
         stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
@@ -180,7 +198,12 @@ async def aquery(
         target=_target,
         source=source,
         confidence=confidence,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "query", output=res.output
+        ),
     )
+    _attach_observer_hooks(graph_deps, "query")
     graph_state = SemanticGraphState.prepare(deps=graph_deps)
 
     graph = prepare_query_graph(
@@ -208,6 +231,7 @@ def query(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> Stream[Output]: ...
 
@@ -226,6 +250,7 @@ def query(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -243,6 +268,7 @@ def query(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
     """Synchronously query a grounded source into a target type using a model or Pydantic AI agent.
@@ -254,11 +280,12 @@ def query(
         confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
         model (ModelParam): The model to use for querying. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
-        attachments (AttachmentType | List[AttachmentType] | None): Attachments, e.g. `Snippet` or `AbstractResource`, provided to the agent. Defaults to None.
+        attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
         tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
         deps (Deps | None): Optional dependencies (e.g., `pydantic_ai.RunContext`) for this operation. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): Usage limits (token/request) configuration. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
         stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
@@ -286,7 +313,12 @@ def query(
         target=_target,
         source=source,
         confidence=confidence,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "query", output=res.output
+        ),
     )
+    _attach_observer_hooks(graph_deps, "query")
     graph_state = SemanticGraphState.prepare(deps=graph_deps)
 
     graph = prepare_query_graph(

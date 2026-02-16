@@ -1,4 +1,4 @@
-"""zyx._graph._context"""
+"""zyx._graph._ctx"""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import inspect
 from typing import Any, Callable, Dict, List, Generic, Self, Type, TypeVar
 
-from pydantic_graph import GraphRunContext
+from pydantic_graph.beta.step import StepContext
 
 from pydantic_ai.toolsets import FunctionToolset
 from pydantic_ai.output import NativeOutput
@@ -32,16 +32,18 @@ from .._aliases import (
     PydanticAISystemPromptPart,
 )
 from .._utils._outputs import OutputBuilder
+from .._utils._strategies._params import SourceStrategy, TargetStrategy
 from .._processing._outputs import normalize_output_target
 from ..context import Context
-from ..resources.abstract import AbstractResource
-from ..snippets import Snippet
+from ..attachments import Attachment, AttachmentLike, is_attachment_like
 from ..targets import Target
 
 __all__ = (
     "SemanticGraphDeps",
     "SemanticGraphState",
     "SemanticGraphContext",
+    "StreamFieldMapping",
+    "GraphHooks",
 )
 
 
@@ -50,6 +52,38 @@ _logger = logging.getLogger(__name__)
 
 Deps = TypeVar("Deps")
 Output = TypeVar("Output")
+
+
+class InjectedDeps(Generic[Deps]):
+    """Wrapper to expose user deps plus internal graph/runtime deps."""
+
+    def __init__(
+        self,
+        user: Deps | None,
+        internal: Dict[str, Any] | None = None,
+    ) -> None:
+        self.user = user
+        self.internal = internal or {}
+
+    def __getattr__(self, name: str) -> Any:
+        if self.user is not None and hasattr(self.user, name):
+            return getattr(self.user, name)
+        if name in self.internal:
+            return self.internal[name]
+        raise AttributeError(name)
+
+    def get(self, name: str, default: Any = None) -> Any:
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            return default
+
+
+@dataclass
+class GraphHooks:
+    on_run_start: Callable[[Any], None] | None = None
+    on_run_end: Callable[[Any], None] | None = None
+    on_error: Callable[[BaseException, Any], None] | None = None
 
 
 @dataclass
@@ -98,21 +132,44 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """Reference to `deps` within `pydantic_ai` which can be passed to tools, messages and instructions
     through `pydantic_ai.RunContext`."""
 
+    user_deps: Deps | None = None
+    """Original user-provided deps before any internal injection."""
+
+    internal_deps: Dict[str, Any] | None = None
+    """Internal framework deps injected into RunContext."""
+
     usage_limits: PydanticAIUsageLimits | None = None
     """The usage limits to set for a single agent run within the execution of a
     semantic operation's graph."""
 
-    attachments: List[Snippet | AbstractResource] | None = None
-    """A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+    attachments: List[Attachment | AttachmentLike | Any] | None = None
+    """A list of attachments provided to the agent.
 
     An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
-    where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
-    are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
+    where it is templated/placed specifically to avoid context rot or loss.
     """
 
     _context_refs: Context | List[Context] | None = None
     """Reference to any `Context` objects that were found within the `context` parameter
     of a semantic operation."""
+
+    _context_additions: List[PydanticAIMessage] = field(default_factory=list)
+    """Non-Context messages provided in the original context parameter."""
+
+    observe: Any | None = None
+    """Optional observer for CLI progress and tool events."""
+
+    semantic_renderer: Any | None = None
+    """Optional callable to build semantic representations for context updates."""
+
+    hooks: GraphHooks | None = None
+    """Optional graph-level lifecycle hooks."""
+
+    source_strategy: SourceStrategy | None = None
+    """Unified strategy for handling `source` context rendering."""
+
+    target_strategy: TargetStrategy | None = None
+    """Unified strategy for handling target schema and instructions."""
 
     @classmethod
     def prepare(
@@ -123,19 +180,98 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         source: Any | Type[Any] | None = None,
         target: Type[Output] | Output | None = None,
         confidence: bool = False,
-        attachments: Snippet
-        | AbstractResource
-        | List[Snippet | AbstractResource]
+        attachments: Attachment
+        | AttachmentLike
+        | Any
+        | List[Attachment | AttachmentLike | Any]
         | None = None,
         instructions: str | Callable | List[str | Callable] | None = None,
         tools: Any | List[Any] | None = None,
         deps: Deps | None = None,
+        internal_deps: Dict[str, Any] | None = None,
+        inject_internal_deps: bool = False,
         usage_limits: PydanticAIUsageLimits | None = None,
+        observe: Any | None = None,
+        semantic_renderer: Any | None = None,
+        hooks: GraphHooks | None = None,
     ) -> Self:
         """
         Prepares a new instance of `SemanticGraphDeps` through a standardized set of
         parameters shared by semantic operations.
         """
+        _context_refs, deps = cls._extract_context_refs(context, deps)
+
+        agent = cls._prepare_agent(
+            model=model,
+            model_settings=model_settings,
+            target=target,
+            deps=deps,
+        )
+
+        if confidence is True:
+            agent = _ensure_confidence_supported_agent(agent)
+        instructions_list = cls._normalize_instructions(instructions)
+        rendered_instructions = cls._prepare_instructions(
+            instructions=instructions_list,
+            deps=deps,
+            context_refs=_context_refs,
+        )
+        message_history = parse_context_to_pydantic_ai_messages(context)
+        context_additions = cls._extract_context_additions(context)
+
+        toolsets, attachments_list, inject_internal_deps = (
+            cls._prepare_tools_and_attachments(
+                tools=tools,
+                attachments=attachments,
+                context_refs=_context_refs,
+                inject_internal_deps=inject_internal_deps,
+            )
+        )
+
+        deps, user_deps, internal = cls._prepare_deps(
+            deps=deps,
+            internal_deps=internal_deps,
+            inject_internal_deps=inject_internal_deps,
+            agent=agent,
+        )
+
+        observe_handler = cls._prepare_observer(observe)
+
+        return cls(
+            agent=agent,
+            target=target,
+            source=source,
+            confidence=confidence,
+            message_history=message_history,
+            instructions=rendered_instructions,
+            toolsets=toolsets,
+            deps=deps,
+            user_deps=user_deps,
+            internal_deps=internal,
+            usage_limits=usage_limits,
+            attachments=attachments_list,
+            _context_refs=_context_refs,
+            _context_additions=context_additions,
+            observe=observe_handler,
+            semantic_renderer=semantic_renderer,
+            hooks=hooks,
+            source_strategy=SourceStrategy(source)
+            if source is not None
+            else None,
+            target_strategy=TargetStrategy.from_target(target)
+            if target is not None
+            else None,
+        )
+
+    @classmethod
+    def _prepare_agent(
+        cls,
+        *,
+        model: str | PydanticAIModel | PydanticAIAgent,
+        model_settings: PydanticAIModelSettings | None,
+        target: Type[Output] | Output | None,
+        deps: Deps | None,
+    ) -> PydanticAIAgent:
         agent: PydanticAIAgent | None = None
 
         if isinstance(model, PydanticAIAgent):
@@ -145,7 +281,6 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                     base=agent.model_settings,
                     overrides=model_settings,
                 )
-
         elif isinstance(model, (PydanticAIModel, str)):
             output_type = None
             if isinstance(target, Target):
@@ -175,50 +310,84 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                 "3. A `pydantic_ai.Agent` object\n"
             )
 
-        if confidence is True:
-            agent = _ensure_confidence_supported_agent(agent)
+        return agent
 
+    @classmethod
+    def _extract_context_refs(
+        cls, context: Any | List[Any] | None, deps: Deps | None
+    ) -> tuple[list[Context], Deps | None]:
         _context_refs: list[Context] = []
-
         if context:
             ctx_list = context if isinstance(context, list) else [context]
             _context_refs = [
                 item for item in ctx_list if isinstance(item, Context)
             ]
-            # Optionally infer deps from the most recent Context, if not yet set
-            if _context_refs:
+            if _context_refs and deps is None:
                 last_ctx = _context_refs[-1]
-                if (
-                    getattr(last_ctx, "deps", None) is not None
-                    and deps is None
-                ):
+                if getattr(last_ctx, "deps", None) is not None:
                     deps = last_ctx.deps
+        return _context_refs, deps
 
-        instructions_list = []
-        if instructions is not None:
-            # Guarantee list hygiene
-            if not isinstance(instructions, list):
-                instructions_list = [instructions]
-            else:
-                instructions_list = instructions
+    @classmethod
+    def _normalize_instructions(
+        cls,
+        instructions: str | Callable | List[str | Callable] | None,
+    ) -> List[str | Callable]:
+        if instructions is None:
+            return []
+        if not isinstance(instructions, list):
+            return [instructions]
+        return instructions  # type: ignore[return-value]
 
-        rendered_instructions = parse_instructions_as_system_prompt_parts(
-            instructions=instructions_list,
+    @classmethod
+    def _prepare_instructions(
+        cls,
+        *,
+        instructions: List[str | Callable],
+        deps: Deps | None,
+        context_refs: list[Context],
+    ) -> List[PydanticAISystemPromptPart]:
+        rendered = parse_instructions_as_system_prompt_parts(
+            instructions=instructions,
             deps=deps,
         )
-        for ctx in _context_refs:
-            rendered_instructions.extend(ctx.render_instructions())
+        for ctx in context_refs:
+            rendered.extend(ctx.render_instructions())
+        return rendered
 
-        message_history = parse_context_to_pydantic_ai_messages(context)
+    @classmethod
+    def _extract_context_additions(
+        cls, context: Any | List[Any] | None
+    ) -> List[PydanticAIMessage]:
+        if not context:
+            return []
+        ctx_list = context if isinstance(context, list) else [context]
+        extras = [item for item in ctx_list if not isinstance(item, Context)]
+        if not extras:
+            return []
+        return parse_context_to_pydantic_ai_messages(extras)
 
-        # Also aggregate toolsets from ALL Context objects if present
+    @classmethod
+    def _prepare_tools_and_attachments(
+        cls,
+        *,
+        tools: Any | List[Any] | None,
+        attachments: Attachment
+        | AttachmentLike
+        | List[Attachment | AttachmentLike]
+        | None,
+        context_refs: list[Context],
+        inject_internal_deps: bool,
+    ) -> tuple[
+        List[PydanticAIToolset], List[Attachment | AttachmentLike], bool
+    ]:
         ctx_toolsets = []
-        for ctx in _context_refs:
+        for ctx in context_refs:
             ctx_toolsets.extend(ctx.render_toolsets())
 
         function_tools = []
-        toolsets = ctx_toolsets
-        attachments_list: List[Any] = []
+        toolsets = list(ctx_toolsets)
+        attachments_list: List[Attachment | AttachmentLike] = []
 
         if tools:
             if not isinstance(tools, list):
@@ -231,7 +400,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                     function_tools.append(tool)
                 elif isinstance(tool, PydanticAIToolset):
                     toolsets.append(tool)
-                elif isinstance(tool, AbstractResource):
+                elif hasattr(tool, "get_toolset"):
                     toolsets.append(tool.get_toolset())
                 else:
                     raise ValueError(
@@ -242,37 +411,69 @@ class SemanticGraphDeps(Generic[Deps, Output]):
                     )
 
         if function_tools:
-            ctx_toolsets.append(FunctionToolset(tools=function_tools))
+            toolsets.append(FunctionToolset(tools=function_tools))
 
         if attachments:
             if not isinstance(attachments, list):
                 attachments = [attachments]
             for attachment in attachments:
-                if isinstance(attachment, AbstractResource):
-                    attachments_list.append(attachment)
-                    toolsets.append(attachment.get_toolset())
-                elif isinstance(attachment, Snippet):
-                    attachments_list.append(attachment)
+                if isinstance(attachment, Attachment) or is_attachment_like(
+                    attachment
+                ):
+                    normalized = attachment
                 else:
                     raise ValueError(
                         f"Invalid attachment: {attachment}. Accepted formats for attachments are:\n"
-                        "1. A `Snippet`\n"
-                        "2. A `Resource`"
+                        "1. An `Attachment`\n"
+                        "2. An object with `get_description()`, `get_state_description()`, and `get_toolset()`"
                     )
 
-        return cls(
-            agent=agent,
-            target=target,
-            source=source,
-            confidence=confidence,
-            message_history=message_history,
-            instructions=rendered_instructions,
-            toolsets=toolsets,
-            deps=deps,
-            usage_limits=usage_limits,
-            attachments=attachments_list,
-            _context_refs=_context_refs,
-        )
+                attachments_list.append(normalized)
+                toolset = normalized.get_toolset()
+                if toolset:
+                    toolsets.append(toolset)
+                    if not inject_internal_deps:
+                        inject_internal_deps = True
+
+        return toolsets, attachments_list, inject_internal_deps
+
+    @classmethod
+    def _prepare_deps(
+        cls,
+        *,
+        deps: Deps | None,
+        internal_deps: Dict[str, Any] | None,
+        inject_internal_deps: bool,
+        agent: PydanticAIAgent,
+    ) -> tuple[Deps | None, Deps | None, Dict[str, Any] | None]:
+        user_deps = deps
+        internal: Dict[str, Any] | None = internal_deps
+        if inject_internal_deps:
+            if internal is None:
+                internal = {}
+            internal.setdefault("agent", agent)
+            internal.setdefault("model", agent.model)
+
+        if internal:
+            deps = InjectedDeps(user_deps, internal)  # type: ignore[arg-type]
+
+        return deps, user_deps, internal
+
+    @classmethod
+    def _prepare_observer(cls, observe: Any | None) -> Any | None:
+        observe_handler = None
+        if observe:
+            from .._utils._observer import Observer
+
+            if observe is True:
+                observe_handler = Observer()
+            elif isinstance(observe, Observer):
+                observe_handler = observe
+            else:
+                raise ValueError(
+                    "Invalid 'observe' value. Expected bool or ObserveHandler."
+                )
+        return observe_handler
 
 
 @dataclass
@@ -294,14 +495,16 @@ class SemanticGraphState(Generic[Output]):
     """Accumulated token usage across all agent runs within the execution of a semantic
     operation."""
 
-    streams: List[PydanticAIAgentStream] = field(default_factory=list)
+    streams: List[PydanticAIAgentStream | None] = field(default_factory=list)
     """Streamed Agent runs that havent been consumed yet by the `Stream` result wrapper."""
 
     stream_contexts: List[Any] = field(default_factory=list)
     """Context managers that handle the consumption of the content within streams, used for
     cleanup."""
 
-    stream_field_mappings: List[Dict[str, Any]] = field(default_factory=list)
+    stream_field_mappings: List["StreamFieldMapping"] = field(
+        default_factory=list
+    )
     """Metadata about which fields each stream should update.
 
     Each entry contains:
@@ -323,10 +526,17 @@ class SemanticGraphState(Generic[Output]):
         )
 
 
-SemanticGraphContext = GraphRunContext[
-    SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+SemanticGraphContext = StepContext[
+    SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
 ]
-"""RunContext type passed through the nodes of a semantic operation's graph."""
+"""RunContext type passed through the steps of a semantic operation's graph."""
+
+
+@dataclass
+class StreamFieldMapping:
+    stream_index: int
+    fields: List[str] | None
+    update_output: bool
 
 
 def _ensure_confidence_supported_agent(
@@ -365,12 +575,26 @@ def _ensure_confidence_supported_agent(
                     openai_client=model.client  # type: ignore[attr-defined]
                 ),
             )
-            agent.model_settings = merge_model_settings(
-                base=agent.model_settings,
-                overrides=OpenAIResponsesModelSettings(
-                    openai_logprobs=True, openai_top_logprobs=10
-                ),
-            )
+
+            if not agent.model_settings:
+                agent.model_settings = OpenAIResponsesModelSettings(
+                    # NOTE: .. openai stop taking peoples data by default....
+                    # its quite rude so we also disable it by default
+                    openai_logprobs=True,
+                    openai_top_logprobs=10,
+                    openai_store=False,
+                )
+            else:
+                agent.model_settings = merge_model_settings(
+                    base=agent.model_settings,
+                    overrides=OpenAIResponsesModelSettings(
+                        openai_logprobs=True,
+                        openai_top_logprobs=10,
+                        openai_store=False
+                        if not agent.model_settings.get("openai_store", True)
+                        else None,
+                    ),
+                )
             return agent
 
     return agent

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import sys
 import types
 from enum import Enum
@@ -23,7 +24,7 @@ from toon import (
 
 from ._outputs import is_simple_type
 
-__all__ = ("object_as_toon_text",)
+__all__ = ("object_as_text",)
 
 
 _TYPE_MAPPING: Dict[type, str] = {
@@ -139,7 +140,7 @@ def _get_simple_type_toon(obj: type) -> str:
     return "string"
 
 
-def object_as_toon_text(obj: Any | BaseModel | Type[Any | BaseModel]) -> str:
+def object_as_text(obj: Any | BaseModel | Type[Any | BaseModel]) -> str:
     """
     Converts a type or value to a TOON string representation, if it
     is supported by the `toonify` library. If it is not supported by `toonify`,
@@ -171,10 +172,28 @@ def object_as_toon_text(obj: Any | BaseModel | Type[Any | BaseModel]) -> str:
             )
 
     try:
-        if hasattr(obj, "model_fields"):
+        if isinstance(obj, BaseModel):
             return encode_pydantic(obj)
-        else:
-            return encode(obj)
+        if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+            return encode(dataclasses.asdict(obj))
+        if isinstance(obj, dict):
+            try:
+                return encode(obj)
+            except Exception:
+                normalized: Dict[Any, Any] = {}
+                for key, value in obj.items():
+                    if _is_type_like(value):
+                        normalized[key] = object_as_text(value)
+                    elif dataclasses.is_dataclass(value) and not isinstance(
+                        value, type
+                    ):
+                        normalized[key] = dataclasses.asdict(value)
+                    elif isinstance(value, BaseModel):
+                        normalized[key] = value.model_dump()
+                    else:
+                        normalized[key] = value
+                return encode(normalized)
+        return encode(obj)
     except Exception as e:
         raise ValueError(
             f"Failed to generate TOON string representation for value: {obj} of type: {type(obj)}. Error: {e}"
