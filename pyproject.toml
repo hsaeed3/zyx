@@ -11,6 +11,8 @@ packages = ["zyx"]
 [tool.hatch.build.targets.sdist]
 exclude = [
     "/docs",
+    "/tests",
+    "/examples",
 ]
 
 [tool.uv-dynamic-versioning]
@@ -20,7 +22,7 @@ bump = true
 
 [project]
 name = "zyx"
-version = "1.0.23"
+version = "1.0.24"
 description = "ZYX"
 authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
 readme = "readme.md"
