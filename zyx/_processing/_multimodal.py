@@ -21,7 +21,7 @@ from pydantic_ai.messages import (
     UserContent,
 )
 
-from ._toon import object_as_toon_text
+from ._toon import object_as_text
 
 if TYPE_CHECKING:
     from markitdown import MarkItDown
@@ -324,7 +324,7 @@ def render_multimodal_source_as_user_content(
     Renders a multimodal source as a compatible `pydantic-ai` UserContent object.
     """
     if origin == MultimodalContentOrigin.OBJECT:
-        return object_as_toon_text(source)
+        return object_as_text(source)
 
     if origin == MultimodalContentOrigin.STRING:
         if media_type == MultimodalContentMediaType.HTML:
@@ -414,7 +414,7 @@ def render_multimodal_source_as_text(
     multimodal content.
     """
     if origin == MultimodalContentOrigin.OBJECT:
-        return object_as_toon_text(source)
+        return object_as_text(source)
 
     if media_type in (
         MultimodalContentMediaType.TEXT,
@@ -482,7 +482,7 @@ def render_multimodal_source_as_description(
         return f"[string value, length={length}]"
 
     if origin == MultimodalContentOrigin.URL:
-        return f"[remote {media_type.value} resource]"
+        return f"[URL: {source} | type={media_type.value}]"
 
     if origin == MultimodalContentOrigin.FILE:
         path = source if isinstance(source, Path) else Path(source)  # type: ignore[arg-type]
