@@ -76,7 +76,9 @@ result = zyx.make(
 )
 
 print(result.output)
-# 90
+"""
+90
+"""
 ```
 
 ### Parse Structured Data
@@ -98,7 +100,11 @@ result = zyx.parse(
 )
 
 print(result.output.library_name)
-# ZYX
+print(result.output.library_description)
+"""
+ZYX
+A fun "anti-framework" for doing useful things with agents and LLMs.
+"""
 ```
 
 ### Query with Tools
@@ -124,12 +130,17 @@ result = zyx.parse(
         zyx.paste("scraping_instructions.txt"),
         "log the website URL before you parse.",
     ],
-    model="openai:gpt-4o-mini",
+    model="anthropic:claude-sonnet-4-5",
     tools=[log_website_url],
 )
 
 print(result.output.library_name)
 print(result.output.library_description)
+"""
+Website URL: https://zyx.hammad.app
+ZYX
+A fun "anti-framework" for doing useful things with agents and LLMs.
+"""
 ```
 
 ### Edit Values
@@ -144,16 +155,19 @@ data = {"name": "John", "age": 30}
 result = zyx.edit(
     target=data,
     context="Update the age to 31",
-    model="openai:gpt-4o-mini",
+    model="anthropic:claude-sonnet-4-5",
+    merge=False
 )
 
 print(result.output)
-# {"name": "John", "age": 31}
+"""
+{"name": None, "age": 31}
+"""
 ```
 
 ### Query Grounded Sources
 
-Use `zyx.query` to ask questions about a source:
+Use `zyx.query` to ask questions about a source, that is grounded/anchored to a specific source's content.
 
 ```python
 import zyx
@@ -166,6 +180,9 @@ result = zyx.query(
 )
 
 print(result.output)
+"""
+Python is a high-level programming language.
+"""
 ```
 
 ### Select from Options
@@ -185,7 +202,9 @@ result = zyx.select(
 )
 
 print(result.output)
-# blue
+"""
+blue
+"""
 ```
 
 ### Async Support
@@ -202,6 +221,11 @@ result = await zyx.amake(
 )
 
 print(result.output)
+"""
+Code flows like a stream,  
+Indents guide the logic's dance,  
+Python dreams in light. 
+"""
 ```
 
 ### Streaming
@@ -220,6 +244,11 @@ stream = zyx.make(
 
 for text in stream.text():
     print(text, end="", flush=True)
+"""
+**The Last Library**
+
+In a small town nestled between rolling...
+"""
 ```
 
 ## Semantic Operations
