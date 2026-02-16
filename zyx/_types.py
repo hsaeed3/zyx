@@ -10,6 +10,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Literal,
     Type,
     TypeAlias,
     TypeVar,
@@ -30,10 +31,8 @@ from ._aliases import (
     PydanticAIToolset,
     PydanticAIBuiltinTool,
 )
+from .attachments import Attachment
 from .context import Context
-from .snippets import Snippet
-from .resources.abstract import AbstractResource
-from .targets import Target
 
 __all__ = (
     "Deps",
@@ -71,14 +70,43 @@ SourceParam: TypeAlias = Any
 a semantic operation."""
 
 
-TargetParam: TypeAlias = Union[Output, Type[Output], Target[Output]]
+TargetParam: TypeAlias = Union[Output, Type[Output]]
 """The output `target` - a type, instance, or value to generate/modify through
 a semantic operation."""
+
+
+KnownModelName: TypeAlias = Literal[
+    "ollama:functiongemma",
+    "ollama:deepseek-ocr",
+    "ollama:deepseek-v3.1",
+    "ollama:devstral-small-2",
+    "ollama:devstral-small-2:cloud",
+    "ollama:lfm2.5-thinking",
+    "ollama:glm-4.7-flash",
+    "ollama:glm-5:cloud",
+    "ollama:glm-ocr",
+    "ollama:gpt-oss",
+    "ollama:gpt-oss-safeguard",
+    "ollama:granite4",
+    "ollama:kimi-k2.5:cloud",
+    "ollama:minimax-m2.5:cloud",
+    "ollama:ministral-3",
+    "ollama:nemotron-3-nano",
+    "ollama:olmo-3",
+    "ollama:olmo-3.1",
+    "ollama:translategemma",
+    "ollama:rnj-1",
+    "ollama:qwen3-coder-next",
+    "ollama:qwen3-coder-next:cloud",
+    "ollama:qwen3-next",
+    "ollama:qwen3-vl",
+]
 
 
 ModelParam: TypeAlias = Union[
     PydanticAIAgent,
     PydanticAIModel,
+    KnownModelName,
     _pydantic_ai_models.KnownModelName,
     str,
 ]
@@ -98,7 +126,6 @@ ContextType: TypeAlias = Union[
     BaseModel,
     Dict[str, Any],
     Context,
-    Snippet,
 ]
 """Accepted formats for a single item within the ``context`` of a semantic
 operation.  All items are converted to ``pydantic_ai.ModelMessage`` objects
@@ -106,15 +133,13 @@ before invocation.
 
 Accepted types:
 
-- A :class:`~zyx.context.Context` – accumulates conversation state across
+- A :class:`~zyx.context.Context` accumulates conversation state across
   operations.  When passed, its messages and rendered instructions are
   injected into the request, and it is auto-updated after the operation
   when ``Context.update`` is ``True``.
 
 - A string (with optional role tags like ``[system]``/``[s]``,
   ``[user]``/``[u]``, ``[assistant]``/``[a]``)
-
-- A :class:`~zyx.snippets.Snippet` of pasted content
 
 - A dictionary or Pydantic model in the PydanticAI or OpenAI Chat Completions
   format
@@ -134,7 +159,6 @@ ToolType: TypeAlias = Union[
     PydanticAITool,
     PydanticAIBuiltinTool,
     PydanticAIToolset,
-    AbstractResource,
 ]
 """
 Accepted formats in which a single item within the `tools` parameter of a semantic operation
@@ -147,19 +171,11 @@ including:
 - PydanticAI Tools
 - PydanticAI Builtin Tools
 - PydanticAI Toolsets
-- `zyx` Resources
 """
 
 
-AttachmentType: TypeAlias = Union[
-    AbstractResource,
-    Snippet,
-]
+AttachmentType: TypeAlias = Union[Any, Type[Any], Attachment]
 """
 Accepted formats in which a single item within the `attachments` parameter of a semantic operation
-can be passed in as. All attachments support passing in RunContext dependencies.
-
-An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
-where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
-are `Resources` provide the agent with an ability to interact with/modify them, like artifacts.
+can be passed in as.
 """
