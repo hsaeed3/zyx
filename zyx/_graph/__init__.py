@@ -3,25 +3,30 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 import inspect
-from dataclasses import dataclass
-from typing import Any, Callable, Generic, Sequence, Type, TypeVar
+from types import SimpleNamespace
+from typing import Any, Callable, Generic, Sequence, TypeVar
 
-from pydantic_graph import End, Graph, GraphRun
+from pydantic_graph.beta.graph import Graph
+from pydantic_graph.beta.graph_builder import GraphBuilder
+from pydantic_graph.nodes import End
 
 from pydantic_ai import _output as _pydantic_ai_output
 from pydantic_ai import _utils as _pydantic_ai_utils
 from pydantic_ai.exceptions import ModelRetry
 
-from ._context import (
+from ._ctx import (
     SemanticGraphDeps,
     SemanticGraphState,
     SemanticGraphContext,
+    GraphHooks,
 )
 from ._nodes import (
     AbstractSemanticNode,
-    SemanticGenerateNode,
-    SemanticStreamNode,
+    make_generate_step,
+    make_stream_step,
+    run_v1_node_chain,
 )
 from ._requests import SemanticGraphRequestTemplate
 from ..targets import Target
@@ -29,15 +34,17 @@ from ..result import Result
 from ..stream import Stream
 
 __all__ = (
-    "SemanticGraphRun",
     "SemanticGraph",
     "AbstractSemanticNode",
-    "SemanticGenerateNode",
-    "SemanticStreamNode",
+    "End",
+    "make_generate_step",
+    "make_stream_step",
+    "run_v1_node_chain",
     "SemanticGraphRequestTemplate",
     "SemanticGraphDeps",
     "SemanticGraphState",
     "SemanticGraphContext",
+    "GraphHooks",
 )
 
 
@@ -55,51 +62,29 @@ def _get_event_loop() -> asyncio.AbstractEventLoop:
     return event_loop
 
 
-@dataclass
-class SemanticGraphRun(Generic[Output]):
-    """
-    Step-by-step execution of a semantic operation's graph. This wraps the `GraphRun`
-    class from `pydantic_graph` to provide specific context and patterns for
-    a semantic operation.
-    """
+def _run_coro_sync(coro: Any) -> Any:
+    """Run a coroutine from sync code, even if an event loop is already running."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
 
-    _graph_run: GraphRun[
-        SemanticGraphState[Output],
-        SemanticGraphDeps[Deps, Output],
-        End[Output] | Any,
-    ]
+    result_box: dict[str, Any] = {}
+    error_box: dict[str, BaseException] = {}
 
-    @property
-    def next_node(self) -> AbstractSemanticNode[Deps, Output] | End[Output]:
-        """The next node to be executed in the graph."""
-        return self._graph_run.next_node  # type: ignore
+    def _runner() -> None:
+        try:
+            result_box["value"] = asyncio.run(coro)
+        except BaseException as exc:  # pragma: no cover - re-raised in caller
+            error_box["error"] = exc
 
-    @property
-    def result(self) -> Output | None:
-        """The final result if the run has ended, otherwise None."""
-        if self._graph_run.result is not None:
-            return self._graph_run.state.output.finalize()
-        return None
+    thread = threading.Thread(target=_runner, name="zyx-asyncio-run")
+    thread.start()
+    thread.join()
 
-    @property
-    def state(self) -> SemanticGraphState[Output]:
-        """The current state of the graph."""
-        return self._graph_run.state
-
-    @property
-    def deps(self) -> SemanticGraphDeps[Deps, Output]:
-        """The dependencies of the graph."""
-        return self._graph_run.deps  # type: ignore
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(
-        self,
-    ) -> AbstractSemanticNode[Deps, Output] | End[Output | Any]:
-        """The next node to be executed in the graph."""
-        node = await anext(self._graph_run)
-        return node
+    if "error" in error_box:
+        raise error_box["error"]
+    return result_box.get("value")
 
 
 class SemanticGraph(Generic[Output]):
@@ -113,8 +98,7 @@ class SemanticGraph(Generic[Output]):
     def __init__(
         self,
         *,
-        nodes: Sequence[Type[AbstractSemanticNode[Deps, Output]]],
-        start: AbstractSemanticNode[Deps, Output],
+        steps: Sequence[Callable[..., Any]],
         state: SemanticGraphState[Output],
         deps: SemanticGraphDeps[Deps, Output],
     ) -> None:
@@ -126,27 +110,59 @@ class SemanticGraph(Generic[Output]):
             state : The initial state of the graph.
             deps : The dependencies of the graph.
         """
-        self._nodes = nodes
-        self._start = start
+        self._steps = steps
         self._state = state
         self._deps = deps
         self._graph: Graph | None = None
 
     def prepare_graph(self) -> Graph:
         if self._graph is None:
-            self._graph = Graph(
-                nodes=self._nodes,  # type: ignore
+            builder = GraphBuilder(
+                state_type=type(self._state),
+                deps_type=type(self._deps),
+                input_type=type(None),
+                output_type=Any,
             )
+            prev = builder.start_node
+            for idx, step in enumerate(self._steps):
+                step_node = builder.step(call=step, node_id=f"step_{idx}")
+                builder.add(builder.edge_from(prev).to(step_node))
+                prev = step_node
+            builder.add(builder.edge_from(prev).to(builder.end_node))
+            self._graph = builder.build()
         return self._graph
 
     def _auto_update_context(self, res: Result[Output]) -> None:
         """Write messages back to the originating ``Context`` if applicable."""
-        ctx_ref = getattr(self._deps, "_context_ref", None)
-        if (
-            ctx_ref is not None
-            and getattr(ctx_ref, "update", True)
-            and res.raw
-        ):
+        ctx_refs = getattr(self._deps, "_context_refs", None) or []
+        if not isinstance(ctx_refs, list):
+            ctx_refs = [ctx_refs]
+        context_additions = getattr(self._deps, "_context_additions", []) or []
+
+        for ctx_ref in ctx_refs:
+            if (
+                ctx_ref is None
+                or not getattr(ctx_ref, "update", True)
+                or not res.raw
+            ):
+                continue
+
+            if context_additions:
+                ctx_ref.extend_messages(context_additions)
+
+            semantic_renderer = getattr(self._deps, "semantic_renderer", None)
+            if semantic_renderer:
+                semantic = semantic_renderer(res, self._state, self._deps)
+                if isinstance(semantic, str):
+                    res._semantic_message = semantic
+                    ctx_ref.add_assistant_message(semantic)
+                    continue
+                if isinstance(semantic, list):
+                    ctx_ref.extend_messages(semantic)
+                    continue
+                if semantic is not None:
+                    ctx_ref.extend_messages([semantic])
+                    continue
             ctx_ref.update_from_pydantic_ai_result(res.raw[-1])
 
     async def run(self) -> Result[Output]:
@@ -154,58 +170,66 @@ class SemanticGraph(Generic[Output]):
         graph = self.prepare_graph()
 
         cleanup = _install_target_hooks(self._deps)
+        _run_graph_start_hooks(self._deps, self._state)
 
         try:
-            if self._start and self._state and self._deps:
-                result = await graph.run(
-                    start_node=self._start,  # type: ignore
-                    state=self._state,  # type: ignore
-                    deps=self._deps,  # type: ignore
+            if self._state and self._deps:
+                await graph.run(
+                    state=self._state,
+                    deps=self._deps,
+                    inputs=None,
                 )
         except Exception as e:
+            _run_graph_error_hooks(self._deps, e, self._state)
             _run_error_hooks(self._deps, e)
             raise
         finally:
             cleanup()
 
         res = Result(
-            result.output,
-            raw=result.state.agent_runs,  # type: ignore[attr-defined]
+            self._state.output.finalize(),
+            raw=self._state.agent_runs,
         )
+        _run_graph_end_hooks(self._deps, res)
         self._auto_update_context(res)
-        return res  # type: ignore
+        return res
 
     def run_sync(self) -> Result[Output]:
         """Execute the graph to completion and return the final result."""
         graph = self.prepare_graph()
 
         cleanup = _install_target_hooks(self._deps)
+        _run_graph_start_hooks(self._deps, self._state)
 
         try:
-            if self._start and self._state and self._deps:
-                result = graph.run_sync(
-                    start_node=self._start,  # type: ignore
-                    state=self._state,  # type: ignore
-                    deps=self._deps,  # type: ignore
+            if self._state and self._deps:
+                _run_coro_sync(
+                    graph.run(
+                        state=self._state,
+                        deps=self._deps,
+                        inputs=None,
+                    )
                 )
         except Exception as e:
+            _run_graph_error_hooks(self._deps, e, self._state)
             _run_error_hooks(self._deps, e)
             raise
         finally:
             cleanup()
 
         res = Result(
-            result.output,
-            raw=result.state.agent_runs,  # type: ignore[attr-defined]
+            self._state.output.finalize(),
+            raw=self._state.agent_runs,
         )
+        _run_graph_end_hooks(self._deps, res)
         self._auto_update_context(res)
-        return res  # type: ignore
+        return res
 
     async def stream(self, *, exclude_none: bool = False) -> Stream[Output]:
         """Execute the graph with streaming nodes and return a Stream wrapper.
 
-        The graph should contain `SemanticStreamNode` nodes that store their
-        streams in `ctx.state.streams` during execution. After the graph runs
+        The graph should contain stream steps that store their streams in
+        `ctx.state.streams` during execution. After the graph runs
         to completion, the accumulated streams are collected and wrapped in a
         `Stream` object for consumption.
 
@@ -220,27 +244,31 @@ class SemanticGraph(Generic[Output]):
         graph = self.prepare_graph()
 
         cleanup = _install_target_hooks(self._deps)
+        _run_graph_start_hooks(self._deps, self._state)
 
         try:
-            if self._start and self._state and self._deps:
+            if self._state and self._deps:
                 await graph.run(
-                    start_node=self._start,  # type: ignore
-                    state=self._state,  # type: ignore
-                    deps=self._deps,  # type: ignore
+                    state=self._state,
+                    deps=self._deps,
+                    inputs=None,
                 )
         except Exception as e:
+            _run_graph_error_hooks(self._deps, e, self._state)
             _run_error_hooks(self._deps, e)
             raise
         finally:
             cleanup()
 
-        return Stream(
+        stream = Stream(
             _builder=self._state.output,
             _streams=self._state.streams,
-            _field_mappings=self._state.stream_field_mappings,
+            _field_mappings=self._state.stream_field_mappings,  # type: ignore[arg-type]
             _stream_contexts=self._state.stream_contexts,
             _exclude_none=exclude_none,
         )
+        _run_graph_end_hooks(self._deps, stream)
+        return stream
 
     def stream_sync(self, *, exclude_none: bool = False) -> Stream[Output]:
         """Synchronous wrapper around `stream()`.
@@ -399,3 +427,44 @@ def _run_error_hooks(
                 fn(deps)
         except Exception:
             pass
+
+
+def _run_graph_start_hooks(
+    deps: SemanticGraphDeps[Any, Any], state: SemanticGraphState[Any]
+) -> None:
+    hooks: GraphHooks | None = getattr(deps, "hooks", None)
+    if hooks is None or hooks.on_run_start is None:
+        return
+    try:
+        hooks.on_run_start(SimpleNamespace(state=state, deps=deps))
+    except Exception:
+        pass
+
+
+def _run_graph_end_hooks(
+    deps: SemanticGraphDeps[Any, Any], result: Any
+) -> None:
+    hooks: GraphHooks | None = getattr(deps, "hooks", None)
+    if hooks is None or hooks.on_run_end is None:
+        return
+    try:
+        hooks.on_run_end(result)
+    except Exception:
+        pass
+
+
+def _run_graph_error_hooks(
+    deps: SemanticGraphDeps[Any, Any],
+    error: BaseException,
+    state: SemanticGraphState[Any],
+) -> None:
+    hooks: GraphHooks | None = getattr(deps, "hooks", None)
+    if hooks is None or hooks.on_error is None:
+        return
+    try:
+        hooks.on_error(
+            error,
+            SimpleNamespace(state=state, deps=deps),
+        )
+    except Exception:
+        pass

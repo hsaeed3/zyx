@@ -2,37 +2,34 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
-from dataclasses import dataclass, replace
-from typing import Any, List, Generic, Self, TypeVar
+from dataclasses import replace
+from typing import Any, List, TypeVar, Callable, Union, Generic, cast
 
-from pydantic_graph import (
-    BaseNode,
-    End,
-)
+from pydantic_graph.beta.step import StepContext
+from pydantic_graph.nodes import End, GraphRunContext, BaseNode
 from pydantic_ai.exceptions import UserError
 
 from .._aliases import (
     PydanticAIAgentResult,
     PydanticAIAgentStream,
 )
-from ._context import (
+from ._ctx import (
     SemanticGraphDeps,
     SemanticGraphState,
-    SemanticGraphContext,
+    StreamFieldMapping,
 )
 from ._requests import SemanticGraphRequestTemplate
 
 __all__ = (
     "AbstractSemanticNode",
-    "SemanticGenerateNode",
-    "SemanticStreamNode",
+    "make_generate_step",
+    "make_stream_step",
+    "run_v1_node_chain",
 )
 
 
 # temporary workaround used if a model provider doesnt support native structured output
-# when creating a request
 _NATIVE_OUTPUT_UNSUPPORTED_ERROR = "Native structured output is not supported"
 
 
@@ -40,189 +37,246 @@ Deps = TypeVar("Deps")
 Output = TypeVar("Output")
 
 
-@dataclass
 class AbstractSemanticNode(
-    BaseNode[
-        SemanticGraphState[Output],
-        SemanticGraphDeps[Deps, Output],
-        End[Output] | Any,
-    ],
-    ABC,
     Generic[Deps, Output],
+    BaseNode[
+        SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], End | Any
+    ],
 ):
-    """
-    Abstract base class for all nodes that make up the execution graph
-    of a semantic operation.
-    """
-
-    @abstractmethod
-    async def run(
-        self, ctx: SemanticGraphContext[Output, Deps]
-    ) -> Self | End[Output]:
-        """
-        Execute this node and return the next node or the final output
-        (End) of the graph.
-        """
+    """Base class for v1-style semantic nodes used in edit workflows."""
 
     async def execute_run(
         self,
-        ctx: SemanticGraphContext[Output, Deps],
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
         *,
         request: SemanticGraphRequestTemplate[Output],
         update_output: bool = True,
         output_fields: str | List[str] | None = None,
     ) -> PydanticAIAgentResult[Output | Any]:
-        """
-        Executes a single agent run and updates the state of the graph and
-        output based on if specified, and according to fields generated in this
-        request.
-        """
-        params = request.render(ctx)
-
-        try:
-            try:
-                result = await ctx.deps.agent.run(**params)
-            except UserError as e:
-                if _NATIVE_OUTPUT_UNSUPPORTED_ERROR in str(e):
-                    params = replace(request, native_output=False)
-                    result = await ctx.deps.agent.run(**params.render(ctx))
-                else:
-                    raise
-        except Exception as e:
-            raise e
+        result = await _execute_with_fallback(
+            ctx,
+            request=request,
+            streaming=False,
+        )
 
         if update_output:
             ctx.state.output.update_from_pydantic_ai_result(
-                result=result, fields=output_fields
+                result=cast(PydanticAIAgentResult[Any], result),
+                fields=output_fields,
             )
 
-        ctx.state.agent_runs.append(result)
-        ctx.state.usage.incr(result.usage())
-        return result
+        ctx.state.agent_runs.append(result)  # type: ignore[arg-type]
+        ctx.state.usage.incr(result.usage())  # type: ignore[arg-type]
+        return result  # type: ignore[return-value]
 
-    def execute_stream(
+    async def execute_stream(
         self,
-        ctx: SemanticGraphContext[Output, Deps],
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
         *,
         request: SemanticGraphRequestTemplate[Output],
     ) -> AbstractAsyncContextManager[PydanticAIAgentStream[Any, Output | Any]]:
-        """
-        Creates an async context manager for a streaming agent run.
-
-        Returns the context manager from `agent.run_stream()` which must be
-        entered with `async with` or `__aenter__()` to get the actual
-        `StreamedRunResult`.
-        """
-        params = request.render(ctx)
-
-        try:
-            return ctx.deps.agent.run_stream(**params)
-        except UserError as e:
-            if _NATIVE_OUTPUT_UNSUPPORTED_ERROR in str(e):
-                params = replace(request, native_output=False)
-                return ctx.deps.agent.run_stream(**params.render(ctx))
-            else:
-                raise
+        stream_ctx = await _execute_with_fallback(
+            ctx,
+            request=request,
+            streaming=True,
+        )
+        assert isinstance(stream_ctx, AbstractAsyncContextManager)
+        return stream_ctx  # type: ignore[return-value]
 
 
-@dataclass
-class SemanticGenerateNode(AbstractSemanticNode[Deps, Output]):
-    """
-    'Run' or generation node that executes a single agent run to return
-    either a full or partial representation of the `target` output, or
-    some other AgentRunResult.
-    """
+async def _execute_run(
+    ctx: StepContext[
+        SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+    ],
+    *,
+    request: SemanticGraphRequestTemplate[Output],
+    update_output: bool = True,
+    output_fields: str | List[str] | None = None,
+) -> PydanticAIAgentResult[Output | Any]:
+    result = await _execute_with_fallback(
+        ctx,
+        request=request,
+        streaming=False,
+    )
 
-    request: SemanticGraphRequestTemplate[Output]
-    """Specific request context specific to this node."""
-
-    update_output: bool = True
-    """Whether to update the output of the graph based on the result of the run."""
-
-    output_fields: str | List[str] | None = None
-    """If specified, only update the output of the graph based on the specified fields."""
-
-    async def run(
-        self, ctx: SemanticGraphContext[Output, Deps]
-    ) -> End[Output]:
-        """
-        Execute the node and return the next node or the final output
-        (End) of the graph.
-        """
-        result = await self.execute_run(
-            ctx=ctx,
-            request=self.request,
-            update_output=self.update_output,
-            output_fields=self.output_fields,
+    if update_output:
+        ctx.state.output.update_from_pydantic_ai_result(
+            result=cast(PydanticAIAgentResult[Any], result),
+            fields=output_fields,
         )
 
-        return End(result.output)
+    ctx.state.agent_runs.append(result)  # type: ignore[arg-type]
+    ctx.state.usage.incr(result.usage())  # type: ignore[arg-type]
+    return result  # type: ignore[return-value]
 
 
-@dataclass
-class SemanticStreamNode(AbstractSemanticNode[Deps, Output]):
-    """
-    Run node that executes a single agent run to return a StreamedRunResult,
-    that represents either a full or partial representation of the `target`
-    output, or some other result.
+async def _execute_with_fallback(
+    ctx: Any,
+    *,
+    request: SemanticGraphRequestTemplate[Output],
+    streaming: bool,
+) -> Union[
+    PydanticAIAgentResult[Output | Any],
+    AbstractAsyncContextManager[PydanticAIAgentStream[Any, Output | Any]],
+]:
+    params = request.render(ctx)
+    observe = getattr(ctx.deps, "observe", None)
+    handler = (
+        getattr(observe, "event_stream_handler", None) if observe else None
+    )
 
-    Unlike SemanticGenerateNode, this node DOES NOT consume the stream.
-    Instead, it stores the stream in graph state for the Stream wrapper
-    to consume, enabling real-time streaming at the graph level.
-    """
+    try:
+        if observe and hasattr(observe, "on_model_request"):
+            observe.on_model_request()
+        return await _do_run(
+            ctx,
+            params=params,
+            streaming=streaming,
+            handler=handler,
+            observe=observe,
+        )
+    except UserError as e:
+        if _NATIVE_OUTPUT_UNSUPPORTED_ERROR not in str(e):
+            raise
+        fallback_request = replace(request, native_output=False)
+        fallback_params = fallback_request.render(ctx)
+        return await _do_run(
+            ctx,
+            params=fallback_params,
+            streaming=streaming,
+            handler=handler,
+            observe=observe,
+        )
 
-    request: SemanticGraphRequestTemplate[Output]
-    """Specific request context specific to this node."""
 
-    update_output: bool = True
-    """Whether to update the output of the graph based on the result of the stream."""
+async def _do_run(
+    ctx: Any,
+    *,
+    params: dict[str, Any],
+    streaming: bool,
+    handler: Any,
+    observe: Any,
+) -> Union[
+    PydanticAIAgentResult[Output | Any],
+    AbstractAsyncContextManager[PydanticAIAgentStream[Any, Output | Any]],
+]:
+    if streaming:
+        return ctx.deps.agent.run_stream(
+            **params, event_stream_handler=handler
+        )
+    if observe:
+        async with ctx.deps.agent.iter(**params) as agent_run:
+            async for node in agent_run:
+                observe.on_node(node, agent_run.ctx)
+        result = agent_run.result
+        if result is None:
+            raise ValueError("Agent run finished without a result.")
+        return result
+    return await ctx.deps.agent.run(**params)
 
-    output_fields: str | List[str] | None = None
-    """If specified, only update the output of the graph based on the specified fields."""
 
-    async def run(
-        self, ctx: SemanticGraphContext[Output, Deps]
-    ) -> End[Output]:
-        """
-        Execute the node and create a stream for consumption.
+def make_generate_step(
+    request: SemanticGraphRequestTemplate[Output],
+    *,
+    update_output: bool = True,
+    output_fields: str | List[str] | None = None,
+) -> Callable[
+    [
+        StepContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+        ]
+    ],
+    Any,
+]:
+    async def _step(
+        ctx: StepContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+        ],
+    ) -> Any:
+        result = await _execute_run(
+            ctx,
+            request=request,
+            update_output=update_output,
+            output_fields=output_fields,
+        )
+        return result.output
 
-        This method:
-        1. Executes execute_stream() to get a StreamedRunResult
-        2. Stores the stream in ctx.state.streams for later consumption
-        3. Stores metadata about which fields this stream should update
-        4. Returns End (graph continues to next node or finishes)
+    return _step
 
-        The actual stream consumption happens in the Stream wrapper,
-        allowing real-time streaming across multiple nodes.
-        """
-        # Get the stream context manager from agent.run_stream()
-        stream_ctx = self.execute_stream(ctx=ctx, request=self.request)
 
-        # Enter the context manager to get the actual StreamedRunResult
+def make_stream_step(
+    request: SemanticGraphRequestTemplate[Output],
+    *,
+    update_output: bool = True,
+    output_fields: str | List[str] | None = None,
+) -> Callable[
+    [
+        StepContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+        ]
+    ],
+    Any,
+]:
+    async def _step(
+        ctx: StepContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+        ],
+    ) -> Any:
+        stream_ctx = await _execute_with_fallback(
+            ctx,
+            request=request,
+            streaming=True,
+        )
+        assert isinstance(stream_ctx, AbstractAsyncContextManager)
+
         stream = await stream_ctx.__aenter__()
-
-        # Store stream info for the Stream wrapper to consume
         ctx.state.streams.append(stream)  # type: ignore
-        ctx.state.stream_contexts.append(stream_ctx)  # For cleanup
+        ctx.state.stream_contexts.append(stream_ctx)
 
-        # Store metadata about this stream
-        if self.output_fields:
+        if output_fields:
+            fields = (
+                output_fields
+                if isinstance(output_fields, list)
+                else [output_fields]
+            )
             ctx.state.stream_field_mappings.append(
-                {
-                    "stream_index": len(ctx.state.streams) - 1,
-                    "fields": self.output_fields
-                    if isinstance(self.output_fields, list)
-                    else [self.output_fields],
-                    "update_output": self.update_output,
-                }
+                StreamFieldMapping(
+                    stream_index=len(ctx.state.streams) - 1,
+                    fields=fields,
+                    update_output=update_output,
+                )
             )
         else:
             ctx.state.stream_field_mappings.append(
-                {
-                    "stream_index": len(ctx.state.streams) - 1,
-                    "fields": None,  # All fields
-                    "update_output": self.update_output,
-                }
+                StreamFieldMapping(
+                    stream_index=len(ctx.state.streams) - 1,
+                    fields=None,
+                    update_output=update_output,
+                )
             )
 
-        return End(None)  # type: ignore
+        return None
+
+    return _step
+
+
+async def run_v1_node_chain(
+    start_node: BaseNode[Any, Any, Any],
+    ctx: StepContext[
+        SemanticGraphState[Output], SemanticGraphDeps[Deps, Output], Any
+    ],
+) -> Any:
+    node: BaseNode[Any, Any, Any] = start_node
+    while True:
+        result = await node.run(
+            GraphRunContext(state=ctx.state, deps=ctx.deps)
+        )
+        if isinstance(result, End):
+            return result.data
+        if not isinstance(result, BaseNode):
+            raise ValueError(f"Invalid node transition: {type(result)}")
+        node = result
