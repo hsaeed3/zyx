@@ -31,8 +31,10 @@ from ._aliases import (
     PydanticAIToolset,
     PydanticAIBuiltinTool,
 )
-from .attachments import Attachment
+from .attachments import Attachment, AttachmentLike
 from .context import Context
+from .tools.memory import Memory
+from .tools.code import Code
 
 __all__ = (
     "Deps",
@@ -159,6 +161,8 @@ ToolType: TypeAlias = Union[
     PydanticAITool,
     PydanticAIBuiltinTool,
     PydanticAIToolset,
+    Memory,
+    Code,
 ]
 """
 Accepted formats in which a single item within the `tools` parameter of a semantic operation
@@ -174,7 +178,7 @@ including:
 """
 
 
-AttachmentType: TypeAlias = Union[Any, Type[Any], Attachment]
+AttachmentType: TypeAlias = Union[Any, Type[Any], Attachment, AttachmentLike]
 """
 Accepted formats in which a single item within the `attachments` parameter of a semantic operation
 can be passed in as.

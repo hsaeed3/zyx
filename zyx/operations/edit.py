@@ -92,7 +92,9 @@ def _native_output_for_edit(deps: SemanticGraphDeps[Deps, Output]) -> bool:
     return False if deps.toolsets else True
 
 
-def _plan_has_edits(strategy: AbstractEditableStrategy[Output], plan: Any) -> bool:
+def _plan_has_edits(
+    strategy: AbstractEditableStrategy[Output], plan: Any
+) -> bool:
     if strategy.kind == "mapping":
         selections = getattr(strategy, "_extract_plan_selections", None)
         if selections is None:
@@ -121,6 +123,30 @@ def _emit_generated_fields(
     fields: list[dict[str, Any]] = []
 
     if strategy.kind == "mapping":
+        if hasattr(edits, "changes") or (
+            isinstance(edits, dict) and "changes" in edits
+        ):
+            changes = (
+                edits.changes
+                if hasattr(edits, "changes")
+                else edits.get("changes", [])
+            )
+            for change in changes or []:
+                if isinstance(change, dict):
+                    field = change.get("field")
+                    value = change.get("value")
+                else:
+                    field = getattr(change, "field", None)
+                    value = getattr(change, "value", None)
+                if field is None:
+                    continue
+                if field_hint and field != field_hint:
+                    continue
+                fields.append({"name": field, "value": value})
+            if fields:
+                observe.on_fields_generated(fields)
+                return
+
         if hasattr(edits, "model_dump"):
             data = edits.model_dump(exclude_none=True)
         elif isinstance(edits, dict):
@@ -165,7 +191,10 @@ class ReplaceEditNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output]:
         result = await self.execute_run(
             ctx=ctx, request=self.request, update_output=False
@@ -183,7 +212,10 @@ class ReplaceEditStreamNode(AbstractSemanticNode[Deps, Output]):
     output_fields: str | List[str] | None = None
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output]:
         stream_ctx = await self.execute_stream(ctx=ctx, request=self.request)
         stream = await stream_ctx.__aenter__()
@@ -215,7 +247,10 @@ class SelectiveEditNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output]:
         result = await self.execute_run(
             ctx=ctx, request=self.request, update_output=False
@@ -235,7 +270,10 @@ class PlanEditNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> (
         End[Output]
         | PlanEditsNode[Deps, Output]
@@ -253,7 +291,9 @@ class PlanEditNode(AbstractSemanticNode[Deps, Output]):
         if observe and getattr(ctx.state, "edit_selective", False):
             fields = []
             if self.strategy.kind == "mapping":
-                selections = getattr(self.strategy, "_extract_plan_selections", None)
+                selections = getattr(
+                    self.strategy, "_extract_plan_selections", None
+                )
                 if selections is not None:
                     fields = selections(plan)
             elif self.strategy.kind == "text":
@@ -320,7 +360,10 @@ class PlanEditsNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output]:
         plan = getattr(ctx.state, "edit_plan", None)
         result = await self.execute_run(
@@ -341,7 +384,10 @@ class PlanEditsStreamNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output]:
         stream_ctx = await self.execute_stream(ctx=ctx, request=self.request)
         stream = await stream_ctx.__aenter__()
@@ -364,7 +410,10 @@ class PlanIterativeEditNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output] | PlanIterativeEditNode[Deps, Output]:
         plan = getattr(ctx.state, "edit_plan", None)
         if plan is None:
@@ -430,7 +479,10 @@ class PlanIterativeStreamNode(AbstractSemanticNode[Deps, Output]):
     exclude_none: bool = False
 
     async def run(
-        self, ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]]
+        self,
+        ctx: GraphRunContext[
+            SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+        ],
     ) -> End[Output] | PlanIterativeStreamNode[Deps, Output]:
         if self.strategy.kind != "mapping":
             raise ValueError(
@@ -505,7 +557,9 @@ def _build_iterative_items(
 
 
 def _build_edit_request(
-    ctx: GraphRunContext[SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]],
+    ctx: GraphRunContext[
+        SemanticGraphState[Output], SemanticGraphDeps[Deps, Output]
+    ],
     *,
     output_type: Any,
     system_prompt_additions: str | None,
@@ -528,7 +582,9 @@ def prepare_edit_graph(
     merge: bool,
     stream: bool,
 ) -> SemanticGraph[Output]:
-    strategy: AbstractEditableStrategy[Output] = EditStrategy.create(state.output)
+    strategy: AbstractEditableStrategy[Output] = EditStrategy.create(
+        state.output
+    )
 
     if merge and strategy.kind != "mapping":
         raise ValueError(
@@ -574,6 +630,7 @@ def prepare_edit_graph(
             stream=stream,
             exclude_none=exclude_none,
         )
+
         async def _plan_step(ctx):
             return await run_v1_node_chain(start_node, ctx)
 
@@ -612,6 +669,7 @@ def prepare_edit_graph(
         start_node = SelectiveEditNode(
             request=request, strategy=strategy, exclude_none=exclude_none
         )
+
         async def _selective_step(ctx):
             return await run_v1_node_chain(start_node, ctx)
 
@@ -648,6 +706,7 @@ def prepare_edit_graph(
     start_node = ReplaceEditNode(
         request=request, strategy=strategy, exclude_none=exclude_none
     )
+
     async def _replace_step(ctx):
         return await run_v1_node_chain(start_node, ctx)
 

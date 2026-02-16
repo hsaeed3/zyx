@@ -36,7 +36,9 @@ class Observer:
         from rich.panel import Panel
 
         full_title = f"{emoji} {title}" if emoji else title
-        panel = Panel(content, title=full_title, border_style=style, expand=False)
+        panel = Panel(
+            content, title=full_title, border_style=style, expand=False
+        )
         self._console.print(panel)
 
     def on_node(self, node: Any, _ctx: Any | None = None) -> None:
@@ -98,7 +100,9 @@ class Observer:
         """Called when multiple tools are invoked at once."""
         if not tool_names:
             return
-        tools_str = "\n".join(f"  • [yellow]{name}[/yellow]" for name in tool_names)
+        tools_str = "\n".join(
+            f"  • [yellow]{name}[/yellow]" for name in tool_names
+        )
         self._emit_panel(
             "Tools Called",
             tools_str,
@@ -127,13 +131,14 @@ class Observer:
         )
 
     def on_fields_generated(
-        self,
-        fields: list[dict[str, Any]] | None = None
+        self, fields: list[dict[str, Any]] | None = None
     ) -> None:
         """Called when fields are generated during editing."""
         if not fields:
             return
-        fields_str = "\n".join(f"  • [green]{field['name']}[/green]" for field in fields)
+        fields_str = "\n".join(
+            f"  • [green]{field['name']}[/green]" for field in fields
+        )
         self._emit_panel(
             "Fields Generated",
             fields_str,
@@ -153,18 +158,16 @@ class Observer:
     def on_verification(self, passed: bool, error: str | None = None) -> None:
         """Called when verification completes."""
         if passed:
-            self.emit(f"  [green]✓[/green] [bold]Verification passed[/bold]")
+            self.emit("  [green]✓[/green] [bold]Verification passed[/bold]")
         else:
-            self.emit(f"  [red]✗[/red] [bold]Verification failed[/bold]")
+            self.emit("  [red]✗[/red] [bold]Verification failed[/bold]")
             if error:
                 self.emit(f"    [dim red]{error}[/dim red]")
 
     def on_model_request(self) -> None:
         """Called when making a request to the model."""
         suffix = (
-            f" ({self._current_operation})"
-            if self._current_operation
-            else ""
+            f" ({self._current_operation})" if self._current_operation else ""
         )
         self.emit(
             f"  [dim cyan]⟳[/dim cyan] [italic]Processing{suffix}...[/italic]"

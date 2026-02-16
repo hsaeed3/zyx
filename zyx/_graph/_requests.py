@@ -19,7 +19,7 @@ from .._aliases import (
 )
 from .._utils._outputs import OutputBuilder
 from .._utils._strategies._params import SourceStrategy, TargetStrategy
-from ..attachments import Attachment
+from ..attachments import Attachment, is_attachment_like
 from ._ctx import (
     SemanticGraphContext,
 )
@@ -193,6 +193,22 @@ class SemanticGraphRequestTemplate(Generic[Output]):
                 if attachment.message is not None:
                     if attachment.message not in message_history:
                         message_history.insert(0, attachment.message)
+                continue
+            if is_attachment_like(attachment):
+                name = getattr(attachment, "name", None)
+                parts.append(
+                    PydanticAISystemPromptPart(
+                        content=_render_attachment_context(
+                            name=name or type(attachment).__name__,
+                            description=attachment.get_description(),
+                            state=attachment.get_state_description(),
+                        )
+                    )
+                )
+                message = getattr(attachment, "message", None)
+                if message is not None:
+                    if message not in message_history:
+                        message_history.insert(0, message)
                 continue
 
             parts.append(

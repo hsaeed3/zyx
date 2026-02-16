@@ -35,7 +35,7 @@ from .._utils._outputs import OutputBuilder
 from .._utils._strategies._params import SourceStrategy, TargetStrategy
 from .._processing._outputs import normalize_output_target
 from ..context import Context
-from ..attachments import Attachment
+from ..attachments import Attachment, AttachmentLike, is_attachment_like
 from ..targets import Target
 
 __all__ = (
@@ -142,7 +142,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
     """The usage limits to set for a single agent run within the execution of a
     semantic operation's graph."""
 
-    attachments: List[Attachment | Any] | None = None
+    attachments: List[Attachment | AttachmentLike | Any] | None = None
     """A list of attachments provided to the agent.
 
     An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
@@ -180,7 +180,11 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         source: Any | Type[Any] | None = None,
         target: Type[Output] | Output | None = None,
         confidence: bool = False,
-        attachments: Attachment | Any | List[Attachment | Any] | None = None,
+        attachments: Attachment
+        | AttachmentLike
+        | Any
+        | List[Attachment | AttachmentLike | Any]
+        | None = None,
         instructions: str | Callable | List[str | Callable] | None = None,
         tools: Any | List[Any] | None = None,
         deps: Deps | None = None,
@@ -251,8 +255,12 @@ class SemanticGraphDeps(Generic[Deps, Output]):
             observe=observe_handler,
             semantic_renderer=semantic_renderer,
             hooks=hooks,
-            source_strategy=SourceStrategy(source) if source is not None else None,
-            target_strategy=TargetStrategy.from_target(target) if target is not None else None,
+            source_strategy=SourceStrategy(source)
+            if source is not None
+            else None,
+            target_strategy=TargetStrategy.from_target(target)
+            if target is not None
+            else None,
         )
 
     @classmethod
@@ -364,17 +372,22 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         cls,
         *,
         tools: Any | List[Any] | None,
-        attachments: Attachment | List[Attachment] | None,
+        attachments: Attachment
+        | AttachmentLike
+        | List[Attachment | AttachmentLike]
+        | None,
         context_refs: list[Context],
         inject_internal_deps: bool,
-    ) -> tuple[List[PydanticAIToolset], List[Attachment], bool]:
+    ) -> tuple[
+        List[PydanticAIToolset], List[Attachment | AttachmentLike], bool
+    ]:
         ctx_toolsets = []
         for ctx in context_refs:
             ctx_toolsets.extend(ctx.render_toolsets())
 
         function_tools = []
         toolsets = list(ctx_toolsets)
-        attachments_list: List[Attachment] = []
+        attachments_list: List[Attachment | AttachmentLike] = []
 
         if tools:
             if not isinstance(tools, list):
@@ -404,12 +417,15 @@ class SemanticGraphDeps(Generic[Deps, Output]):
             if not isinstance(attachments, list):
                 attachments = [attachments]
             for attachment in attachments:
-                if isinstance(attachment, Attachment):
+                if isinstance(attachment, Attachment) or is_attachment_like(
+                    attachment
+                ):
                     normalized = attachment
                 else:
                     raise ValueError(
                         f"Invalid attachment: {attachment}. Accepted formats for attachments are:\n"
-                        "1. An `Attachment`"
+                        "1. An `Attachment`\n"
+                        "2. An object with `get_description()`, `get_state_description()`, and `get_toolset()`"
                     )
 
                 attachments_list.append(normalized)
@@ -479,7 +495,7 @@ class SemanticGraphState(Generic[Output]):
     """Accumulated token usage across all agent runs within the execution of a semantic
     operation."""
 
-    streams: List[PydanticAIAgentStream] = field(default_factory=list)
+    streams: List[PydanticAIAgentStream | None] = field(default_factory=list)
     """Streamed Agent runs that havent been consumed yet by the `Stream` result wrapper."""
 
     stream_contexts: List[Any] = field(default_factory=list)
@@ -564,15 +580,19 @@ def _ensure_confidence_supported_agent(
                 agent.model_settings = OpenAIResponsesModelSettings(
                     # NOTE: .. openai stop taking peoples data by default....
                     # its quite rude so we also disable it by default
-                    openai_logprobs=True, openai_top_logprobs=10,
-                    openai_store=False
+                    openai_logprobs=True,
+                    openai_top_logprobs=10,
+                    openai_store=False,
                 )
             else:
                 agent.model_settings = merge_model_settings(
                     base=agent.model_settings,
                     overrides=OpenAIResponsesModelSettings(
-                        openai_logprobs=True, openai_top_logprobs=10,
-                        openai_store=False if not agent.model_settings.get("openai_store", True) else None
+                        openai_logprobs=True,
+                        openai_top_logprobs=10,
+                        openai_store=False
+                        if not agent.model_settings.get("openai_store", True)
+                        else None,
                     ),
                 )
             return agent

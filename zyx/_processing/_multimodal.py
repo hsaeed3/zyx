@@ -7,6 +7,9 @@ from enum import Enum
 from io import BytesIO
 import mimetypes
 import re
+from urllib.parse import urlparse
+
+import httpx
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -70,6 +73,37 @@ _URL_HEADERS = {
 }
 
 
+def _looks_like_url(value: str) -> bool:
+    if not value or " " in value:
+        return False
+    if value.startswith(_URIS):
+        return True
+    # Avoid misclassifying local filesystem paths like "foo/bar.txt"
+    if Path(value).exists():
+        return False
+    candidate = _normalize_url(value)
+    try:
+        parsed = httpx.URL(candidate)
+    except Exception:
+        return False
+    host = parsed.host
+    if not host:
+        return False
+    if host == "localhost":
+        return True
+    return "." in host
+    return True
+
+
+def _normalize_url(value: str) -> str:
+    if value.startswith(_URIS):
+        return value
+    parsed = urlparse(value)
+    if parsed.scheme:
+        return value
+    return f"https://{value}"
+
+
 class MultimodalContentOrigin(Enum):
     """
     The computed origin of a snippet.
@@ -96,6 +130,8 @@ class MultimodalContentOrigin(Enum):
         else:
             if isinstance(source, str):
                 if source.startswith(_URIS):
+                    return cls.URL  # type: ignore
+                if _looks_like_url(source):
                     return cls.URL  # type: ignore
                 if Path(source).exists() and Path(source).is_file():
                     return cls.FILE  # type: ignore
@@ -257,6 +293,7 @@ def _classify_magic_bytes(
 def _detect_url_media_type(
     url: str,
 ) -> Tuple[MultimodalContentMediaType | None, str | None]:
+    url = _normalize_url(url)
     try:
         req = urllib.request.Request(url, method="HEAD", headers=_URL_HEADERS)
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -340,26 +377,27 @@ def render_multimodal_source_as_user_content(
         return str(source)
 
     if origin == MultimodalContentOrigin.URL and isinstance(source, str):
-        guessed_media_type, _ = mimetypes.guess_type(source)
+        normalized = _normalize_url(source)
+        guessed_media_type, _ = mimetypes.guess_type(normalized)
         if not guessed_media_type:
-            _, detected = _detect_url_media_type(source)
+            _, detected = _detect_url_media_type(normalized)
             guessed_media_type = detected
         if media_type == MultimodalContentMediaType.IMAGE:
-            return ImageUrl(url=source, media_type=guessed_media_type)
+            return ImageUrl(url=normalized, media_type=guessed_media_type)
         if media_type == MultimodalContentMediaType.AUDIO:
-            return AudioUrl(url=source, media_type=guessed_media_type)
+            return AudioUrl(url=normalized, media_type=guessed_media_type)
         if media_type == MultimodalContentMediaType.VIDEO:
-            return VideoUrl(url=source, media_type=guessed_media_type)
+            return VideoUrl(url=normalized, media_type=guessed_media_type)
         if media_type in (
             MultimodalContentMediaType.TEXT,
             MultimodalContentMediaType.HTML,
             MultimodalContentMediaType.DOCUMENT,
         ):
-            return _render_multimodal_file_or_url_as_text(source)
+            return _render_multimodal_file_or_url_as_text(normalized)
         return (
-            DocumentUrl(url=source, media_type=guessed_media_type)
+            DocumentUrl(url=normalized, media_type=guessed_media_type)
             if guessed_media_type
-            else source
+            else normalized
         )
 
     if origin == MultimodalContentOrigin.FILE:
@@ -432,7 +470,9 @@ def render_multimodal_source_as_text(
             return _render_multimodal_file_or_url_as_text(str(path))
 
         if origin == MultimodalContentOrigin.URL and isinstance(source, str):
-            return _render_multimodal_file_or_url_as_text(source)
+            return _render_multimodal_file_or_url_as_text(
+                _normalize_url(source)
+            )
 
         if origin == MultimodalContentOrigin.BYTES:
             data = (
@@ -455,7 +495,7 @@ def render_multimodal_source_as_text(
             return "[document bytes]"
 
     if origin == MultimodalContentOrigin.URL and isinstance(source, str):
-        return f"[{media_type.value} content at {source}]"
+        return f"[{media_type.value} content at {_normalize_url(source)}]"
     if origin == MultimodalContentOrigin.FILE:
         path = source if isinstance(source, Path) else Path(source)  # type: ignore
         return f"[{media_type.value} content from {path}]"

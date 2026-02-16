@@ -233,8 +233,7 @@ def make_stream_step(
         )
         assert isinstance(stream_ctx, AbstractAsyncContextManager)
 
-        stream = await stream_ctx.__aenter__()
-        ctx.state.streams.append(stream)  # type: ignore
+        ctx.state.streams.append(None)
         ctx.state.stream_contexts.append(stream_ctx)
 
         if output_fields:

@@ -161,7 +161,7 @@ class BasicEditStrategy(AbstractEditableStrategy[Output]):
         if getattr(plan, "selection", None) == "null":
             if self.builder.partial is None and self.builder.is_value:
                 return self.builder.update(self.builder.target)
-            return self.builder.partial # type: ignore[return-value]
+            return self.builder.partial  # type: ignore[return-value]
         return self.apply_replacement(edits)
 
 

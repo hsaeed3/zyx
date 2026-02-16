@@ -6,7 +6,19 @@ import asyncio
 import inspect
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generic, List, Literal, Optional, TypeVar, cast, overload, TYPE_CHECKING
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    TypeVar,
+    cast,
+    overload,
+    TYPE_CHECKING,
+)
 
 from pydantic import BaseModel
 import pydantic_monty
@@ -18,7 +30,7 @@ from .._aliases import (
     PydanticAIInstructions,
     PydanticAIModelSettings,
     PydanticAIUsage,
-    PydanticAIUsageLimits, 
+    PydanticAIUsageLimits,
     PydanticAIModel,
 )
 from .._graph import SemanticGraphDeps, SemanticGraphRequestTemplate
@@ -70,7 +82,7 @@ _PLAN_SYSTEM_PROMPT = (
     "- Produce a deterministic execution plan for this task as pure Python code.\n"
     "- Output ONLY Python code. No prose, no JSON, no markdown fences.\n"
     "- Call tools directly by name, e.g. front_door_light(False).\n"
-    "- Use `prompt(\"...\")` to queue follow-up instructions.\n"
+    '- Use `prompt("...")` to queue follow-up instructions.\n'
     "- Use `complete(...)` to finalize the task.\n"
     "- Do NOT use await, multi_tool_use, or functions.* prefixes.\n"
 )
@@ -206,9 +218,13 @@ class RunStream(Stream[Output]):
         res = await super().finish_async()
         completion_state = self.completion
         if self._execution_state is not None:
-            completion_state = completion_state or self._execution_state.completion_state
+            completion_state = (
+                completion_state or self._execution_state.completion_state
+            )
         if self._require_completion and completion_state is None:
-            raise ValueError("Task did not complete. The model must call `complete`.")
+            raise ValueError(
+                "Task did not complete. The model must call `complete`."
+            )
         completion_state = completion_state or RunCompletion(
             status="skipped",
             summary="No completion tool call was made.",
@@ -217,8 +233,12 @@ class RunStream(Stream[Output]):
             output=res.output,
             raw=res.raw,
             completion=completion_state,
-            verified=self.verified if self._execution_state is None else self._execution_state.verified,
-            verification_error=self.verification_error if self._execution_state is None else self._execution_state.verification_error,
+            verified=self.verified
+            if self._execution_state is None
+            else self._execution_state.verified,
+            verification_error=self.verification_error
+            if self._execution_state is None
+            else self._execution_state.verification_error,
             task=self.task,
         )
 
@@ -226,9 +246,13 @@ class RunStream(Stream[Output]):
         res = super().finish()
         completion_state = self.completion
         if self._execution_state is not None:
-            completion_state = completion_state or self._execution_state.completion_state
+            completion_state = (
+                completion_state or self._execution_state.completion_state
+            )
         if self._require_completion and completion_state is None:
-            raise ValueError("Task did not complete. The model must call `complete`.")
+            raise ValueError(
+                "Task did not complete. The model must call `complete`."
+            )
         completion_state = completion_state or RunCompletion(
             status="skipped",
             summary="No completion tool call was made.",
@@ -237,8 +261,12 @@ class RunStream(Stream[Output]):
             output=res.output,
             raw=res.raw,
             completion=completion_state,
-            verified=self.verified if self._execution_state is None else self._execution_state.verified,
-            verification_error=self.verification_error if self._execution_state is None else self._execution_state.verification_error,
+            verified=self.verified
+            if self._execution_state is None
+            else self._execution_state.verified,
+            verification_error=self.verification_error
+            if self._execution_state is None
+            else self._execution_state.verification_error,
             task=self.task,
         )
 
@@ -301,13 +329,16 @@ class RunStream(Stream[Output]):
             )
 
         if self._streams and len(self._streams) > 0:
+            first_stream = self._streams[0]
             if (
-                self._streams[0].response
-                and self._streams[0].response.model_name
+                first_stream is not None
+                and hasattr(first_stream, "response")
+                and first_stream.response
+                and first_stream.response.model_name
             ):
                 renderables.append(
                     Text.from_markup(
-                        f"[sandy_brown]>>>[/sandy_brown] [dim italic]Model: {self._streams[0].response.model_name}[/dim italic]"
+                        f"[sandy_brown]>>>[/sandy_brown] [dim italic]Model: {first_stream.response.model_name}[/dim italic]"
                     )
                 )
 
@@ -324,13 +355,19 @@ class RunExecutionState(Generic[Output]):
     total_tool_calls: int = 0
 
 
-RunVerifier = Callable[[RunCompletion], bool | str | None] | Callable[
-    [RunCompletion, RunVerificationContext[Output]], bool | str | None
-]
+RunVerifier = (
+    Callable[[RunCompletion], bool | str | None]
+    | Callable[
+        [RunCompletion, RunVerificationContext[Output]], bool | str | None
+    ]
+)
 
-RunCheck = Callable[[RunCompletion], bool | str | None] | Callable[
-    [RunCompletion, RunVerificationContext[Output]], bool | str | None
-]
+RunCheck = (
+    Callable[[RunCompletion], bool | str | None]
+    | Callable[
+        [RunCompletion, RunVerificationContext[Output]], bool | str | None
+    ]
+)
 
 
 def _build_target_schema_text(
@@ -372,7 +409,11 @@ def _render_tool_inventory(toolsets: List[Any]) -> str | None:
                     tools.append(f"- {name}")
     if not tools:
         return None
-    return "\n[AVAILABLE TOOLS]\n" + "\n".join(tools) + "\n[END AVAILABLE TOOLS]\n"
+    return (
+        "\n[AVAILABLE TOOLS]\n"
+        + "\n".join(tools)
+        + "\n[END AVAILABLE TOOLS]\n"
+    )
 
 
 def _observe_model_request(observe: Any | None) -> None:
@@ -511,7 +552,9 @@ def _apply_completion(
             state.validated_output = result
         else:
             try:
-                state.validated_output = _validate_target_result(target, result)
+                state.validated_output = _validate_target_result(
+                    target, result
+                )
             except Exception as exc:
                 raise error_cls(
                     f"Task completion result failed validation: {exc}"
@@ -545,7 +588,9 @@ def _apply_completion(
         final_answer_checks, state.completion_state, verification_context
     )
     if checks_ok is False:
-        raise error_cls(checks_error or "Final answer checks failed. Try again.")
+        raise error_cls(
+            checks_error or "Final answer checks failed. Try again."
+        )
 
 
 async def _execute_plan_based_run(
@@ -651,9 +696,7 @@ async def _execute_plan_based_run(
                     max_steps is not None
                     and execution_state.total_tool_calls > max_steps
                 ):
-                    raise ValueError(
-                        f"Max steps exceeded ({max_steps})."
-                    )
+                    raise ValueError(f"Max steps exceeded ({max_steps}).")
 
                 if not isinstance(graph_deps.agent.model, PydanticAIModel):
                     model = graph_deps.agent._get_model(
@@ -730,9 +773,7 @@ async def _execute_plan_based_run(
                     monty = pydantic_monty.Monty(
                         code,
                         inputs=[],
-                        external_functions=list(
-                            external_functions.keys()
-                        ),
+                        external_functions=list(external_functions.keys()),
                         script_name="run_plan.py",
                         type_check=False,
                     )
@@ -742,8 +783,7 @@ async def _execute_plan_based_run(
                     )
                 if planning_interval is not None:
                     round_calls = (
-                        execution_state.total_tool_calls
-                        - round_start_calls
+                        execution_state.total_tool_calls - round_start_calls
                     )
                     if round_calls > planning_interval:
                         raise ValueError(
@@ -850,23 +890,35 @@ async def _execute_stream_run(
     observe = getattr(graph_deps, "observe", None)
     request = SemanticGraphRequestTemplate(
         system_prompt_additions=system_prompt,
-        output_type=graph_deps.target_strategy.target if graph_deps.target_strategy else None,
+        output_type=graph_deps.target_strategy.target
+        if graph_deps.target_strategy
+        else None,
         native_output=False,
         include_output_context=False,
         toolsets=[toolset],
     )
     params = request.render(ctx)
-    handler = getattr(observe, "event_stream_handler", None) if observe else None
+    handler = (
+        getattr(observe, "event_stream_handler", None) if observe else None
+    )
     _observe_model_request(observe)
     stream_ctx = await graph_deps.agent.run_stream(
         **params, event_stream_handler=handler
     )
     stream = await stream_ctx.__aenter__()
-    builder = OutputBuilder(target=graph_deps.target_strategy.target if graph_deps.target_strategy else target)
+    builder = OutputBuilder(
+        target=graph_deps.target_strategy.target
+        if graph_deps.target_strategy
+        else target
+    )
     stream_wrapper = RunStream(
         _builder=builder,
         _streams=[stream],
-        _field_mappings=[StreamStreamFieldMapping(stream_index=0, fields=None, update_output=True)],
+        _field_mappings=[
+            StreamStreamFieldMapping(
+                stream_index=0, fields=None, update_output=True
+            )
+        ],
         _stream_contexts=[stream_ctx],
         completion=execution_state.completion_state,
         _exclude_none=False,
@@ -903,7 +955,9 @@ async def _run_async(
     stream: bool = False,
 ) -> RunResult[Output] | RunStream[Output]:
     if task is None:
-        make_target = cast(TargetParam[Output], target if target is not None else str)
+        make_target = cast(
+            TargetParam[Output], target if target is not None else str
+        )
         return await amake(  # type: ignore[no-matching-overload]
             target=make_target,
             context=context,

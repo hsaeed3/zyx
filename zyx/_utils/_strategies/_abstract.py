@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from ..._aliases import PydanticAIToolset
 
-__all__ = (
-    "AbstractStrategy",
-)
+__all__ = ("AbstractStrategy",)
 
 
 class AbstractStrategy(ABC):
@@ -17,11 +14,6 @@ class AbstractStrategy(ABC):
     Base class for 'strategies' that are provided to agents or models
     to interface with various objects and resources.
     """
-
-    @property
-    @abstractmethod
-    def kind(self) -> str:
-        raise NotImplementedError
 
     @property
     @abstractmethod

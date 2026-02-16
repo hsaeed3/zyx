@@ -1,6 +1,6 @@
 """zyx._utils._strategies._params
 
-Framework specific strategies for the `source` and 
+Framework specific strategies for the `source` and
 `target` parameters of semantic operations.
 """
 

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, TypeGuard, runtime_checkable
 from pydantic_ai.toolsets import FunctionToolset
 from pydantic_ai.messages import UserPromptPart
 
-from ._aliases import PydanticAIModelRequest
+from ._aliases import PydanticAIModelRequest, PydanticAIToolset
 from ._processing._multimodal import (
     MultimodalContentOrigin,
     MultimodalContentMediaType,
@@ -22,7 +22,9 @@ from ._utils._strategies._attachments import (
 
 __all__ = (
     "Attachment",
+    "AttachmentLike",
     "attach",
+    "is_attachment_like",
     "paste",
 )
 
@@ -30,12 +32,12 @@ __all__ = (
 class Attachment:
     """
     An `Attachment` is defined best as 2 sources of content:
-    
+
     1. A piece of content that can be `pasted` to represent textual
     content, documents or multimodal (image, audio, video) content within
     the `context`, or attachments provided to agents and llms during an operation.
 
-    2. A piece of content that can be `attached` to represent a 
+    2. A piece of content that can be `attached` to represent a
     pythonic object or external source that can be queried/edited/etc. by
     an agent or model.
 
@@ -125,6 +127,29 @@ class Attachment:
         )
 
 
+@runtime_checkable
+class AttachmentLike(Protocol):
+    def get_description(self) -> str: ...
+
+    def get_state_description(self) -> str | None: ...
+
+    def get_toolset(self) -> PydanticAIToolset | None: ...
+
+    @property
+    def message(self) -> PydanticAIModelRequest | None: ...
+
+    @property
+    def name(self) -> str | None: ...
+
+
+def is_attachment_like(value: Any) -> TypeGuard[AttachmentLike]:
+    return (
+        hasattr(value, "get_description")
+        and hasattr(value, "get_state_description")
+        and hasattr(value, "get_toolset")
+    )
+
+
 def attach(
     source: Any,
     *,
@@ -145,7 +170,7 @@ def attach(
         writeable (bool): Whether the attachment is writeable. Defaults to True.
         confirm (bool): Whether to confirm the attachment. Defaults to True.
         max_chars (int): The maximum number of characters to attach. Defaults to 8000.
-    
+
     Returns:
         Attachment: The attachment object.
     """
