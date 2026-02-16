@@ -65,7 +65,7 @@ The weather in Tokyo is sunny.
 
     print(result.output)
     """
-    The project notes memory stores various notes related to projects. 
+    The project notes memory stores various notes related to projects.
     If you would like more specific information or need to search through the project notes, please let me know!
     """
     ```
