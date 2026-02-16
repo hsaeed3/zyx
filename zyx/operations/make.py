@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import List, Literal, TypeVar, overload
+from typing import List, Literal, TypeVar, overload, TYPE_CHECKING
 
 from .._aliases import (
     PydanticAIInstructions,
@@ -15,8 +15,9 @@ from .._graph import (
     SemanticGraphDeps,
     SemanticGraphState,
     SemanticGraphRequestTemplate,
-    SemanticGenerateNode,
-    SemanticStreamNode,
+    GraphHooks,
+    make_generate_step,
+    make_stream_step,
 )
 from ..result import Result
 from ..stream import Stream
@@ -27,6 +28,10 @@ from .._types import (
     ToolType,
     AttachmentType,
 )
+from .._utils._semantic import semantic_for_operation
+
+if TYPE_CHECKING:
+    from .._utils._observer import Observer
 
 __all__ = (
     "amake",
@@ -80,6 +85,18 @@ _RANDOMIZATION_KEYWORDS: list[str] = [
 ]
 
 
+def _attach_observer_hooks(
+    deps: SemanticGraphDeps[Deps, Output], operation: str
+) -> None:
+    observe = getattr(deps, "observe", None)
+    if not observe or getattr(deps, "hooks", None) is not None:
+        return
+    deps.hooks = GraphHooks(
+        on_run_start=lambda _ctx: observe.on_operation_start(operation),
+        on_run_end=lambda _res: observe.on_operation_complete(operation),
+    )
+
+
 def prepare_make_graph(
     deps: SemanticGraphDeps[Deps, Output],
     state: SemanticGraphState[Output],
@@ -122,12 +139,10 @@ def prepare_make_graph(
             deps.agent.model_settings = {"temperature": 0.7}
 
     if stream:
-        nodes = [SemanticStreamNode]
-        start_node = SemanticStreamNode(request=request)
+        steps = [make_stream_step(request)]
     else:
-        nodes = [SemanticGenerateNode]
-        start_node = SemanticGenerateNode(request=request)
-    return SemanticGraph(nodes=nodes, start=start_node, state=state, deps=deps)
+        steps = [make_generate_step(request)]
+    return SemanticGraph(steps=steps, state=state, deps=deps)
 
 
 @overload
@@ -144,6 +159,7 @@ async def amake(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> Stream[Output]: ...
 
@@ -162,6 +178,7 @@ async def amake(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -179,6 +196,7 @@ async def amake(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
     """Asynchronously generate ('make') a value of the provided `target` type using
@@ -194,7 +212,7 @@ async def amake(
         model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
             or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
-        attachments (AttachmentType | List[AttachmentType] | None): A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+        attachments (AttachmentType | List[AttachmentType] | None): A single or list of attachment objects provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
             where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
             are `Resources` provide the agent with an ability to interact with/modify them, like artifacts. Defaults to None.
@@ -203,6 +221,7 @@ async def amake(
         deps (Deps | None): Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
             tools and instructions. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): The usage limits to use for the operation. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
         stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
@@ -219,7 +238,12 @@ async def amake(
         deps=deps,
         usage_limits=usage_limits,
         attachments=attachments,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "make", output=res.output
+        ),
     )
+    _attach_observer_hooks(graph_deps, "make")
     state = SemanticGraphState.prepare(deps=graph_deps)
 
     graph = prepare_make_graph(
@@ -246,6 +270,7 @@ def make(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[True],
 ) -> Stream[Output]: ...
 
@@ -264,6 +289,7 @@ def make(
     tools: ToolType | List[ToolType] | None = ...,
     deps: Deps | None = ...,
     usage_limits: PydanticAIUsageLimits | None = ...,
+    observe: bool | Observer | None = ...,
     stream: Literal[False] = False,
 ) -> Result[Output]: ...
 
@@ -281,6 +307,7 @@ def make(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
     stream: bool = False,
 ) -> Result[Output] | Stream[Output]:
     """Generate ('make') a value of the provided `target` type using
@@ -296,7 +323,7 @@ def make(
         model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
             or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
-        attachments (AttachmentType | List[AttachmentType] | None): A single or list of `Snippet` or `AbstractResource` objects that are provided to the agent.
+        attachments (AttachmentType | List[AttachmentType] | None): A single or list of attachment objects provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
             where it is templated/placed specifically to avoid context rot or loss. Furthermore, attachments that
             are `Resources` provide the agent with an ability to interact with/modify them, like artifacts. Defaults to None.
@@ -305,6 +332,7 @@ def make(
         deps (Deps | None): Reference to `deps` in `pydantic_ai.RunContext`, that can be passed to messages,
             tools and instructions. Defaults to None.
         usage_limits (PydanticAIUsageLimits | None): The usage limits to use for the operation. Defaults to None.
+        observe (bool | Observer | None): If True or provided, enables CLI observation output.
         stream (bool): Whether to stream the output of the operation. Defaults to False.
 
     Returns:
@@ -321,6 +349,10 @@ def make(
         deps=deps,
         usage_limits=usage_limits,
         attachments=attachments,
+        observe=observe,
+        semantic_renderer=lambda res, _state, _deps: semantic_for_operation(
+            "make", output=res.output
+        ),
     )
     state = SemanticGraphState.prepare(deps=graph_deps)
 

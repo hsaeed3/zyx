@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, TypeVar
+from typing import Any, List, TypeVar, TYPE_CHECKING
 
 from .._aliases import (
     PydanticAIInstructions,
@@ -17,6 +17,9 @@ from .._types import (
     AttachmentType,
 )
 from .parse import parse
+
+if TYPE_CHECKING:
+    from .._utils._observer import Observer
 
 __all__ = ("expr", "Expressions")
 
@@ -44,6 +47,7 @@ class Expressions:
         tools: ToolType | List[ToolType] | None = None,
         deps: Deps | None = None,
         usage_limits: PydanticAIUsageLimits | None = None,
+        observe: bool | Observer | None = None,
     ):
         """Initialize an Expressions instance.
 
@@ -67,6 +71,7 @@ class Expressions:
         self._tools = tools
         self._deps = deps
         self._usage_limits = usage_limits
+        self._observe = observe
 
     def _evaluate(
         self,
@@ -112,6 +117,7 @@ class Expressions:
             tools=self._tools,
             deps=self._deps,
             usage_limits=self._usage_limits,
+            observe=self._observe,
         )
 
         return result.output  # type: ignore[return-value]
@@ -180,6 +186,7 @@ def expr(
     tools: ToolType | List[ToolType] | None = None,
     deps: Deps | None = None,
     usage_limits: PydanticAIUsageLimits | None = None,
+    observe: bool | Observer | None = None,
 ) -> Expressions:
     """Create an Expressions instance for semantic expression evaluation.
 
@@ -221,4 +228,5 @@ def expr(
         tools=tools,
         deps=deps,
         usage_limits=usage_limits,
+        observe=observe,
     )
