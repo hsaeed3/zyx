@@ -2,6 +2,8 @@
 site_name = "zyx"
 site_description = "fun llm functions"
 site_author = "Hammad Saeed"
+site_url = "https://zyx.hammad.app"
+repo_url = "https://github.com/hsaeed3/zyx"
 
 copyright = """
 Copyright &copy; 2026 Hammad Saeed
