@@ -158,7 +158,7 @@ def log_website_url(url : str) -> None:
 result = zyx.parse( # (2)!
     source=zyx.paste("https://zyx.hammad.app"), # (3)!
     target=Information,
-    context="log the website URL before you parse.", # (4)!
+    instructions="log the website URL before you parse.", # (4)!
     model="openai:gpt-4o-mini", # (5)!
     tools=[log_website_url] # (6)!
 )
