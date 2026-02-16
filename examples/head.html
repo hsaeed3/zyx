@@ -1,0 +1,44 @@
+<style>
+/* Zed Mono (code) and Zed Sans (text) for marimo notebooks.
+ * Fonts are loaded from docs/assets/fonts/ via relative paths below.
+ * Cell targeting: use [data-cell-name='cell_name'] and [data-cell-role='output']. */
+
+@font-face {
+  font-family: "Zed Mono";
+  src: url("../docs/assets/fonts/zed-mono-extended.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Zed Sans";
+  src: url("../docs/assets/fonts/zed-sans-extended.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --marimo-heading-font: "Zed Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --marimo-code-font: "Zed Mono", ui-monospace, "Cascadia Mono", "Source Code Pro", Menlo, monospace;
+}
+
+/* Body and main content */
+body,
+main {
+  font-family: var(--marimo-heading-font);
+}
+
+/* Paragraphs: font size and color (light-dark for theme-aware colors) */
+.paragraph {
+  font-size: 1.2rem;
+  color: light-dark(navy, #e6e7ea);
+  font-family: var(--marimo-heading-font);
+}
+
+/* Code: blocks, inline, and editor (CodeMirror) */
+pre,
+code,
+.cm-content,
+.cm-line,
+.cm-editor {
+  font-family: var(--marimo-code-font) !important;
+}
+</style>
