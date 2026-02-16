@@ -5,6 +5,8 @@ icon: lucide/goal
 
 # `select()`
 
+Select **one or more options** from a given list or type representing a set of options.
+
 ??? note "API Reference"
 
     ??? note "`select()`"

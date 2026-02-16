@@ -5,6 +5,8 @@ icon: lucide/pencil-line
 
 # `edit()`
 
+Edit a `target` value using natural language instructions, along with **type-specific**, **field/content selective**, and **planning** capabilities.
+
 ??? note "API Reference"
 
     ??? note "`edit()`"

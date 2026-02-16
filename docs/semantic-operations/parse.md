@@ -5,6 +5,8 @@ icon: lucide/code
 
 # `parse()`
 
+Parse a **source** into a **target** type or schema. It treats the input as literal content to parse and returns only the structured output that matches the target.
+
 ??? note "API Reference"
 
     ??? note "`parse()`"

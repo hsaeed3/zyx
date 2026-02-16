@@ -41,12 +41,12 @@ The weather in Tokyo is sunny.
 
     The `Memory` tool is a prebuilt toolset that can be used by a model or agent to store and query memories.
 
-    ```python title="Using Memory as a tool"
+    ```python title="Using Memory as a tool" hl_lines="5 6 7 8 9"
     from zyx import make
     from zyx.tools import Memory
 
 
-    memory = Memory(
+    memory = Memory( # (1)!
         key="project_notes",
         provider="chroma/ephemeral",
         instructions="Stores project notes.",
@@ -59,7 +59,7 @@ The weather in Tokyo is sunny.
     result = make(
         str,
         context="What is the project notes about in memory?",
-        attachments=[memory], # (1)!
+        attachments=[memory], # (2)!
     )
 
 
@@ -70,7 +70,9 @@ The weather in Tokyo is sunny.
     """
     ```
 
-    1. Various prebuilt tools within `ZYX` can be passed directly as attachments to a semantic operation, for additional context and functionality that is provided to the model or agent.
+    1. The `Memory` class is abstracted similarly to `Memory` from the [`marvin`](https://github.com/PrefectHQ/marvin) library. Currently you can use the `qdrant` and `chroma` (chromadb) memory providers.
+
+    2. Various prebuilt tools within `ZYX` can be passed directly as attachments to a semantic operation, for additional context and functionality that is provided to the model or agent.
 
 === "Code"
 

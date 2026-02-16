@@ -18,7 +18,7 @@ The easiest way to create an attachment is through the `paste()` function, which
 
 ### HTML & Web Pages
 
-```python title="Using paste() on a URL"
+```python title="Using paste() on a URL" hl_lines="3"
 from zyx import paste
 
 attachment = paste("www.google.com") # (1)!
@@ -63,7 +63,7 @@ age: 30
 
 An attachment can be included in the `context` of any semantic operation, or as the direct `source` for operations such as `parse` or `query` that support the parameter.
 
-```python title="Passing an Attachment to a semantic operation"
+```python title="Passing an Attachment to a semantic operation" hl_lines="6"
 from zyx import make, paste
 
 attachment = paste("https://picsum.photos/id/237/536/354")

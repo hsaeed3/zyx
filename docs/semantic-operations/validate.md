@@ -5,6 +5,8 @@ icon: lucide/check
 
 # `validate()`
 
+Parse a **source** into a **target** type and then validate it against one or more **constraints**. You can choose to raise on violations or receive a structured result.
+
 ??? note "API Reference"
 
     ??? note "`validate()`"

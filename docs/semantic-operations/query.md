@@ -5,6 +5,8 @@ icon: lucide/book
 
 # `query()`
 
+Query a grounded **source** into a **target** type or schema. It only uses the provided source content and returns a structured output that matches the **target** type or schema.
+
 ??? note "API Reference"
 
     ??? note "`query()`"

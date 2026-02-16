@@ -9,9 +9,9 @@ icon: lucide/sparkles
 
 The core generative, or LLM-powered methods within `ZYX` are called **semantic operations**. A semantic operation is a function that leverages language models to:
 
-1. Take in some input **[Context](context.md){ data-preview }** (prompts, instructions, message history, data) and a **[Source](targets.md){ data-preview }** for specific operations.
-2. Execute any **[Tools](tool-use.md){ data-preview }** or interact with any **[Resources](resources.md){ data-preview }** as needed.
-3. Check-off or complete a **Condition (Goal)** or/and return a **Target** value.
+1. Take in some input **[Context](context.md){ data-preview }** (prompts, instructions, message history, data) and a **[Source](targets.md#sources){ data-preview }** for specific operations.
+2. Execute any **[Tools](tool-use.md){ data-preview }** or interact with any interactive **[Attachments](attachments.md){ data-preview }** as needed.
+3. Check-off or complete a **Condition (Goal)** or/and return a **[Target](targets.md#targets){ data-preview }** value.
 
 ## What are the different Semantic Operations?
 

@@ -5,6 +5,8 @@ icon: lucide/sparkle
 
 # `make()`
 
+Generate text and **structured outputs** based on a given `target`, with the ability to create **synthetic content**.
+
 ??? note "API Reference"
 
     ??? note "`make()`"

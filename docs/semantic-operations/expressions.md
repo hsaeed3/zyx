@@ -5,6 +5,8 @@ icon: lucide/list-check
 
 # `expr()`
 
+Run simple Pythonic expressions such as **`==`**, **`if x in y`**, ... operations against a given `source`.
+
 ??? note "API Reference"
 
     ??? note "`expr()`"

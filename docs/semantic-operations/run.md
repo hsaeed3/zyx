@@ -5,6 +5,8 @@ icon: lucide/rocket
 
 # `run()`
 
+Run an agent or model on an **arbitrary task**, and optionally return a **target** value, or a representation of the completion of the task.
+
 ??? note "API Reference"
 
     ??? note "`run()`"

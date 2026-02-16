@@ -5,11 +5,13 @@ icon: lucide/target
 
 # Targets & Sources
 
+## Targets
+
 A **Target** describes the output you want from a semantic operation. It can be a Python type, a concrete value, or a `Target` object with extra metadata and hooks.
 
 A **Source** is the primary input for operations like `parse`, `query`, `edit`, and `validate`. For `make` and `select`, a source is usually optional or implicit.
 
-## Target Basics
+### Target Basics
 
 Targets can be as simple as a type:
 
@@ -44,7 +46,7 @@ title='Harnessing the Future: The Rise of Renewable Energy' summary='This articl
 """
 ```
 
-## Target Metadata
+### Target Metadata
 
 Use `target(...)` to add extra guidance such as a name, description, instructions, constraints, or a default model.
 
@@ -73,7 +75,7 @@ result = parse(
 print(result.output)
 ```
 
-## Constraints
+### Constraints
 
 Targets can include constraints that `validate` (or `Target.validate`) will check using a model.
 
@@ -102,7 +104,7 @@ result = task_target.validate(
 print(result)
 ```
 
-## Target Hooks
+### Target Hooks
 
 Targets can register hooks that run on completion or error, or on specific fields as they are produced. Hooks can retry or update the output depending on the hook options.
 
@@ -133,24 +135,43 @@ print(result.output)
 
 ## Sources
 
-Sources are the primary inputs for grounded operations:
+Sources are the primary inputs for grounded operations. A source can be raw text, a Python object, or an attachment created with `paste(...)` or `attach(...)`.
 
-```python title="Parsing a Source"
-from zyx import parse
-from pydantic import BaseModel
+=== "Raw Text"
 
-
-class Info(BaseModel):
-    product: str
-    price: float
+    ```python title="Parsing a Source"
+    from zyx import parse
+    from pydantic import BaseModel
 
 
-result = parse(
-    source="The mug costs $12.50.",
-    target=Info,
-)
+    class Info(BaseModel):
+        product: str
+        price: float
 
-print(result.output)
-```
+
+    result = parse(
+        source="The mug costs $12.50.",
+        target=Info,
+    )
+
+    print(result.output)
+    ```
+
+=== "Multimodal Content"
+
+    ```python
+    from zyx import paste, parse
+
+    result = parse(
+        source=paste("https://zyx.hammad.app"),
+        instructions="Parse the name of the library from the website.",
+        target=str,
+    )
+
+    print(result.output)
+    """
+    ZYX
+    """
+    ```
 
 You can pass a `source` as raw text, a Python object, or an attachment created with `paste(...)`.
