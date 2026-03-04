@@ -50,7 +50,7 @@ qdrant = ["qdrant-client[fastembed]"]
 
 [dependency-groups]
 dev = [
-    "pre-commit",
+    "prek",
     "logfire",
     "black",
     # SORT!
