@@ -126,10 +126,14 @@ class Context(Generic[Deps]):
 
         self.instructions = instructions  # type: ignore
 
+        self.tools: List[ToolType] = []
+
         if tools:
             if not isinstance(tools, list):
                 tools = [tools]
             self.tools = tools  # type: ignore
+        else:
+            self.tools = []
 
         self.deps = deps
         self.update = update
