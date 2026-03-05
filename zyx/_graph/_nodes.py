@@ -9,6 +9,7 @@ from typing import Any, List, TypeVar, Callable, Union, Generic, cast
 from pydantic_graph.beta.step import StepContext
 from pydantic_graph.nodes import End, GraphRunContext, BaseNode
 from pydantic_ai.exceptions import UserError
+from pydantic_ai.messages import DocumentUrl, ModelRequest, UserPromptPart
 
 from .._aliases import (
     PydanticAIAgentResult,
@@ -20,6 +21,11 @@ from ._ctx import (
     StreamFieldMapping,
 )
 from ._requests import SemanticGraphRequestTemplate
+from .._processing._multimodal import (
+    MultimodalContentOrigin,
+    MultimodalContentMediaType,
+    render_multimodal_source_as_text,
+)
 
 __all__ = (
     "AbstractSemanticNode",
@@ -151,6 +157,44 @@ async def _execute_with_fallback(
             handler=handler,
             observe=observe,
         )
+    except RuntimeError as e:
+        # TODO:
+        # super janky fix, but it works for the time being.
+        if "DocumentUrl is not supported" not in str(e):
+            raise
+        _inline_document_urls_in_params(params)
+        return await _do_run(
+            ctx,
+            params=params,
+            streaming=streaming,
+            handler=handler,
+            observe=observe,
+        )
+
+
+def _inline_document_urls_in_params(params: dict[str, Any]) -> None:
+    message_history = params.get("message_history") or []
+    for message in message_history:
+        if not isinstance(message, ModelRequest):
+            continue
+        for part in message.parts:
+            if not isinstance(part, UserPromptPart):
+                continue
+            content = part.content
+            if not isinstance(content, list):
+                continue
+            new_content: list[Any] = []
+            for item in content:
+                if isinstance(item, DocumentUrl):
+                    text = render_multimodal_source_as_text(
+                        item.url,
+                        MultimodalContentOrigin.URL,
+                        MultimodalContentMediaType.DOCUMENT,
+                    )
+                    new_content.append(text)
+                else:
+                    new_content.append(item)
+            part.content = new_content
 
 
 async def _do_run(
