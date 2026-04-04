@@ -21,6 +21,7 @@ from pydantic_ai import (
     usage as _pydantic_ai_usage,
     RunContext as PydanticAIRunContext,
 )
+from pydantic_ai.agent.abstract import Instructions as PydanticAIInstructions
 
 __all__ = (
     "PydanticAIRunContext",
@@ -55,7 +56,7 @@ PydanticAIAgentResult: TypeAlias = _pydantic_ai_run.AgentRunResult
 PydanticAIAgentStream: TypeAlias = _pydantic_ai_result.StreamedRunResult
 
 
-PydanticAIInstructions: TypeAlias = _pydantic_ai_agent.Instructions
+PydanticAIInstructions: TypeAlias = PydanticAIInstructions
 
 
 PydanticAIMessage: TypeAlias = _pydantic_ai_messages.ModelMessage
