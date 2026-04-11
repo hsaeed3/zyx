@@ -9,30 +9,6 @@ copyright = """
 Copyright &copy; 2026 Hammad Saeed
 """
 
-extra_css = ["stylesheets/extras.css"]
-
-nav = [
-    {"Introduction" = "index.md"},
-    {"Core Concepts" = [
-        {"Semantic Operations" = "core-concepts/semantic-operations.md"},
-        {"Context & Prompting" = "core-concepts/context.md"},
-        {"Targets & Sources" = "core-concepts/targets.md"},
-        {"Attachments" = "core-concepts/attachments.md"},
-        {"Tools" = "core-concepts/tools.md"},
-        {"Results & Streaming" = "core-concepts/results.md"},
-    ]},
-    {"Semantic Operations" = [
-        {"Make" = "semantic-operations/make.md"},
-        {"Select" = "semantic-operations/select.md"},
-        {"Edit" = "semantic-operations/edit.md"},
-        {"Query" = "semantic-operations/query.md"},
-        {"Expressions" = "semantic-operations/expressions.md"},
-        {"Parse" = "semantic-operations/parse.md"},
-        {"Validate" = "semantic-operations/validate.md"},
-        {"Run" = "semantic-operations/run.md"},
-    ]}
-]
-
 # ----------------------------------------------------------------------------
 # Section for configuring theme options
 # ----------------------------------------------------------------------------

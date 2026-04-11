@@ -4,6 +4,7 @@
 
 # Extra Dev Files (Personal Dev Addition)
 .dev/
+.workspace/
 
 # Ruff Cache
 .ruff_cache/
