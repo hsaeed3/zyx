@@ -22,7 +22,7 @@ bump = true
 
 [project]
 name = "zyx"
-version = "1.0.29"
+version = "1.0.30"
 description = "ZYX"
 authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
 readme = "readme.md"
@@ -37,7 +37,7 @@ classifiers = [
 dependencies = [
     "markitdown>=0.1.4",
     "openai>=2.16.0",
-    "pydantic-ai-slim>=1.58.0",
+    "pydantic-ai-slim>=1.84.0",
     "pydantic-monty>=0.0.4",
     "toonify>=1.6.0",
 ]

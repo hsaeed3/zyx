@@ -21,7 +21,9 @@ from pydantic_ai import (
     usage as _pydantic_ai_usage,
     RunContext as PydanticAIRunContext,
 )
-from pydantic_ai.agent.abstract import Instructions as PydanticAIInstructions
+from pydantic_ai.agent.abstract import (
+    AgentInstructions as PydanticAIInstructions
+)
 
 __all__ = (
     "PydanticAIRunContext",

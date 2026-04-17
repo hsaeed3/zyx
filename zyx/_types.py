@@ -19,8 +19,10 @@ from typing import (
 
 from pydantic import BaseModel
 from pydantic_ai import (
-    agent as _pydantic_ai_agent,
     models as _pydantic_ai_models,
+)
+from pydantic_ai.agent.abstract import (
+    AgentInstructions as PydanticAIInstructions
 )
 
 from ._aliases import (
@@ -58,7 +60,7 @@ Output = TypeVar("Output")
 `Stream` returned by a semantic operation."""
 
 
-InstructionsParam: TypeAlias = _pydantic_ai_agent.Instructions | Any
+InstructionsParam: TypeAlias = PydanticAIInstructions | Any
 """Accepted formats of passing in instructions to a semantic operation. This is a re-export
 of the `pydantic_ai.agent.Instructions` type, and supports:
 
