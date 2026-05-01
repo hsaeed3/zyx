@@ -77,7 +77,7 @@ def run_edit_values_example() -> None:
         target=data,
         context="Update the age to 31",
         model="openai:gpt-4o-mini",
-        merge=False
+        merge=False,
     )
 
     print(result.output)

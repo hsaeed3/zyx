@@ -22,7 +22,7 @@ from pydantic_ai import (
     models as _pydantic_ai_models,
 )
 from pydantic_ai.agent.abstract import (
-    AgentInstructions as PydanticAIInstructions
+    AgentInstructions as PydanticAIInstructions,
 )
 
 from ._aliases import (
@@ -131,7 +131,7 @@ ContextType: TypeAlias = Union[
     Dict[str, Any],
     Context,
     AttachmentLike,
-    Attachment
+    Attachment,
 ]
 """Accepted formats for a single item within the ``context`` of a semantic
 operation.  All items are converted to ``pydantic_ai.ModelMessage`` objects

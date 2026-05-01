@@ -22,7 +22,7 @@ from pydantic_ai import (
     RunContext as PydanticAIRunContext,
 )
 from pydantic_ai.agent.abstract import (
-    AgentInstructions as PydanticAIInstructions
+    AgentInstructions as PydanticAIInstructions,
 )
 
 __all__ = (
