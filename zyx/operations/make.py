@@ -189,7 +189,7 @@ async def amake(
     *,
     randomize: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -210,7 +210,7 @@ async def amake(
         confidence (bool): Whether to include confidence scores in the result of the operation. This is currently only
             supported for OpenAI or OpenAI-like models. Defaults to False.
         model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
-            or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
+            or Pydantic AI agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): A single or list of attachment objects provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,
@@ -300,7 +300,7 @@ def make(
     *,
     randomize: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -321,7 +321,7 @@ def make(
         confidence (bool): Whether to include confidence scores in the result of the operation. This is currently only
             supported for OpenAI or OpenAI-like models. Defaults to False.
         model (ModelParam): The model to use for the operation. This can be a string, Pydantic AI model,
-            or Pydantic AI agent. Defaults to "openai:gpt-4o-mini".
+            or Pydantic AI agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): The model settings to use for the operation. Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): A single or list of attachment objects provided to the agent.
             An attachment is a piece of content that is provided to the agent in a 'persistent' fashion,

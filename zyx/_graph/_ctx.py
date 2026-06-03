@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import inspect
 from typing import Any, Callable, Dict, List, Generic, Self, Type, TypeVar
 
-from pydantic_graph.beta.step import StepContext
+from pydantic_graph.step import StepContext
 
 from pydantic_ai.toolsets import FunctionToolset
 from pydantic_ai.output import NativeOutput
@@ -305,7 +305,7 @@ class SemanticGraphDeps(Generic[Deps, Output]):
         if not agent:
             raise ValueError(
                 "Invalid 'runner' (model) provided when preparing semantic operation graph dependencies. Accepted formats for a model are:\n"
-                "1. A string in the `pydantic_ai` model format (e.g. 'openai:gpt-4o-mini', etc.)\n"
+                "1. A string in the `pydantic_ai` model format (e.g. 'openai-chat:gpt-4o-mini', etc.)\n"
                 "2. A `pydantic_ai.models.Model` object\n"
                 "3. A `pydantic_ai.Agent` object\n"
             )

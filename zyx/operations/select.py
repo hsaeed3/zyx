@@ -405,7 +405,7 @@ async def aselect(
     literal: bool = True,
     include_reason: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
@@ -430,7 +430,7 @@ async def aselect(
         include_reason (bool): Reserved flag to include a textual reason field in the
             intermediate structured output (not exposed in the final result). Defaults to False.
         confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for selection. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for selection. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
         tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.
@@ -611,7 +611,7 @@ def select(
     literal: bool = True,
     include_reason: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     instructions: PydanticAIInstructions | None = None,
     tools: ToolType | List[ToolType] | None = None,
@@ -636,7 +636,7 @@ def select(
         include_reason (bool): Reserved flag to include a textual reason field in the
             intermediate structured output (not exposed in the final result). Defaults to False.
         confidence (bool): When True, enable log-probability based confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for selection. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for selection. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
         tools (ToolType | List[ToolType] | None): List of tools available to the model. Defaults to None.

@@ -177,7 +177,7 @@ async def avalidate(
     constraints: List[str] | None = None,
     raise_on_error: bool = True,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -196,7 +196,7 @@ async def avalidate(
         raise_on_error (bool): If True (default), raise AssertionError if validation fails.
             If False, return a ValidationResult with any violations. Defaults to True.
         confidence (bool): If True, includes confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for parsing/validation. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for parsing/validation. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to use for the operation. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions for the model. Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments to provide to the model. Defaults to None.
@@ -304,7 +304,7 @@ def validate(
     constraints: List[str] | None = None,
     raise_on_error: bool = True,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -323,7 +323,7 @@ def validate(
         raise_on_error (bool): If True (default), raise AssertionError if validation fails.
             If False, return a ValidationResult with any violations. Defaults to True.
         confidence (bool): If True, includes confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for parsing/validation. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for parsing/validation. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to use for the operation. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions for the model. Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments to provide to the model. Defaults to None.

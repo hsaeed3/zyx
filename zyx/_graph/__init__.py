@@ -8,9 +8,8 @@ import inspect
 from types import SimpleNamespace
 from typing import Any, Callable, Generic, Sequence, TypeVar
 
-from pydantic_graph.beta.graph import Graph
-from pydantic_graph.beta.graph_builder import GraphBuilder
-from pydantic_graph.nodes import End
+from pydantic_graph.graph_builder import Graph, GraphBuilder
+from pydantic_graph.basenode import End
 
 from pydantic_ai import _output as _pydantic_ai_output
 from pydantic_ai import _utils as _pydantic_ai_utils

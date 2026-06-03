@@ -11,7 +11,7 @@ from .._aliases import (
     PydanticAIModelSettings,
     PydanticAIUsageLimits,
 )
-from pydantic_graph.nodes import GraphRunContext
+from pydantic_graph.basenode import GraphRunContext
 
 from .._graph import (
     AbstractSemanticNode,
@@ -770,7 +770,7 @@ async def aedit(
     plan: bool = False,
     merge: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -790,7 +790,7 @@ async def aedit(
         plan (bool): When True, create an edit plan first. Defaults to False.
         merge (bool): When True, merge edits with existing values. Requires selective=True or plan=True. Defaults to False.
         confidence (bool): When True, enables log-probability based confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
@@ -916,7 +916,7 @@ def edit(
     plan: bool = False,
     merge: bool = False,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -936,7 +936,7 @@ def edit(
         plan (bool): When True, create an edit plan first. Defaults to False.
         merge (bool): When True, merge edits with existing values. Requires selective=True or plan=True. Defaults to False.
         confidence (bool): When True, enables log-probability based confidence scoring. Defaults to False.
-        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for editing. Can be a string, Pydantic AI model, or agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.

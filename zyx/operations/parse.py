@@ -157,7 +157,7 @@ async def aparse(
     context: ContextType | List[ContextType] | None = None,
     *,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -174,7 +174,7 @@ async def aparse(
         target (TargetParam[Output]): The target type, schema, or agent to parse into. Defaults to str.
         context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
         confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
-        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
@@ -272,7 +272,7 @@ def parse(
     context: ContextType | List[ContextType] | None = None,
     *,
     confidence: bool = False,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -289,7 +289,7 @@ def parse(
         target (TargetParam[Output]): The target type, schema, or agent to parse into. Defaults to str.
         context (ContextType | List[ContextType] | None): Optional context or conversation history for the operation. Defaults to None.
         confidence (bool): When True, enables log-probability based confidence scoring (if supported by the model). Defaults to False.
-        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for parsing. Can be a string, Pydantic AI model, or agent. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings to pass to the operation (e.g., temperature). Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.

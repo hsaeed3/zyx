@@ -6,8 +6,8 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import replace
 from typing import Any, List, TypeVar, Callable, Union, Generic, cast
 
-from pydantic_graph.beta.step import StepContext
-from pydantic_graph.nodes import End, GraphRunContext, BaseNode
+from pydantic_graph.step import StepContext
+from pydantic_graph.basenode import End, GraphRunContext, BaseNode
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.messages import DocumentUrl, ModelRequest, UserPromptPart
 
@@ -74,7 +74,7 @@ class AbstractSemanticNode(
             )
 
         ctx.state.agent_runs.append(result)  # type: ignore[arg-type]
-        ctx.state.usage.incr(result.usage())  # type: ignore[arg-type]
+        ctx.state.usage.incr(result.usage)  # type: ignore[arg-type]
         return result  # type: ignore[return-value]
 
     async def execute_stream(
@@ -116,7 +116,7 @@ async def _execute_run(
         )
 
     ctx.state.agent_runs.append(result)  # type: ignore[arg-type]
-    ctx.state.usage.incr(result.usage())  # type: ignore[arg-type]
+    ctx.state.usage.incr(result.usage)  # type: ignore[arg-type]
     return result  # type: ignore[return-value]
 
 

@@ -118,7 +118,7 @@ ModelParam: TypeAlias = Union[
 of a semantic operation.
 
 This can be passed as:
-- A string name of a known model in the `pydantic_ai` format (e.g. "openai:gpt-4o-mini")
+- A string name of a known model in the `pydantic_ai` format (e.g. "openai-chat:gpt-4o-mini")
 - A PydanticAI Model (OpenAIChatModel, AnthropicModel, etc.)
 - A PydanticAI Agent
 """

@@ -40,7 +40,7 @@ class Expressions:
         source: SourceParam | None = None,
         context: ContextType | List[ContextType] | None = None,
         *,
-        model: ModelParam = "openai:gpt-4o-mini",
+        model: ModelParam = "openai-chat:gpt-4o-mini",
         model_settings: PydanticAIModelSettings | None = None,
         attachments: AttachmentType | List[AttachmentType] | None = None,
         instructions: PydanticAIInstructions | None = None,
@@ -179,7 +179,7 @@ def expr(
     source: SourceParam | None = None,
     context: ContextType | List[ContextType] | None = None,
     *,
-    model: ModelParam = "openai:gpt-4o-mini",
+    model: ModelParam = "openai-chat:gpt-4o-mini",
     model_settings: PydanticAIModelSettings | None = None,
     attachments: AttachmentType | List[AttachmentType] | None = None,
     instructions: PydanticAIInstructions | None = None,
@@ -193,7 +193,7 @@ def expr(
     Args:
         source (SourceParam | None): The source value to evaluate expressions against. Defaults to None.
         context (ContextType | List[ContextType] | None): Optional context or conversation history. Defaults to None.
-        model (ModelParam): The model to use for evaluation. Defaults to "openai:gpt-4o-mini".
+        model (ModelParam): The model to use for evaluation. Defaults to "openai-chat:gpt-4o-mini".
         model_settings (PydanticAIModelSettings | None): Model settings (e.g., temperature). Defaults to None.
         attachments (AttachmentType | List[AttachmentType] | None): Attachments provided to the agent. Defaults to None.
         instructions (PydanticAIInstructions | None): Additional instructions/hints for the model. Defaults to None.
