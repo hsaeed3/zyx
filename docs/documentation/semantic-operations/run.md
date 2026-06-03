@@ -3,6 +3,13 @@ title: Run
 icon: lucide/rocket
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `run()`
 
 Run an agent or model on an **arbitrary task**, and optionally return a **target** value, or a representation of the completion of the task.

@@ -3,6 +3,13 @@ title: Edit
 icon: lucide/pencil-line
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `edit()`
 
 Edit a `target` value using natural language instructions, along with **type-specific**, **field/content selective**, and **planning** capabilities.

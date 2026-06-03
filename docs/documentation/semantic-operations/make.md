@@ -3,6 +3,13 @@ title: Make
 icon: lucide/sparkle
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `make()`
 
 Generate text and **structured outputs** based on a given `target`, with the ability to create **synthetic content**.

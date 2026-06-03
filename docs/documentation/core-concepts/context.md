@@ -3,6 +3,13 @@ title: Context & Prompting
 icon: lucide/layers
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # Context & Prompting
 
 The `context` parameter is the *memory* and *prompting surface* of `ZYX`. It accepts flexible input types, mixes them freely, and gets normalized into model messages.

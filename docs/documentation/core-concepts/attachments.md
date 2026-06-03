@@ -3,6 +3,13 @@ title: Attachments
 icon: lucide/image
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # Attachments
 
 An *Attachment* is a piece of content or an object reference that can be used to represent text, documents, multimodal content, or Python objects in a way that can be passed to a model via the `context`, `source`, or `attachments` parameters of a semantic operation.

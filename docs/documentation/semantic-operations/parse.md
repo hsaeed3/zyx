@@ -3,6 +3,13 @@ title: Parse
 icon: lucide/code
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `parse()`
 
 Parse a **source** into a **target** type or schema. It treats the input as literal content to parse and returns only the structured output that matches the target.

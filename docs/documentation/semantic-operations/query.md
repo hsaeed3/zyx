@@ -3,6 +3,13 @@ title: Query
 icon: lucide/book
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `query()`
 
 Query a grounded **source** into a **target** type or schema. It only uses the provided source content and returns a structured output that matches the **target** type or schema.

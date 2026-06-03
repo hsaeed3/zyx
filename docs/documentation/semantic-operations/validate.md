@@ -3,6 +3,13 @@ title: Validate
 icon: lucide/check
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `validate()`
 
 Parse a **source** into a **target** type and then validate it against one or more **constraints**. You can choose to raise on violations or receive a structured result.

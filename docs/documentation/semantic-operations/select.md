@@ -3,6 +3,13 @@ title: Run
 icon: lucide/goal
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # `select()`
 
 Select **one or more options** from a given list or type representing a set of options.

@@ -3,6 +3,13 @@ title: Tools
 icon: lucide/wrench
 ---
 
+??? warning "Deprecated API"
+
+    The documentation on this page is no longer maintained in favor of the new ``zyx.beta`` API. You can
+    get started by checking out the [beta documentation]{data-preview} instead!
+
+[beta documentation]: .../beta/overview.md
+
 # Tools
 
 Tools let models and agents call functions during a semantic operation. You can pass tools directly with the `tools` parameter or attach tool-providing resources via `attachments`.
