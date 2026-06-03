@@ -9,11 +9,7 @@ package = true
 packages = ["zyx"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-    "/docs",
-    "/tests",
-    "/examples",
-]
+exclude = ["/docs", "/tests", "/examples"]
 
 [tool.uv-dynamic-versioning]
 vcs = "git"
@@ -22,11 +18,11 @@ bump = true
 
 [project]
 name = "zyx"
-version = "1.0.30"
+version = "1.0.31"
 description = "ZYX"
-authors = [{name = "Hammad Saeed", email = "hvmmad@gmail.com"}]
+authors = [{ name = "Hammad Saeed", email = "hvmmad@gmail.com" }]
 readme = "readme.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -37,7 +33,7 @@ classifiers = [
 dependencies = [
     "markitdown>=0.1.4",
     "openai>=2.16.0",
-    "pydantic-ai-slim>=1.84.0",
+    "pydantic-ai-slim>=1.105.0",
     "pydantic-monty>=0.0.4",
     "toonify>=1.6.0",
 ]
@@ -71,7 +67,7 @@ dev = [
     # docs (zensical is a project by the mkdocs-material team, that
     # aims to be the successor to mkdocs-material and mkdocs itself)
     "zensical",
-    "mkdocstrings-python"
+    "mkdocstrings-python",
 ]
 
 [tool.uv.build-backend]

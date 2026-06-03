@@ -22,7 +22,7 @@ from pydantic_ai import (
     RunContext as PydanticAIRunContext,
 )
 from pydantic_ai.agent.abstract import (
-    AgentInstructions as PydanticAIInstructions
+    AgentInstructions as PydanticAIInstructions,
 )
 
 __all__ = (
@@ -91,7 +91,8 @@ PydanticAIUserContent: TypeAlias = _pydantic_ai_messages.UserContent
 PydanticAITool: TypeAlias = _pydantic_ai_tools.Tool
 
 
-PydanticAIBuiltinTool: TypeAlias = _pydantic_ai_tools.AbstractBuiltinTool
+# TODO: ensure full lib reflects pydantic ai alias name change
+PydanticAIBuiltinTool: TypeAlias = _pydantic_ai_tools.AbstractNativeTool
 
 
 PydanticAIToolset: TypeAlias = _pydantic_ai_toolsets.AbstractToolset
