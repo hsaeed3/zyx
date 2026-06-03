@@ -67,6 +67,9 @@ dev = [
     # docs (zensical is a project by the mkdocs-material team, that
     # aims to be the successor to mkdocs-material and mkdocs itself)
     "zensical",
+    "griffe-typingdoc",
+    "mkdocs-material",
+    "mkdocs-click",
     "mkdocstrings-python",
 ]
 
